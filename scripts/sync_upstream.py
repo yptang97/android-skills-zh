@@ -118,6 +118,14 @@ def is_local_only(rel: str) -> bool:
     return rel in LOCAL_ONLY_FILES or rel.startswith(LOCAL_ONLY_PREFIXES)
 
 
+# 本地剔除的 skill 目录：不跟随上游复制、不翻译、finalize 时从本地删除
+EXCLUDED_PREFIXES = ("wear/", "cars/", "device-ai/", "xr/")
+
+
+def is_excluded(rel: str) -> bool:
+    return rel.startswith(EXCLUDED_PREFIXES)
+
+
 FENCE_LINE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 
 
@@ -209,7 +217,11 @@ def ensure_upstream(fetch: bool) -> Path:
 
 
 def upstream_manifest(up: Path) -> dict[str, str]:
-    return {rel: sha256_file(up / rel) for rel in walk_files(up)}
+    return {
+        rel: sha256_file(up / rel)
+        for rel in walk_files(up)
+        if not is_excluded(rel)
+    }
 
 
 def local_manifest() -> dict[str, str]:
@@ -265,6 +277,15 @@ def localize_plugin_json(target: Path) -> bool:
     if l10n and data.get("version") == l10n.get("upstream_version"):
         if data.get("version") != l10n.get("version"):
             data["version"] = l10n["version"]
+            changed = True
+    skills = data.get("skills")
+    if isinstance(skills, list):
+        kept = [
+            s for s in skills
+            if not is_excluded(s[2:] if isinstance(s, str) and s.startswith("./") else str(s))
+        ]
+        if len(kept) != len(skills):
+            data["skills"] = kept
             changed = True
     for plugin in data.get("plugins", []) or []:
         if isinstance(plugin, dict) and isinstance(plugin.get("description"), str):

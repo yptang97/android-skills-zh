@@ -19,11 +19,6 @@
   "skills": [
     "./build-system/agp/agp-9-upgrade",
     "./camera/camerax",
-    "./cars/android-for-cars-parked-apps",
-    "./device-ai/appfunctions",
-    "./device-ai/litert/litert-lm",
-    "./device-ai/litert/litert-runtime",
-    "./device-ai/ml-kit-genai-prompt-api",
     "./devtools/android-cli",
     "./identity/restore-credentials",
     "./identity/verified-email",
@@ -45,10 +40,6 @@
     "./system/edge-to-edge",
     "./system/glance-canonical-layouts",
     "./testing/testing-setup",
-    "./tv/leanback-to-compose-tv-migration",
-    "./wear/wear-compose-m3",
-    "./wear/wear-widgets",
-    "./xr/display-glasses-with-jetpack-compose-glimmer",
-    "./xr/projected-hardware"
+    "./tv/leanback-to-compose-tv-migration"
   ]
 }

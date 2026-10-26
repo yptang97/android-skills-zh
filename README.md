@@ -1,9 +1,88 @@
-## Android skills
-
 <!-- local:begin -->
-> **简体中文本地化版本。** 本仓库是 [android/skills](https://github.com/android/skills) 的社区中文翻译，内容以上游为准并每日自动同步。
-> 翻译范围与校验方式见 `SYNC.md`，术语约定见 `TRANSLATION-GLOSSARY.md`。
+
+# Android skills 中文版
+
+[android/skills](https://github.com/android/skills) 的简体中文本地化分支，只做语言转换，内容与结构以上游为准。
+
+- **上游**：`android/skills`（Apache-2.0），每天 03:00 自动同步、翻译、校验、发版
+- **本仓库**：`yptang97/android-skills-zh`，24 个 skill，SKILL.md 与说明文档为中文，代码与 API 原样保留
+- **剔除**：`wear/`、`cars/`、`device-ai/`、`xr/` 四类 skill 不在此仓库维护（见下文）
+
+## 快速安装
+
+Claude Code：
+
+```text
+/plugin marketplace add yptang97/android-skills-zh
+/plugin install android-skills@android-skills
+```
+
+Codex：
+
+```text
+codex plugin marketplace add yptang97/android-skills-zh
+codex plugin add android-skills@android-skills
+```
+
+只想要某个 skill，直接把目录拷进 agent 的 skills 目录，例如 `cp -r camera/camerax ~/.claude/skills/`。
+
+## 包含的 24 个 skill
+
+| 分组 | skill | 用途 |
+| --- | --- | --- |
+| 构建与工具 | `build-system/agp/agp-9-upgrade` | AGP 9 升级迁移（kapt→ksp、Paparazzi 等配方） |
+| | `devtools/android-cli` | `android` CLI：建项目、装 APK、管模拟器、导出 UI 树 |
+| | `testing/testing-setup` | 测试策略与骨架：单测、UI 测试、截图测试、E2E |
+| Compose | `jetpack-compose/adaptive` | 一套 UI 适配手机/平板/折叠/桌面/TV，处理窗口尺寸与配置变更 |
+| | `jetpack-compose/jetpack-compose-performance` | 诊断重组开销、掉帧、卡顿 |
+| | `jetpack-compose/migration/migrate-xml-views-to-jetpack-compose` | XML View 迁 Compose 的完整流程 |
+| | `jetpack-compose/theming/styles` | Compose Styles API 与设计系统迁移 |
+| 导航 | `navigation/navigation-3` | Navigation 3：深链、多返回栈、场景化导航 |
+| | `navigation/navigation-event` | 返回手势拦截与 Predictive Back |
+| 性能 | `performance/anr-audit-and-fix` | ANR 风险扫描与堆栈分诊 |
+| | `performance/r8-analyzer` | R8 keep 规则冗余与体积优化 |
+| | `profilers/android-profiler` | Perfetto trace 录制与分析 |
+| 安全 | `security/android-intent-security` | Intent 重定向防护 |
+| | `security/android-permissions-security` | 权限与 IPC 组件加固 |
+| Play | `play/engage-sdk-integration` | Engage SDK 集成与排障 |
+| | `play/play-billing-library-version-upgrade` | Play Billing Library 升级 |
+| | `play/play-policy-insights` | 按 Play 政策自动审计并出合规报告 |
+| 大屏与小部件 | `tv/leanback-to-compose-tv-migration` | Leanback/Views 迁到 Compose for TV |
+| | `system/glance-canonical-layouts` | Glance 主屏小组件规范布局 |
+| 系统适配 | `system/edge-to-edge` | 全屏适配，修系统栏遮挡与 IME insets |
+| 相机与媒体 | `camera/camerax` | CameraX 相机开发 |
+| | `media/media3-cast-integration` | Media3 接入 Google Cast |
+| 身份 | `identity/restore-credentials` | 恢复密钥，新设备静默登录 |
+| | `identity/verified-email` | Credential Manager 免 OTP 邮箱验证 |
+
+## 不包含的部分
+
+| 目录 | 上游 skill | 剔除原因 |
+| --- | --- | --- |
+| `wear/` | `wear-compose-m3`、`wear-widgets` | Wear OS 手表，与本仓库使用场景无关（上游这两项占 56 篇文档） |
+| `cars/` | `android-for-cars-parked-apps` | Android Auto / Automotive OS 驻车应用 |
+| `device-ai/` | `appfunctions`、`litert-lm`、`litert-runtime`、`ml-kit-genai-prompt-api` | 端侧 AI 与 AppFunctions，按需从上游原文取用 |
+| `xr/` | `display-glasses-with-jetpack-compose-glimmer`、`projected-hardware` | Android XR 眼镜与头显应用 |
+
+剔除目录在每次同步时自动跳过，上游新增的相邻内容不会回流进来。需要时直接看上游原文。
+
+## 维护方式
+
+| 工具 | 作用 |
+| --- | --- |
+| `scripts/sync_upstream.py` | `plan` 拉取上游并算出差异 → 翻译 → `finalize` 落状态、删上游已移除的文件 |
+| `scripts/check_translation.py` | 结构校验：frontmatter、代码块内容、链接目标、标题数量、YAML 合法性 |
+| `scripts/fix_anchors.py` | 中文标题导致英文页内锚点失效时补 `<a id>` |
+| `scripts/audit_english.py` | 英文残留的人工复核队列 |
+| `scripts/publish.py` | 发布版本，规则为 `<上游版本>-zh.<n>` |
+
+翻译规范见 `.skills/translate-skill/SKILL.md`，术语以 `TRANSLATION-GLOSSARY.md` 为准，同步历史见 `SYNC.md`。
+
+## 原版 README
+
 <!-- local:end -->
+
+## Android skills
 
 **Android skills** 是一个专门维护 **面向 AI 优化的模块化指令**与资源的仓库，帮助 agent 更好地理解并执行符合
 Android 开发最佳实践与官方指南的特定模式，内容源自 [developer.android.com](https://developer.android.com)。

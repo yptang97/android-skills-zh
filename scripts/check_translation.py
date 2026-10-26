@@ -35,7 +35,7 @@ _env_upstream = os.environ.get("ANDROID_SKILLS_UPSTREAM", "").strip()
 UPSTREAM_DIR = (
     Path(_env_upstream).expanduser().resolve()
     if _env_upstream
-    else (Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "android-skills-zh" / "upstream").resolve()
+    else (REPO.parent / "android-skills-upstream").resolve()
 )
 
 LOCAL_ONLY_PREFIXES = (".git/", ".sync/", ".skills/", "scripts/")
@@ -43,6 +43,8 @@ LOCAL_ONLY_FILES = {".gitignore", "TRANSLATION-GLOSSARY.md", "SYNC.md"}
 NO_TRANSLATE_PREFIXES = (".github/",)
 NO_TRANSLATE_FILES = {"LICENSE.txt"}
 OFFICIAL_DOC_MIRROR_RE = re.compile(r"/references/android/")
+# 本地剔除的 skill 目录（与 scripts/sync_upstream.py 的 EXCLUDED_PREFIXES 保持一致）
+EXCLUDED_PREFIXES = ("wear/", "cars/", "device-ai/", "xr/")
 # 这些 frontmatter 键的值必须与上游逐字一致，只有 description 之类说明性值可以翻译
 FIXED_SCALAR_KEYS = ("name", "license", "allowed-tools", "disable-model-invocation")
 
@@ -280,7 +282,15 @@ def main() -> int:
 
     up = upstream_root()
     roots = skill_roots(up)
-    files = [args.path] if args.path else [rel for rel in walk_files(up) if not is_local_only(rel)]
+    files = (
+        [args.path]
+        if args.path
+        else [
+            rel
+            for rel in walk_files(up)
+            if not is_local_only(rel) and not rel.startswith(EXCLUDED_PREFIXES)
+        ]
+    )
 
     report = {"checked": 0, "translated": 0, "errors": {}, "warnings": {}}
     for rel in files:
