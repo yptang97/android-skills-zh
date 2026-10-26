@@ -38,6 +38,17 @@ LICENSE.txt             法律文本
 
 范围由 `scripts/sync_upstream.py` 的 `should_translate()` 判定，上游新增的 skill 目录会自动纳入。
 
+本地剔除（不复制、不翻译、同步时自动从本地删除）：
+
+```text
+wear/          Wear OS 手表
+cars/          Android Auto / Automotive OS 驻车应用
+device-ai/     端侧 AI 与 AppFunctions
+xr/            Android XR 眼镜与头显
+```
+
+排除列表是 `sync_upstream.py` 的 `EXCLUDED_PREFIXES`，`check_translation.py` 里有一份同名常量，改一处必须同步另一处。
+
 ## 翻译哪些内容
 
 翻译自然语言文本，包括：
