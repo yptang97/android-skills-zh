@@ -212,6 +212,39 @@ references/android/      developer.android.com 整篇文档镜像，翻译收益
 
 插件清单中仅 `description` 字段由 `scripts/sync_upstream.py` 统一套用中文文案，其余字段原样保留。
 
+## 提交信息模板
+
+提交信息一律用中文，两条固定格式：
+
+```text
+sync: 首次简体中文本地化，上游 android/skills@<short-sha>
+
+新增 N 个文件、变更 M 个、移除 K 个。
+翻译 X 个 markdown（Y 个 SKILL.md 与 skill 内文档）。
+references/android/ 下官方文档镜像保留英文原样。
+
+校验：check_translation 全量通过（N 文件 / 0 error）。
+```
+
+```text
+sync: 同步上游 android/skills@<short-sha>
+
+新增 N / 变更 M / 移除 K；翻译 X 个 markdown。
+校验：check_translation 通过。
+```
+
+发布版本单独用一条：
+
+```text
+release: <上游版本>-zh.<n> 中文技能包
+```
+
+配套的文档提交：
+
+```text
+docs: 记录 <short-sha> 同步对应的本地 commit
+```
+
 ## 验证步骤
 
 每次上游内容刷新后，必须完成并记录以下检查：
