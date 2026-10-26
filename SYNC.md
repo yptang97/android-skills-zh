@@ -12,4 +12,4 @@
 
 ## 同步记录
 
-- 2026-10-26：已同步上游 `android/skills@4ebabf2`，本地 commit 待定。首次全量翻译：新增 428 / 变更 0 / 移除 0 个文件，翻译 151 个 markdown。
+- 2026-10-26：已同步上游 `android/skills@4ebabf2`，本地 commit `a341394`。首次全量翻译：新增 428 / 变更 0 / 移除 0 个文件，翻译 151 个 markdown。
