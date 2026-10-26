@@ -1,9 +1,8 @@
 ---
 name: edge-to-edge
-description: Use this skill to migrate your Jetpack Compose app to add adaptive edge-to-edge
-  support and troubleshoot common issues. Use this skill to fix UI components (like
-  buttons or lists) that are obscured by or overlapping with the navigation bar or
-  status bar, fix IME insets, and fix system bar legibility.
+description: 使用这个 skill 把 Jetpack Compose 应用迁移为支持自适应 edge-to-edge，
+  并排查常见问题。使用这个 skill 修复被导航栏或状态栏遮挡、与之重叠的 UI 组件
+  （例如按钮或列表），修复 IME insets，以及修复系统栏图标可读性问题。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -17,29 +16,28 @@ metadata:
   - navigation bar
 ---
 
-## Prerequisites
+## 前置条件
 
-- Project **MUST** use Android Jetpack Compose.
-- Project **MUST** target SDK 35 or later. If the SDK is lower than 35, increase the SDK to 35.
+- 项目**必须**使用 Android Jetpack Compose。
+- 项目**必须**以 SDK 35 或更高版本为目标。如果 SDK 低于 35，请把 SDK 提高到 35。
 
-## Step 1: plan
+## 步骤 1：规划
 
-1. Locate and analyze all Activity classes to detect which have existing edge-to-edge support. For every Activity without edge-to-edge, plan to make each Activity edge-to-edge.
-2. In each Activity, Locate and analyze all lists and FAB components to detect which have existing edge-to-edge support. For every component without edge-to-edge support, plan to make each of these components edge-to-edge.
-3. In each Activity, scan for `TextField`, `OutlinedTextField`, or `BasicTextField`. If found, then you **MUST** verify the IME doesn't hide the input field by following the IME section of this skill.
+1. 定位并分析所有 Activity 类，判断哪些已经支持 edge-to-edge。对每个尚未支持 edge-to-edge 的 Activity，计划让它实现 edge-to-edge。
+2. 在每个 Activity 中定位并分析所有列表和 FAB 组件，判断哪些已经支持 edge-to-edge。对每个尚未支持 edge-to-edge 的组件，计划让这些组件都实现 edge-to-edge。
+3. 在每个 Activity 中扫描 `TextField`、`OutlinedTextField` 或 `BasicTextField`。如果找到，你**必须**按照本 skill 的 IME 章节验证 IME 不会遮挡输入框。
 
-## Step 2: add edge-to-edge support
+## 步骤 2：添加 edge-to-edge 支持
 
-1. Add `enableEdgeToEdge` before `setContent` in `onCreate` in each Activity that does not already call `enableEdgeToEdge`.
-2. Add `android:windowSoftInputMode="adjustResize"` in the AndroidManifest.xml for all Activities that use a soft keyboard.
+1. 在每个尚未调用 `enableEdgeToEdge` 的 Activity 中，于 `onCreate` 里的 `setContent` 之前添加 `enableEdgeToEdge`。
+2. 对所有使用软键盘的 Activity，在 AndroidManifest.xml 中添加 `android:windowSoftInputMode="adjustResize"`。
 
-## Step 3: apply insets
+## 步骤 3：应用 insets
 
-- The app **MUST** apply system insets, or align content to rulers, so critical
-  UI remains tappable. Choose only one method to avoid double padding:
+- 应用**必须**应用系统 insets，或把内容对齐到标尺，以保证关键
+  UI 仍然可点击。只选择一种方式，避免重复的内边距：
 
-  1. **PREFERRED:** When available, use `Scaffold`s and pass `PaddingValues` to the content lambda.
-
+  1. **首选：** 在可用时使用 `Scaffold`，把 `PaddingValues` 传给 content lambda。
 
   ```kotlin
   Scaffold { innerPadding ->
@@ -55,9 +53,9 @@ metadata:
 
   <br />
 
-  1. **PREFERRED:** When available, use the automatic inset handling or padding modifiers in material components.
+  1. **首选：** 在可用时使用 Material 组件自带的 inset 处理或 padding 修饰符。
 
-     - Material 3 Components manages safe areas for its own components, including:
+     - Material 3 组件会为自己的组件管理安全区域，包括：
        - `TopAppBar`
        - `SmallTopAppBar`
        - `CenterAlignedTopAppBar`
@@ -70,11 +68,11 @@ metadata:
        - `ModalBottomSheet`
        - `NavigationBar`
        - `NavigationRail`
-     - For Material 2 Components, use the `windowInsets`parameter to apply insets manually for `BottomAppBar`, `TopAppBar` and `BottomNavigation`. **DO NOT** apply padding to the parent container; instead, pass insets directly to the App Bar component. Applying padding to the parent container prevents the App Bar background from drawing into the system bar area. For example, for `TopAppBar`, choose only one of the following options:
-       1. **PREFERRED:** `TopAppBar(windowInsets = AppBarDefaults.topAppBarWindowInsets)`
+     - 对 Material 2 组件，使用 `windowInsets` 参数为 `BottomAppBar`、`TopAppBar` 和 `BottomNavigation` 手动应用 insets。**不要**给父容器加 padding；而应把 insets 直接传给 App Bar 组件。给父容器加 padding 会阻止 App Bar 背景绘制到系统栏区域。例如对 `TopAppBar`，只选择下列选项之一：
+       1. **首选：** `TopAppBar(windowInsets = AppBarDefaults.topAppBarWindowInsets)`
        2. `TopAppBar(windowInsets = WindowInsets.systemBars.exclude(WindowInsets.navigationBars))`
        3. `TopAppBar(windowInsets = WindowInsets.systemBars.add(WindowInsets.captionBar))`
-  2. For components outside a Scaffold, use padding modifiers, such as `Modifier.safeDrawingPadding()` or `Modifier.windowInsetsPadding(WindowInsets.safeDrawing)`.
+  2. 对于 Scaffold 之外的组件，使用 padding 修饰符，例如 `Modifier.safeDrawingPadding()` 或 `Modifier.windowInsetsPadding(WindowInsets.safeDrawing)`。
 
 
      ```kotlin
@@ -94,30 +92,30 @@ metadata:
 
      <br />
 
-  3. For deeply nested components with excessive padding, use `WindowInsetsRulers` (e.g. `Modifier.fitInside(WindowInsetsRulers.SafeDrawing.current)`). See the *IME* section for a code sample.
+  3. 对于嵌套很深、内边距过多的组件，使用 `WindowInsetsRulers`（例如 `Modifier.fitInside(WindowInsetsRulers.SafeDrawing.current)`）。代码示例见 *IME* 章节。
 
-  4. When you need an element (e.g. a custom header or decorative scrim) to
-     equal the dimensions of a system bar, use inset size modifiers (e.g.
-     `Modifier.windowInsetsTopHeight(WindowInsets.systemBars)`).
-     See the *Lists* section for a code sample.
+  4. 当你需要某个元素（例如自定义标题栏或装饰性遮罩）的尺寸与系统栏一致时，
+     使用 inset 尺寸修饰符（例如
+     `Modifier.windowInsetsTopHeight(WindowInsets.systemBars)`）。
+     代码示例见 *列表* 章节。
 
-## Adaptive Scaffolds
+## 自适应 Scaffold
 
-- `NavigationSuiteScaffold` manages safe areas for its own components, like the `NavigationRail` or `NavigationBar`. However, the adaptive scaffolds (e.g. `NavigationSuiteScaffold`, `ListDetailPaneScaffold`) don't propagate PaddingValues to their inner contents. You **MUST** apply insets to **individual** screens or components (e.g., list `contentPadding` or FAB padding) as described in *Step 3* . **DO NOT** apply `safeDrawingPadding` or similar modifiers to the `NavigationSuiteScaffold` parent. This clips and prevents an edge-to-edge screen.
+- `NavigationSuiteScaffold` 会为自己的组件（如 `NavigationRail` 或 `NavigationBar`）管理安全区域。但自适应 scaffold（例如 `NavigationSuiteScaffold`、`ListDetailPaneScaffold`）不会把 PaddingValues 传递给其内部内容。你**必须**按 *步骤 3* 所述，对**各个**屏幕或组件（例如列表的 `contentPadding` 或 FAB 的 padding）应用 insets。**不要**给 `NavigationSuiteScaffold` 父级应用 `safeDrawingPadding` 或类似修饰符。这会裁剪内容并阻止屏幕实现 edge-to-edge。
 
 ## IME
 
-- For each Activity with a soft keyboard, check that `android:windowSoftInputMode="adjustResize"` is set in the AndroidManifest.xml. DO NOT use `SOFT_INPUT_ADJUST_RESIZE` because it is deprecated. Then, maintain focus on the input field. Choose one:
-  - 1. **PREFERRED:** Add `Modifier.fitInside(WindowInsetsRulers.Ime.current)` to the content container. This is preferred over `imePadding()` because it reduces jank and extra padding caused by forgetting to consume insets upstream in the hierarchy.
-  - 2. Add `imePadding` to the content container. The padding modifier **MUST** be placed before `Modifier.verticalScroll()`. Do NOT use `Modifier.imePadding()` if the parent already accounts for the IME with `contentWindowInsets` (e.g. `contentWindowInsets =
-    WindowInsets.safeDrawing`). Doing so will cause double padding.
+- 对每个使用软键盘的 Activity，检查 AndroidManifest.xml 中是否设置了 `android:windowSoftInputMode="adjustResize"`。不要使用 `SOFT_INPUT_ADJUST_RESIZE`，因为它已废弃。然后，保持输入框的焦点。选择一种：
+  - 1. **首选：** 给内容容器添加 `Modifier.fitInside(WindowInsetsRulers.Ime.current)`。这比 `imePadding()` 更受推荐，因为它能减少卡顿，以及因忘记在层级上层消费 insets 而产生的多余内边距。
+  - 2. 给内容容器添加 `imePadding`。该 padding 修饰符**必须**放在 `Modifier.verticalScroll()` 之前。如果父级已通过 `contentWindowInsets` 处理了 IME（例如 `contentWindowInsets =
+    WindowInsets.safeDrawing`），就不要使用 `Modifier.imePadding()`。否则会造成双重内边距。
 
-### IMEs with Scaffolds code patterns
+### 带 Scaffold 的 IME 代码模式
 
-#### RIGHT
+#### 正确
 
-RIGHT because `contentWindowInsets` contains IME insets, which are passed to the
-content lambda as `innerPadding`.
+这里正确，是因为 `contentWindowInsets` 包含 IME insets，它们会作为 `innerPadding` 传给
+content lambda。
 
 
 ```kotlin
@@ -136,8 +134,8 @@ Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { innerPadding ->
 
 *** ** * ** ***
 
-RIGHT because `fitInside` fits the content to the IME insets regardless of
-`contentWindowInsets`.
+这里正确，是因为 `fitInside` 会让内容贴合 IME insets，与
+`contentWindowInsets` 无关。
 
 
 ```kotlin
@@ -157,8 +155,8 @@ Scaffold() { innerPadding ->
 
 *** ** * ** ***
 
-RIGHT because the default `contentWindowInsets` does not contain IME insets, and
-`imePadding()` applies IME insets:
+这里正确，是因为默认的 `contentWindowInsets` 不包含 IME insets，
+而 `imePadding()` 会应用 IME insets：
 
 
 ```kotlin
@@ -176,11 +174,9 @@ Scaffold() { innerPadding ->
 
 <br />
 
-#### WRONG
+#### 错误
 
-WRONG because there will be excess padding when the IME opens. IME insets are
-applied twice, once with innerPadding, which contains IME insets from the passed
-`contentWindowInsets` values, and once with `imePadding`:
+这里错误，是因为 IME 打开时会出现多余的内边距。IME insets 被应用了两次：一次通过 innerPadding（其中包含传入的 `contentWindowInsets` 值带来的 IME insets），一次通过 `imePadding`：
 
 
 ```kotlin
@@ -199,8 +195,8 @@ Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { innerPadding ->
 
 *** ** * ** ***
 
-WRONG because the IME will cover up the content. Scaffold's default
-`contentWindowInsets` does NOT contain IME insets.
+这里错误，是因为 IME 会盖住内容。Scaffold 默认的
+`contentWindowInsets` 不包含 IME insets。
 
 
 ```kotlin
@@ -216,11 +212,11 @@ Scaffold() { innerPadding ->
 
 <br />
 
-### IMEs without Scaffolds code patterns
+### 不带 Scaffold 的 IME 代码模式
 
-#### RIGHT
+#### 正确
 
-The following code samples WILL NOT cause excessive padding.
+以下代码示例不会造成多余的内边距。
 
 
 ```kotlin
@@ -273,10 +269,10 @@ Box(
 
 <br />
 
-#### WRONG
+#### 错误
 
-The following code sample WILL cause excessive padding because IME insets are
-applied twice:
+以下代码示例会造成多余的内边距，因为 IME insets
+被应用了两次：
 
 
 ```kotlin
@@ -293,14 +289,13 @@ Box(
 
 <br />
 
-## Navigation Bar Contrast \& System Bar Icons
+## 导航栏对比度 \& 系统栏图标
 
-- If the Activity uses `enableEdgeToEdge` from `WindowCompat`, you **MUST** set
-  `isAppearanceLightNavigationBars` and `isAppearanceLightStatusBars` to the
-  inverse of the device theme for apps that support light and dark theme so the
-  system bar icons are legible. It's recommended to do this in your theme file.
-  DO NOT do this if the Activities use `enableEdgeToEdge` from `ComponentActivity`
-  because it handles the icon colors automatically.
+- 如果 Activity 使用 `WindowCompat` 的 `enableEdgeToEdge`，对于同时支持浅色和深色主题的应用，
+  你**必须**把 `isAppearanceLightNavigationBars` 和 `isAppearanceLightStatusBars` 设为
+  与设备主题相反的值，以便系统栏图标清晰可读。建议在主题文件中做这个设置。
+  如果 Activity 使用 `ComponentActivity` 的 `enableEdgeToEdge`，就不要这样做，
+  因为它会自动处理图标颜色。
 
 
   ```kotlin
@@ -329,17 +324,15 @@ Box(
 
   <br />
 
-- If any screen uses a `Scaffold` or a `NavigationSuiteScaffold` with a bottom
-  bar (e.g., `BottomAppBar`, `NavigationBar`), set
-  `window.isNavigationBarContrastEnforced = false` in the corresponding Activity
-  for SDK 29+. This prevents the system from adding a translucent background to
-  the navigation bar, verifying your bottom bar colors extend to the bottom of the
-  screen.
+- 如果任何屏幕使用了带底栏（例如 `BottomAppBar`、`NavigationBar`）的 `Scaffold` 或
+  `NavigationSuiteScaffold`，在 SDK 29+ 上于对应 Activity 中设置
+  `window.isNavigationBarContrastEnforced = false`。这可以阻止系统给导航栏添加
+  半透明背景，从而确保你的底栏颜色延伸到屏幕底部。
 
-## Lists
+## 列表
 
-- Apply inset padding (like `Scaffold`'s `innerPadding`) to the `contentPadding` parameter of scrollable components (e.g. `LazyColumn`, `LazyRow`). DO NOT apply it as a `Modifier.padding()` to the list's parent container, as this clips the content and prevents it from scrolling behind the system bars.
-- Create a translucent composable covering the system bar so that the icons are still legible.
+- 把 inset 内边距（如 `Scaffold` 的 `innerPadding`）应用到可滚动组件（例如 `LazyColumn`、`LazyRow`）的 `contentPadding` 参数上。不要把它作为 `Modifier.padding()` 应用到列表的父容器，因为这会裁剪内容并阻止内容滚动到系统栏后面。
+- 创建一个覆盖系统栏的半透明 composable，使图标仍然清晰可读。
 
 
 ```kotlin
@@ -391,15 +384,14 @@ private fun StatusBarProtection(
 
 <br />
 
-## Dialogs
+## 对话框
 
-If both the following conditions are true, then the Dialog is full screen and
-must be made edge-to-edge:
-1. The `DialogProperties` contains `usePlatformDefaultWidth = false`.
-2. The Dialog calls `Modifier.fillMaxSize()`.
+如果以下两个条件都成立，则该 Dialog 是全屏的，
+必须把它做成 edge-to-edge：
+1. `DialogProperties` 包含 `usePlatformDefaultWidth = false`。
+2. Dialog 调用了 `Modifier.fillMaxSize()`。
 
-To make a full screen Dialog edge-to-edge, set `decorFitsSystemWindows = false`
-in the `DialogProperties`.
+要把全屏 Dialog 做成 edge-to-edge，在 `DialogProperties` 中设置 `decorFitsSystemWindows = false`。
 
 
 ```kotlin
@@ -416,11 +408,11 @@ Dialog(
 
 <br />
 
-## Checklist
+## 检查清单
 
-- \[ \] Does every `Activity` call `enableEdgeToEdge()`?
-- \[ \] Is `adjustResize` set in the `AndroidManifest.xml`?
-- \[ \] Does every `TextField`, `OutlinedTextField`, or `BasicTextField` have a parent with `imePadding()`, `fitInside`, `Modifier.safeDrawingPadding()`, `Modifier.safeContentPadding()`, `Modifier.safeGesturesPadding()`, or `contentWindowInsets` set to `WindowInsets.safeDrawing` or `WindowInsets.ime`?
-- \[\] Does the first and last list item draw away from the system bars by passing insets to `contentPadding`?
-- \[\] Do FABs draw above the navigation bars by either being inside a Scaffold or by applying `Modifier.safeDrawingPadding()`?
-- \[\] Does the project build? Run `./gradlew build` to be sure.
+- \[ \] 每个 `Activity` 都调用了 `enableEdgeToEdge()` 吗？
+- \[ \] `AndroidManifest.xml` 中设置了 `adjustResize` 吗？
+- \[ \] 每个 `TextField`、`OutlinedTextField` 或 `BasicTextField` 的父级都设置了 `imePadding()`、`fitInside`、`Modifier.safeDrawingPadding()`、`Modifier.safeContentPadding()`、`Modifier.safeGesturesPadding()`，或把 `contentWindowInsets` 设为 `WindowInsets.safeDrawing` 或 `WindowInsets.ime` 吗？
+- \[\ ] 列表的第一项和最后一项是否通过把 insets 传给 `contentPadding` 而避开了系统栏？
+- \[\ ] FAB 是否通过位于 Scaffold 内或应用 `Modifier.safeDrawingPadding()` 而绘制在导航栏之上？
+- \[\ ] 项目能构建吗？运行 `./gradlew build` 确认。

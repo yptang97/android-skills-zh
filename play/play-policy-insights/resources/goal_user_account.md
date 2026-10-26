@@ -1,93 +1,77 @@
 {{#IF_ANY data_sources.USER_ACCOUNT, data_sources.ACCOUNT_DELETION}}
 {{ACTIVATE_GOAL}}
 {{/IF_ANY}}
-## User Account and Identity Audit
+## 用户账号与身份审计
 
-### Hint: Deducing Account Presence
+### 提示：推断账号的存在
 
-To determine if an app handles user accounts (even if it uses third-party
-providers like Google Sign-In or Firebase Auth), look for:
-1. **Login/Auth Screens**: Semantic files or layouts named `login`, `auth`,
-   `signin`, or `signup`.
-2. **Account Management**: APIs like `AccountManager`, `CredentialManager`, or
-   `Firebase.auth`.
-3. **User Profile**: UI strings or data models referencing `profile`,
-   `my account`, or `user settings`.
+要判断应用是否涉及用户账号（即使它使用 Google 登录或 Firebase Auth 之类的第三方服务商），可以查找：
+1. **登录/认证界面**：名为 `login`、`auth`、`signin` 或 `signup` 的语义文件或布局。
+2. **账号管理**：`AccountManager`、`CredentialManager` 或 `Firebase.auth` 之类的 API。
+3. **用户资料**：引用了 `profile`、`my account` 或 `user settings` 的 UI 字符串或数据模型。
 
-### Policies to Verify
+### 需要核查的政策
 
 {{#IF_ANY data_sources.USER_ACCOUNT, semantic_files.USER_ACCOUNT}}
-#### Play Console Requirements (Policy ID: login_credentials)
+#### Play Console 要求（Policy ID: login_credentials）
 
-- **Goal**: Identify if the app implements a login wall or authentication
-  screen.
-- **The Policy Spirit**: To ensure Play Store reviewers can successfully test
-  and audit apps, developers must submit functional, non-expiring credentials in
-  Play Console if the app's features are gated behind a login screen.
-- **Evidence**:
+- **目标**：识别应用是否实现了登录墙或认证界面。
+- **政策精神**：为确保 Play 商店审核人员能顺利测试和审计应用，如果应用功能被登录界面
+  限制，开发者必须在 Play Console 中提交可用且不会过期的凭据。
+- **证据**：
   {{#IF semantic_files.USER_ACCOUNT}}
-  - **Account Files**:
+  - **账号文件**：
     `{{#EACH semantic_files.USER_ACCOUNT}}{{ITEM}}, {{/EACH}}`
   {{/IF}}
   {{#IF data_sources.USER_ACCOUNT}}
-  - **Account Signals**:
+  - **账号信号**：
     `{{#EACH data_sources.USER_ACCOUNT}}{{ITEM}}, {{/EACH}}`
   {{/IF}}
-- **Common Evaluation Matrix**:
-  | App State | Finding / Condition | Severity | Actionable Recommendation |
+- **通用评估矩阵**：
+  | 应用状态 | 发现/条件 | 严重程度 | 可执行的建议 |
   | :--- | :--- | :--- | :--- |
-  | **Login Screen Detected** | App displays or contains a login screen, registration wall, or authentication interface. | `IMPORTANT` | **Administrative Console Requirements**: Because your app implements a login flow, you MUST complete two manual setup steps in the Play Console dashboard to pass review:<br>1. **Reviewer Demo Credentials**: Submit active, non-expiring test credentials so Google Play reviewers can access your gated features.<br>2. **Account Deletion Link**: Submit a public-facing web link for account deletion to satisfy Google Play's data deletion policies. |
+  | **检测到登录界面** | 应用展示或包含登录界面、注册墙或认证界面。 | `IMPORTANT` | **管理控制台要求**：由于你的应用实现了登录流程，你必须在 Play Console 面板中完成两项手动设置才能通过审核：<br>1. **审核人员演示凭据**：提交有效且不会过期的测试凭据，使 Google Play 审核人员能访问你受限制的功能。<br>2. **账号删除链接**：提交一个公开的账号删除网页链接，以满足 Google Play 的数据删除政策。 |
 
-- **Domain-Specific Heuristics (Strictly Bounded)**:
-  Look beyond standard native login buttons. Extrapolate using this heuristic:
-  1. **Hidden Gatekeepers**: Analyze if certain critical features (e.g.,
-     synchronizing local database, checkout forms, or member-only dashboards)
-     require authentication even if the app opens directly to a main page. If
-     you deduce that functional workflows require a login, treat it as a login
-     gate and output the `IMPORTANT` console credentials and deletion link
-     reminders.
+- **领域特定启发式规则（严格受限）**：
+  不要只看标准原生登录按钮。按以下启发式规则做推断：
+  1. **隐藏的守门人**：分析某些关键功能（例如同步本地数据库、结账表单或仅限会员的面板）
+     是否即使用户直接进入首页也需要认证。如果你推断出某些功能工作流需要登录，
+     就按登录墙处理，并输出 `IMPORTANT` 级别的控制台凭据与删除链接提醒。
 {{/IF_ANY}}
 
 {{#IF_ANY data_sources.USER_ACCOUNT, data_sources.ACCOUNT_DELETION}}
-#### Account Deletion Requirement (Policy ID: account_deletion)
+#### 账号删除要求（Policy ID: account_deletion）
 
-- **Goal**: If the app handles user accounts, it must provide a discoverable
-  in-app account deletion mechanism.
-- **The Policy Spirit**: Users have a fundamental right to request data erasure.
-  If they can create an account in-app, they must be able to delete it in-app.
-  Deletion must wipe remote database records, not just sign out.
-- **Evidence**:
+- **目标**：如果应用涉及用户账号，就必须提供易于发现的应用内账号删除机制。
+- **政策精神**：用户有权要求删除数据，这是一项基本权利。如果用户能在应用内创建账号，
+  就必须能在应用内删除账号。删除必须清除远程数据库记录，而不仅仅是退出登录。
+- **证据**：
   {{#IF data_sources.USER_ACCOUNT}}
-  - **Account signals (Presence)**:
+  - **账号信号（存在性）**：
     `{{#EACH data_sources.USER_ACCOUNT}}{{ITEM}}, {{/EACH}}`
   {{/IF}}
   {{#IF data_sources.ACCOUNT_DELETION}}
-  - **Deletion signals (Mechanism)**:
+  - **删除信号（机制）**：
     `{{#EACH data_sources.ACCOUNT_DELETION}}{{ITEM}}, {{/EACH}}`
   {{/IF}}
-- **Common Evaluation Matrix**:
-  | App Account Status | Finding / Deletion Evidence | Severity | Actionable Recommendation |
+- **通用评估矩阵**：
+  | 应用账号状态 | 发现/删除证据 | 严重程度 | 可执行的建议 |
   | :--- | :--- | :--- | :--- |
-  | **Handles User Accounts** | App manages user accounts, but NO code, layout, or string suggests an in-app deletion button or process. | `IMPORTANT` | **Implement in-app deletion**: Create a highly discoverable path (e.g., under User Profile/Account Settings) to let users initiate account deletion directly in the app. |
+  | **涉及用户账号** | 应用管理用户账号，但没有任何代码、布局或字符串表明存在应用内删除按钮或删除流程。 | `IMPORTANT` | **实现应用内删除**：创建一个极易发现的入口（例如放在用户资料/账号设置下），让用户能直接在应用内发起账号删除。 |
 
-- **Domain-Specific Heuristics (Strictly Bounded)**:
-  Do not limit your analysis to basic "Delete" buttons. Actively analyze custom
-  and grey-area implementations:
-  1. **The Partial Deletion Trap**: Read the implementation of any found
-     deletion mechanisms. If the code merely calls `clearPreferences()`, clears
-     a local cookie, or triggers a standard `logout()` without sending a remote
-     delete/purge network API call to clean up backend user records, flag this
-     as a `IMPORTANT` violation of the deletion mandate.
-  2. **Indirect User Accounts**: If the app uses third-party sign-in bridges
-     (e.g., Google Sign-In, Firebase) but does not store an
-     explicit account profile on its own server, it still handles user account
-     details if any user preferences or device identifiers are cached remotely.
-     If so, a delete link/button is still required.
+- **领域特定启发式规则（严格受限）**：
+  不要只分析基础的「Delete」按钮。要主动分析自定义实现和灰色地带的实现：
+  1. **部分删除陷阱**：阅读所有找到的删除机制的实现。如果代码只调用了 `clearPreferences()`、
+     清除了本地 cookie，或触发标准的 `logout()`，却没有发送远程删除/清除的网络 API 调用来
+     清理后端用户记录，就把它标记为违反删除要求的 `IMPORTANT` 问题。
+  2. **间接用户账号**：如果应用使用第三方登录桥接（例如 Google 登录、Firebase），
+     但没有在自己的服务器上存储显式的账号资料，只要有任何用户偏好或设备标识符
+     被远程缓存，它仍然涉及用户账号信息。这种情况下同样需要删除链接/按钮。
 {{/IF_ANY}}
 
-## Output schema
+## 输出 schema
 
-Save final JSON output to `{{TEMP_DIR}}/worker_{{GOAL_NAME}}.json`.
+把最终的 JSON 输出保存到 `{{TEMP_DIR}}/worker_{{GOAL_NAME}}.json`。
 
 ```json
 {

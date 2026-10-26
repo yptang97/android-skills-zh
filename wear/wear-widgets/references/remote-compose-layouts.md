@@ -1,13 +1,13 @@
-Remote Compose uses dedicated `@RemoteComposable` layout containers, modifiers,
-and state wrappers in `androidx.compose.remote.creation.compose.*` and
-Material 3 components in `androidx.wear.compose.remote.material3.*`.
+Remote Compose 在 `androidx.compose.remote.creation.compose.*` 中使用专用的
+`@RemoteComposable` 布局容器、修饰符和状态包装器，并在
+`androidx.wear.compose.remote.material3.*` 中使用 Material 3 组件。
 
-## 1. Adaptive container sizing (`SMALL` versus `LARGE`)
+## 1. 自适应容器尺寸（`SMALL` 与 `LARGE`）
 
-Inspect `params.containerType` in `provideWidgetData` to distinguish
-`ContainerInfo.CONTAINER_TYPE_SMALL` (`1x1` cards) from
-`ContainerInfo.CONTAINER_TYPE_LARGE` (`2x1` cards). Adapt layout density,
-padding, visible rows, and typography for each container size:
+在 `provideWidgetData` 中检查 `params.containerType`，区分
+`ContainerInfo.CONTAINER_TYPE_SMALL`（`1x1` 卡片）和
+`ContainerInfo.CONTAINER_TYPE_LARGE`（`2x1` 卡片）。针对每种容器尺寸调整布局密度、
+内边距、可见行数和字体排版：
 
 ```kotlin
 import androidx.compose.remote.creation.compose.layout.RemoteAlignment
@@ -52,13 +52,13 @@ fun AdaptiveCardContent(
 }
 ```
 
-## 2. Unmasked full-bleed background images
+## 2. 未遮罩的全出血背景图
 
-When a widget displays background artwork or photography:
+当 widget 展示背景图案或照片时：
 
-1. Decode the drawable in `provideWidgetData` with `BitmapFactory.decodeResource(context.resources, R.drawable.<bg_res>)`.
-2. Convert the `Bitmap` using `RemoteImageBitmap` (`bitmap.asImageBitmap`). Render it as the first child of a root `RemoteBox` using `RemoteImage` with `RemoteModifier.fillMaxSize`.
-3. **NEVER** apply `CircleShape`, `RoundedCornerShape`, or manual `cornerRadius` clipping to full-bleed backgrounds. The Wear OS host automatically masks the widget surface to match the watch's round or squircle border.
+1. 在 `provideWidgetData` 中用 `BitmapFactory.decodeResource(context.resources, R.drawable.<bg_res>)` 解码 drawable。
+2. 用 `RemoteImageBitmap`（`bitmap.asImageBitmap`）转换 `Bitmap`。把它作为根 `RemoteBox` 的第一个子项，用 `RemoteImage` 搭配 `RemoteModifier.fillMaxSize` 渲染。
+3. **绝不** 对全出血背景应用 `CircleShape`、`RoundedCornerShape` 或手动 `cornerRadius` 裁剪。Wear OS 宿主会自动把 widget 表面遮罩成手表的圆形或方圆边框。
 
 ```kotlin
 import android.graphics.Bitmap
@@ -104,13 +104,13 @@ fun FullBleedBackgroundLayout(
 }
 ```
 
-## 3. Responsive multi-item grids and rows
+## 3. 响应式多项目网格与行
 
-Combine `RemoteColumn` and `RemoteRow` with `RemoteArrangement.spacedBy` to
-arrange avatars, quick actions, or status badges with a bottom action button.
-Display fewer items in `SMALL` containers and the full grid in `LARGE`
-containers. Wrap each item in a `.clickable(onItemClick)` container so both
-`RemoteImage` and fallback `RemoteText` branches respond to clicks:
+把 `RemoteColumn` 和 `RemoteRow` 与 `RemoteArrangement.spacedBy` 结合，用于
+排列头像、快捷操作或状态徽章，并配一个底部操作按钮。
+在 `SMALL` 容器中显示更少的项目，在 `LARGE` 容器中显示完整网格。
+把每个项目包进 `.clickable(onItemClick)` 容器，让 `RemoteImage`
+和回退的 `RemoteText` 两个分支都能响应点击：
 
 ```kotlin
 import android.graphics.Bitmap

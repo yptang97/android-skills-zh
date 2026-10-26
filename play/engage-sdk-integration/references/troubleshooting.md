@@ -1,39 +1,39 @@
-This guide helps resolve common compilation, import, and sandbox-related errors encountered during the Play Engage SDK integration.
+本指南帮助你解决 Play Engage SDK 集成过程中常见的编译、导入和沙箱相关错误。
 
-## 1. Ensure sandbox compilation safety for agents
+## 1. 确保 agent 在沙箱中的编译安全
 
-When executing compilations in sandboxed or ephemeral workspaces, such as evaluation environments or automated presubmits, you must follow these rules to prevent container crashes and lockups:
+在沙箱化或临时工作区（例如评测环境或自动化 presubmit）中执行编译时，你必须遵循以下规则，以避免容器崩溃和卡死：
 
-- **Use full compilation** : Run `./gradlew compileDebugUnitTestSources --no-daemon` or `./gradlew assembleDebug --no-daemon`.
-- **Don't use compilation shortcuts** : Avoid commands like `./gradlew :app:compileDebugKotlin` or other compile-only tasks. These shortcuts bypass manifest merging and resource packaging, which can hide critical errors like namespace conflicts or XML syntax errors.
-- **Don't run full tests or builds** : Don't run `./gradlew test` or `./gradlew build`. These tasks trigger heavy testing environments (requiring emulators) and run full builds, which easily crash the FUSE filesystem mounts and exhaust sandbox CPU and RAM.
-- **Always use --no-daemon** : Always append `--no-daemon` to prevent background JVM processes from leaking and locking files in the sandbox.
+- **使用完整编译**：运行 `./gradlew compileDebugUnitTestSources --no-daemon` 或 `./gradlew assembleDebug --no-daemon`。
+- **不要使用编译捷径**：避免使用 `./gradlew :app:compileDebugKotlin` 之类的命令或其他仅编译的任务。这些捷径会绕过清单合并和资源打包，从而掩盖命名空间冲突或 XML 语法错误这类关键错误。
+- **不要运行完整测试或构建**：不要运行 `./gradlew test` 或 `./gradlew build`。这些任务会触发重量级测试环境（需要模拟器）并执行完整构建，很容易导致 FUSE 文件系统挂载崩溃，并耗尽沙箱的 CPU 和内存。
+- **始终使用 --no-daemon**：始终追加 `--no-daemon`，防止后台 JVM 进程泄漏并锁住沙箱中的文件。
 
-## 2. Resolve missing imports
+## 2. 解决缺失的导入
 
-If you're upgrading the SDK version, for example, to 1.6.0, or if you get `Unresolved reference` errors during the initial compilation, make sure you've added the correct import statements:
+如果你在升级 SDK 版本（例如升级到 1.6.0），或者在初次编译时遇到 `Unresolved reference` 错误，请确认已添加正确的 import 语句：
 
-| Class name | Package or import statement | Note |
+| 类名 | 包名或 import 语句 | 备注 |
 |---|---|---|
 | `ImageTheme` | `import com.google.android.engage.common.datamodel.ImageTheme` |   |
 | `PlatformSpecificUri` | `import com.google.android.engage.common.datamodel.PlatformSpecificUri` |   |
 | `DisplayTimeWindow` | `import com.google.android.engage.common.datamodel.DisplayTimeWindow` |   |
-| `RatingSystem` | `import com.google.android.engage.video.datamodel.RatingSystem` | Note: It's under `video.datamodel`, not `common.datamodel`. |
+| `RatingSystem` | `import com.google.android.engage.video.datamodel.RatingSystem` | 注意：它在 `video.datamodel` 下，不在 `common.datamodel` 下。 |
 
-## 3. Resolve namespace conflicts
+## 3. 解决命名空间冲突
 
-You might receive an error message like this one:
+你可能会收到类似下面这样的错误信息：
 
     Namespace 'com.google.android.engage' is used in multiple modules and/or libraries: com.google.android.engage:engage-core:1.6.0, com.google.android.engage:engage-tv:1.1.0
 
-This conflict occurs because both packages declare the same namespace.
-\* **Resolution** : Remove the explicit `engage-core` dependency from your `build.gradle` or `build.gradle.kts` and keep *only* `engage-tv`. The `engage-tv` library transitively pulls in the compatible version of `engage-core` automatically.
+出现这个冲突是因为两个包声明了相同的命名空间。
+\* **解决办法**：从你的 `build.gradle` 或 `build.gradle.kts` 中移除显式声明的 `engage-core` 依赖，*只*保留 `engage-tv`。`engage-tv` 库会自动以传递依赖的方式引入兼容版本的 `engage-core`。
 
-## 4. Resolve sandbox-specific build and test failures
+## 4. 解决沙箱特有的构建与测试失败
 
-When compiling or running tests in the evaluation sandbox (especially for large projects like Now in Android), you might encounter environment-specific failures:
+在评测沙箱中编译或运行测试时（尤其是在 Now in Android 这类大型项目上），你可能会遇到特定环境下的失败：
 
-- **Jlink error with Android SDK 36** : If the build fails during Java compilation with a `jlink` error in `JdkImageTransform` for `android-36`, force Gradle to use JDK 17 by prepending `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64` to the Gradle command.
-- **Missing ANDROID_HOME** : If lint or test tasks fail complaining about missing SDK, explicitly set the environment variable `ANDROID_HOME=/usr/local/google/home/shashvatgupta/Android/Sdk` (or the corresponding path on the workstation).
-- **Roborazzi screenshot mismatches** : Headless or sandbox container rendering might differ from local golden images, causing Roborazzi screenshot test assertions to fail. Bypass these visual checks by appending `-Proborazzi.test.verify=false` to your test command.
-- **Robolectric SDK 36 unsupported** : If screenshot tests fail with `java.lang.UnsupportedOperationException` in `DefaultSdkProvider` due to experimental SDK 36, update the `@Config` annotation in the failing test files to pin the SDK to 34 (e.g., `@Config(..., sdk = [34])`).
+- **Android SDK 36 的 Jlink 错误**：如果构建在 Java 编译阶段因 `android-36` 的 `JdkImageTransform` 报 `jlink` 错误而失败，就在 Gradle 命令前加上 `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`，强制使用 JDK 17。
+- **缺少 ANDROID_HOME**：如果 lint 或测试任务因缺少 SDK 而失败，就显式设置环境变量 `ANDROID_HOME=/usr/local/google/home/shashvatgupta/Android/Sdk`（或工作站上对应的路径）。
+- **Roborazzi 截图不匹配**：无头环境或沙箱容器渲染可能与本地基准图不同，导致 Roborazzi 截图测试断言失败。在测试命令后追加 `-Proborazzi.test.verify=false` 来绕过这些视觉检查。
+- **Robolectric 不支持 SDK 36**：如果截图测试因实验性 SDK 36 在 `DefaultSdkProvider` 中抛出 `java.lang.UnsupportedOperationException` 而失败，就把出错测试文件里的 `@Config` 注解改成把 SDK 固定为 34（例如 `@Config(..., sdk = [34])`）。

@@ -1,52 +1,50 @@
-Follow these steps in order:
+按顺序执行以下步骤：
 
-## 1. Verify Data Integrity
+## 1. 验证数据完整性
 
-Query the `stats` table for CPU and data loss indicators. If dropped events
-exist, warn the user that findings may be incomplete and proceed with `[GAP]`
-awareness.
+查询 `stats` 表，检查 CPU 与数据丢失指标。如果存在丢弃的事件，就提醒用户结论
+可能不完整，并在后续以 `[GAP]` 意识继续。
 
-## 2. Run High-Level System Metrics
+## 2. 运行高层系统指标
 
-Run metrics to detect systemic issues (thermal throttling, LMKs, binder
-contention) affecting system health.
-> **Prerequisite:** Verify `trace_processor` is available (see
-> `$SKILL_ROOT/references/perfetto/setup.md`) and start a warm background
-> session per `$SKILL_ROOT/references/perfetto/sql.md`
-> (`trace_processor server unix --name <session> --daemonize [trace_file]`) so
-> all triage and candidate queries share one in-memory parse.
+运行指标以检测影响系统健康的系统性问题（温度降频、LMK、binder 争用）。
+> **前置条件：**确认 `trace_processor` 可用（参见
+> `$SKILL_ROOT/references/perfetto/setup.md`），并按 `$SKILL_ROOT/references/perfetto/sql.md`
+> 启动一个常驻后台会话
+> （`trace_processor server unix --name <session> --daemonize [trace_file]`），
+> 使所有分诊和候选查询共用同一次内存内解析。
 
-Query the standard library views below against `--remote <session>` (or run a
-single metrics pass via
-`trace_processor [trace_file] --run-metrics [comma_separated_metrics]`):
+针对 `--remote <session>` 查询下面的标准库视图（或通过
+`trace_processor [trace_file] --run-metrics [comma_separated_metrics]`
+运行一次性指标）：
 
-### Quick Reference for Triaging
+### 分诊快速参考
 
-Key available metrics for `--run-metrics`: `android_startup`, `android_cpu`,
-`android_mem`, `android_lmk`, `android_binder`, `android_surfaceflinger`,
-`android_gpu`.
+`--run-metrics` 可用的关键指标：`android_startup`、`android_cpu`、
+`android_mem`、`android_lmk`、`android_binder`、`android_surfaceflinger`、
+`android_gpu`。
 
-| Symptom / Issue | What to check | Useful Perfetto tables |
+| 症状 / 问题 | 需要检查什么 | 有用的 Perfetto 表 |
 |---|---|---|
-| **App Startup** | Main thread, class loading, bindApplication | `android.startup.startups` (`android_startups`), `slice` |
-| **App Jank** | Main thread, RenderThread | `actual_frame_timeline_slice`, `slice`, `thread_state` |
-| **System Jank** | SurfaceFlinger, HWC composition | `actual_frame_timeline_slice`, `slice` |
-| **App / System Crash** | `Process crashed` or `tombstoned` | `slice`, `process` |
-| **ANR** | Main thread, `system_server` watchdog | `thread_state`, `slice` |
-| **Frame Timing Issues** | `DrawFrame` or `doFrame` slices | `slice`, `actual_frame_timeline_slice` |
-| **Memory Pressure / LMK** | LMKD kills, RSS growth, kswapd | `counter`, `sched_slice` |
+| **应用启动** | 主线程、类加载、bindApplication | `android.startup.startups`（`android_startups`）, `slice` |
+| **应用卡顿** | 主线程、RenderThread | `actual_frame_timeline_slice`, `slice`, `thread_state` |
+| **系统卡顿** | SurfaceFlinger、HWC 合成 | `actual_frame_timeline_slice`, `slice` |
+| **应用 / 系统崩溃** | `Process crashed` 或 `tombstoned` | `slice`, `process` |
+| **ANR** | 主线程、`system_server` watchdog | `thread_state`, `slice` |
+| **帧时序问题** | `DrawFrame` 或 `doFrame` 切片 | `slice`, `actual_frame_timeline_slice` |
+| **内存压力 / LMK** | LMKD 终止、RSS 增长、kswapd | `counter`, `sched_slice` |
 
-## 3. Define Target and Symptom Window
+## 3. 确定目标与症状窗口
 
-1. Locate the start (`ts`), duration (`dur`) and end timestamp (`ts + dur`) of the specific issue.
-2. **Expand upstream:** Check if the first blocking event was caused by a stall that *started before* the symptom window. Stalls (for example, in binder servers, memory reclamation or kernel locks) often originate hundreds of milliseconds before the user-visible frame drop or latency spike occurs.
-   - Find the victim's first non-Running state transition within the symptom window.
-   - Follow the waker chain. If the blocking event began significantly before the symptom window, expand the investigation window upstream to include that origin. If it cascades down to an origin in another process (for example, a binder server that stalled `500ms` before the jank), **note** the expanded window and track the upstream stall as a co-candidate in the output.
-3. **Output** the triage summary using the format defined below.
+1. 定位具体问题的起始时间（`ts`）、持续时长（`dur`）和结束时间戳（`ts + dur`）。
+2. **向上游扩展：**检查第一个阻塞事件是否由*在症状窗口之前*就已开始的等待造成。等待（例如 binder 服务端、内存回收或内核锁中的等待）往往比用户可见的掉帧或延迟尖峰早数百毫秒发生。
+   - 找出受害者在症状窗口内的第一次非 Running 状态转换。
+   - 沿着唤醒者（waker）链追溯。如果阻塞事件明显早于症状窗口开始，就把调查窗口向上游扩展以覆盖该起点。如果链条级联到另一个进程中的起点（例如某个 binder 服务端在卡顿前 `500ms` 就阻塞了），**记下**扩展后的窗口，并在输出中把该上游等待记录为共同候选。
+3. **输出**分诊摘要，使用下面定义的格式。
 
-## 4. Final Output Format
+## 4. 最终输出格式
 
-Output the triage summary in this format:
+按以下格式输出分诊摘要：
 
     ## Trace Metadata
     - **Device Model:** `[String, e.g., Pixel 7 Pro]`

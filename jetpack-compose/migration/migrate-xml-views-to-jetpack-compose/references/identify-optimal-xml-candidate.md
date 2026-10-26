@@ -1,31 +1,31 @@
-### 1. Analysis scope
+### 1. 分析范围
 
-**Action:** Use find files and examine all XML layout files within the project (typically located in `res`directories). For each file, parse the view hierarchy and metadata.
+**操作：** 使用查找文件的能力，检查项目内的所有 XML 布局文件（通常位于 `res` 目录）。对每个文件，解析其视图层级和 metadata。
 
-### 2. Selection criteria
+### 2. 筛选标准
 
-Prioritize layouts that meet the following criteria:
+优先选择符合以下条件的布局：
 
-- **Hierarchy depth:** Target **leaf nodes** or components at the bottom of the UI tree.
-- **Complexity:** Select layouts with the **smallest number of nested children** and minimal logic.
-- **State management:** Prioritize **stateless** components or those with the fewest UI state variables.
-- **Dependency footprint:** Identify layouts with **zero to minimal external UI dependencies**.
-- **Isolation:** Focus on **self-contained** components that do not rely heavily on parent context or complex data binding.
+- **层级深度：** 目标是 **叶子节点** 或 UI 树底部的组件。
+- **复杂度：** 选择 **嵌套子项数量最少**、逻辑最少的布局。
+- **状态管理：** 优先选择 **无状态** 组件，或 UI 状态变量最少的组件。
+- **依赖足迹：** 找出 **外部 UI 依赖为零到极少** 的布局。
+- **隔离性：** 聚焦 **自包含** 的组件，即不严重依赖父级 context 或复杂数据绑定的组件。
 
-### 3. Risk assessment
+### 3. 风险评估
 
-Evaluate the migration risk based on:
-\* **Reusability:** Find layouts with **minimum reuse** across the project to limit regression impact.
-\* **Accessibility:** Ensure the layout has an **easily accessible entry point** (e.g., used in a simple Activity, Fragment, or as a standalone include).
+基于以下方面评估迁移风险：
+\* **可复用性：** 找出项目中 **复用最少** 的布局，以限制回归影响。
+\* **可访问性：** 确保该布局有 **易于到达的入口点**（例如用在简单的 Activity、Fragment 中，或作为独立的 include）。
 
 *** ** * ** ***
 
-## Output requirements
+## 输出要求
 
-Provide a ranked list of the top 3-5 candidates. For each candidate, include:
-1. **File path:** (e.g., `res/layout/item_user_profile.xml`)
-2. **Rationale:** Why this is a good candidate based on the provided criteria.
-3. **Complexity score:** A rating from 1-5 (1 being simplest).
-4. **Dependency count:** List of custom/external views found within.
+提供一份排名前 3-5 的候选列表。对每个候选，包含：
+1. **文件路径：**（例如 `res/layout/item_user_profile.xml`）
+2. **理由：** 基于所给标准说明为什么这是好候选。
+3. **复杂度评分：** 1-5 分（1 为最简单）。
+4. **依赖数量：** 列出其中找到的自定义/外部视图。
 
-**Action:** If you support user interaction, ask the user to choose which XML to proceed with. Else proceed with the best option, based on the previous criteria.
+**操作：** 如果你支持用户交互，请询问用户选择继续处理哪个 XML。否则，基于前面的标准直接采用最佳选项。

@@ -1,51 +1,45 @@
-## 1. Configuration
+## 1. 配置
 
-*(Optional section for the report, omit if no relevant findings are present.)*
+*（报告中可选的小节，如果没有相关发现就省略。）*
 
-- **AGP Version**: \[Current\] -\> Upgrade to 9.0.
-- **Full Mode** : Not enabled. Remove `android.enableR8.fullMode=false` from `gradle.properties`.
+- **AGP 版本**：\[Current\] -\> 升级到 9.0。
+- **完整模式**：未启用。从 `gradle.properties` 中移除 `android.enableR8.fullMode=false`。
 
-## 2. Global disable rules
+## 2. 全局禁用规则
 
-*(Optional section for the report, omit if no relevant findings are present.)*
+*（报告中可选的小节，如果没有相关发现就省略。）*
 
-- \[Rule\]: Disables R8 globally. **Action**: Remove.
+- \[Rule\]：全局禁用 R8。**操作**：移除。
 
-If there is -dontobfuscate, -dontoptimize or -dontshrink in the codebase,
-mention in this section
+如果代码库中存在 -dontobfuscate、-dontoptimize 或 -dontshrink，
+请在本节中说明
 
-## 3. Optimization summary
+## 3. 优化摘要
 
-- **Optimization score**: \[X\]% code is available for R8 optimizations (e.g., inlining, merging). \[100-X\]% of codebase can't be optimized by R8.
-- **Shrinking score**: \[X\]% of code will be optimized by R8 by removing unused classes, fields and methods. \[100-X\]% of codebase contains redundant classes, fields and methods that can't be removed by R8.
-- **Obfuscation score**: \[X\]% of the codebase is available for R8 to obfuscate.
+- **优化得分**：\[X\]% 的代码可接受 R8 优化（例如内联、合并）。\[100-X\]% 的代码库无法被 R8 优化。
+- **压缩得分**：\[X\]% 的代码将通过移除未使用的类、字段和方法被 R8 优化。\[100-X\]% 的代码库包含 R8 无法移除的冗余类、字段和方法。
+- **混淆得分**：\[X\]% 的代码库可供 R8 混淆。
 
-Increasing these scores increases the codebase available to R8 for
-optimizations.
+提高这些得分会让 R8 可用于优化的代码比例更高。
 
-## 4. Keep rules evaluation
+## 4. keep 规则评估
 
-### \[Rule text\]
+### \[规则文本\]
 
-- **Keeps**: \[X\] items or \[X\] % of the codebase from optimization. Classes: \[X\], Fields: \[X\], Methods: \[X\] are prevented from optimization due to this keep rule
-- **Kept items**: \[Class1\], \[Class2\]
-- **Action** : **Remove** (Library bundles rules) OR **Refine** (Too broad, use \[Surgical Rule\]).
+- **保留项**：该 keep 规则阻止 \[X\] 项或 \[X\]% 的代码库被优化。类：\[X\]，字段：\[X\]，方法：\[X\]
+- **被保留的项**：\[Class1\]、\[Class2\]
+- **操作**：**移除**（库自带的规则）或 **细化**（范围过宽，使用 \[Surgical Rule\]）。
 
-## 5. Subsumed keep rules
+## 5. 被包含的 keep 规则
 
-*(Optional section for the report, omit if no relevant findings are present.)*
+*（报告中可选的小节，如果没有相关发现就省略。）*
 
-### \[Redundant rules\]
+### \[冗余规则\]
 
-- **Subsumed By**: \[Broader Rule\]
-- **Action** : **Remove**.
+- **被其包含**：\[Broader Rule\]
+- **操作**：**移除**。
 
-## 6. Historical analysis summary
+## 6. 历史分析摘要
 
-*(Only include this section if a previous report existed. Summarize the changes
-in optimization scores here to track progress. For example:)* The previous app
-had scores: Optimization (XX%), Obfuscation (XX%), and Shrinking (XX%). The
-current app has scores: Optimization (YY%), Obfuscation (YY%), and Shrinking
-(YY%).
-**Change**: Optimization improved by ZZ%, Obfuscation improved by ZZ%, and
-Shrinking improved by ZZ%.
+*（仅当存在上一份报告时才包含本节。在此汇总优化得分的变化以跟踪进展。例如：）* 上一个应用的得分为：优化（XX%）、混淆（XX%）、压缩（XX%）。当前应用的得分为：优化（YY%）、混淆（YY%）、压缩（YY%）。
+**变化**：优化提升 ZZ%，混淆提升 ZZ%，压缩提升 ZZ%。

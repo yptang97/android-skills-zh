@@ -1,24 +1,21 @@
-Many Android APIs are designed with immutability in mind to prevent race
-conditions in async environments. However, this often trips up developers used
-to mutable builder patterns.
+许多 Android API 在设计时就考虑了不可变性，以避免异步环境中的竞争条件。不过，这常常让习惯可变 builder 模式的开发者出错。
 
-## Common immutable classes
+## 常见不可变类
 
-The following classes use fluent APIs that **return a new instance**. You must
-reassign the variable.
+以下类的流式 API 会**返回新实例**。你必须重新赋值给变量。
 
-| Class | Methods that return a new instance | Result if not reassigned |
+| 类 | 返回新实例的方法 | 未重新赋值的结果 |
 |---|---|---|
-| `PendingRecording` | `withAudioEnabled`, `asPersistentRecording` | Audio isn't recorded. |
-| `ImageCapture.Builder` | `setTargetRotation`, `setTargetResolution` | The output has the wrong orientation. |
-| `Recorder.Builder` | `setQualitySelector`, `setExecutor` | The recording uses the default quality. |
-| `Viewport.Builder` | `setScaleType`, `setLayoutDirection` | The viewfinder is stretched. |
+| `PendingRecording` | `withAudioEnabled`, `asPersistentRecording` | 音频不会被录制。 |
+| `ImageCapture.Builder` | `setTargetRotation`, `setTargetResolution` | 输出方向错误。 |
+| `Recorder.Builder` | `setQualitySelector`, `setExecutor` | 录制使用默认画质。 |
+| `Viewport.Builder` | `setScaleType`, `setLayoutDirection` | 取景器被拉伸。 |
 
-## Use standard patterns
+## 使用标准模式
 
-### CameraX video recording
+### CameraX 视频录制
 
-To set up video recording, use the following code:
+要配置视频录制，使用以下代码：
 
 
 ```kotlin
@@ -46,9 +43,9 @@ run {
 
 <br />
 
-### Viewport construction
+### Viewport 构造
 
-To set up the viewport, use the following code:
+要配置 viewport，使用以下代码：
 
 
 ```kotlin

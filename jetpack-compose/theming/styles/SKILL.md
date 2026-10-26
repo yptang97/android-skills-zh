@@ -1,10 +1,6 @@
 ---
 name: styles
-description: Use this skill to integrate the Jetpack Compose Styles API into an Android
-  project. This skill guides you through upgrading dependencies, setting up component
-  themes, making custom components styleable, and migrating existing layout properties
-  to use unified styles. Migrate custom design system components, replace hard coded
-  parameters with Style attributes, and use Modifier.styleable for interaction states.
+description: 使用这个 skill 把 Jetpack Compose Styles API 集成到 Android 项目中。这个 skill 引导你升级依赖、配置组件主题、让自定义组件支持样式化，并把现有布局属性迁移到统一样式。迁移自定义设计系统组件、把硬编码参数替换为 Style 属性，并使用 Modifier.styleable 处理交互状态。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -17,26 +13,25 @@ metadata:
   - Modifier.styleable
 ---
 
-## Limitations
+## 限制
 
-- Warn the user that this skill is EXPERIMENTAL and requires updating to alpha version of Compose and opting in to the Experimental APIs.
-- This skill only supports custom UI components and custom themes.
-- This skill does not support Material Design component Styles.
+- 提醒用户这个 skill 是 EXPERIMENTAL（实验性）的，需要升级到 Compose 的 alpha 版本并选用实验性 API。
+- 这个 skill 只支持自定义 UI 组件和自定义主题。
+- 这个 skill 不支持 Material Design 组件 Styles。
 
-## Prerequisites
+## 前置条件
 
-### 1. Upgrade dependencies
+### 1. 升级依赖
 
-- The project must use `compileSdk` version 37 or higher.
-- The project must use `androidx.compose.foundation:foundation` version `1.12.0-alpha01` or higher.
-- Alternatively, the project must use Compose BOM version `2026.04.01` or higher.
-- The API requires this exact package: `import
+- 项目必须使用 `compileSdk` 版本 37 或更高。
+- 项目必须使用 `androidx.compose.foundation:foundation` 版本 `1.12.0-alpha01` 或更高。
+- 或者，项目必须使用 Compose BOM 版本 `2026.04.01` 或更高。
+- 该 API 要求精确的包名：`import
   androidx.compose.foundation.style.Style`
 
-### 2. Configure compiler options to enable experimental API
+### 2. 配置编译器选项以启用实验性 API
 
-You must opt-in to the experimental API at the project level. Add the following
-block to your module's `build.gradle.kts`:
+你必须在项目级别选用该实验性 API。把下面这个代码块添加到模块的 `build.gradle.kts`：
 
     kotlin {
         compilerOptions {
@@ -45,31 +40,28 @@ block to your module's `build.gradle.kts`:
         }
     }
 
-## Core workflows and guides
+## 核心工作流与指南
 
-Refer to the official documentation to complete specific development tasks:
+参考官方文档来完成具体的开发任务：
 
-- Basic Style Usage: To set backgrounds, sizes, and alignments on a component, follow the [Compose Styles Fundamentals
-  Guide](references/android/develop/ui/compose/styles/fundamentals.md).
-- State and Transitions: To configure property changes for state shifts (like pressed or hovered), follow the [Animations and State-Based Styling
-  Guide](references/android/develop/ui/compose/styles/state-animations.md).
-- Architecture Trade offs: To decide when to use a Style versus a standard Modifier, follow the [Styles versus Modifiers
-  Comparison](references/android/develop/ui/compose/styles/styles-vs-modifiers.md).
-- Theme Level Integration: To connect style definitions with custom themes, follow [Theming with Styles](references/android/develop/ui/compose/styles/theming.md) and [Custom Themes in Compose](references/android/develop/ui/compose/designsystems/custom.md).
+- 基本 Style 用法：要在组件上设置背景、尺寸和对齐方式，请遵循 [Compose Styles 基础指南](references/android/develop/ui/compose/styles/fundamentals.md)。
+- 状态与过渡：要为状态变化（例如按下或悬停）配置属性变更，请遵循 [动画与基于状态的样式指南](references/android/develop/ui/compose/styles/state-animations.md)。
+- 架构取舍：要判断何时使用 Style 而不是标准 Modifier，请遵循 [Styles 与 Modifiers 对比](references/android/develop/ui/compose/styles/styles-vs-modifiers.md)。
+- 主题级集成：要把样式定义与自定义主题关联起来，请遵循 [使用 Styles 构建主题](references/android/develop/ui/compose/styles/theming.md) 和 [Compose 中的自定义主题](references/android/develop/ui/compose/designsystems/custom.md)。
 
-## Step-by-Step Migration Workflow
+## 分步迁移工作流
 
-### Step 1: Analyze theme structure
+### 步骤 1：分析主题结构
 
-1. Locate your central theme file (such as `Theme.kt`).
-2. Identify design tokens. Note references for colors, typography, and shapes (for example, `LocalColorScheme`, `LocalTypography`, or `LocalShapes`).
-3. If the project lacks Jetpack Compose dependencies, stop. Instruct the user to migrate to Jetpack Compose first.
-4. If the project imports `androidx.compose.material.MaterialTheme`, recommend migrating to Material 3 before proceeding.
+1. 找到你的中心主题文件（例如 `Theme.kt`）。
+2. 识别设计令牌。记录颜色、排版和形状的引用（例如 `LocalColorScheme`、`LocalTypography` 或 `LocalShapes`）。
+3. 如果项目缺少 Jetpack Compose 依赖，就停下来。先指示用户迁移到 Jetpack Compose。
+4. 如果项目导入了 `androidx.compose.material.MaterialTheme`，建议在继续之前先迁移到 Material 3。
 
-### Step 2: Establish `ComponentStyles`
+### 步骤 2：建立 `ComponentStyles`
 
-1. Create a new file named `ComponentStyles.kt` in your theme directory.
-2. Define a top-level data class to hold your component styles, for example, the Jetsnack one is called `JetsnackStyles`:
+1. 在主题目录中新建一个名为 `ComponentStyles.kt` 的文件。
+2. 定义一个顶层 data class 来存放组件样式，例如 Jetsnack 的那一个叫 `JetsnackStyles`：
 
 
    ```kotlin
@@ -85,8 +77,7 @@ Refer to the official documentation to complete specific development tasks:
 
    <br />
 
-3. Expose this class through your custom theme with a static reference, don't
-   use `CompositionLocals` here as it's not required.
+3. 通过自定义主题以静态引用的方式暴露这个类，这里不要用 `CompositionLocals`，因为并不需要。
 
 
    ```kotlin
@@ -108,8 +99,7 @@ Refer to the official documentation to complete specific development tasks:
 
    <br />
 
-4. Provide extensions on `StyleScope` to reference theme tokens directly if
-   they are exposed using `CompositionLocals`. For example:
+4. 如果主题令牌是通过 `CompositionLocals` 暴露的，就在 `StyleScope` 上提供扩展来直接引用它们。例如：
 
 
    ```kotlin
@@ -125,28 +115,27 @@ Refer to the official documentation to complete specific development tasks:
 
    <br />
 
-### Step 3: Migrate a component to Styles API
+### 步骤 3：把组件迁移到 Styles API
 
-For each custom component (for example, `CustomButton`), complete the following
-sequence:
+对每个自定义组件（例如 `CustomButton`），按以下顺序完成操作：
 
-1. **Establish a visual baseline (If an emulator is available):**
-   - **If you CANNOT run an Android emulator:** Skip this step entirely and proceed to Step 2.
-   - **If you CAN run an Android emulator:** Perform the following to capture a baseline screenshot:
-     - **Option A:** Locate and run an existing screenshot test for the component.
-     - **Option B (If no test exists):** Create a test using the project's existing testing framework, then run it.
-     - **Option C (If no framework exists):** Create a minimal screenshot test using UI Automator or Espresso, then run it.
-2. **Remove individual styling parameters** : Remove styling parameters such as `backgroundColor`, `shape`, `textStyle`, and `contentPadding` from the signature - anything that `StyleScope` supports.
-3. **Add the style parameter** : Add `style: Style = Style` to the function signature. Always ensure the default value is exactly `Style` (e.g., `style:
-   Style = Style`) and not a specific style default like `ChipStyleDefault` or any other value.
-4. **Declare state tracking** : If the component is interactable, create a `MutableStyleState` using the interaction source. Update state fields (such as `isEnabled`) inside the Composable to track the state correctly.
-5. **Apply styleable modifier** : Replace specific layout modifiers on the root element with `Modifier.styleable()`.
-6. **Move defaults to ComponentStyles** : Move hardcoded values from the component definition to a dedicated `Style` instance in `ComponentStyles.kt`.
-7. **Validate component:** Compare the baseline screenshot image taken at the start with the rendered Compose Preview of the new composable. Ignore string content; focus on layout and styling. Iterate on the Compose code until visual parity is achieved. Once verified, write a Compose UI test for the new composable.
+1. **建立视觉基线（如果有可用的模拟器）：**
+   - **如果你无法运行 Android 模拟器：** 完全跳过这一步，直接进入步骤 2。
+   - **如果你可以运行 Android 模拟器：** 执行以下操作来截取基线截图：
+     - **方案 A：** 找到并运行该组件已有的截图测试。
+     - **方案 B（如果没有现成测试）：** 使用项目已有的测试框架创建一个测试，然后运行它。
+     - **方案 C（如果没有测试框架）：** 使用 UI Automator 或 Espresso 创建一个最小化的截图测试，然后运行它。
+2. **移除各自的样式参数**：从签名中移除 `backgroundColor`、`shape`、`textStyle` 和 `contentPadding` 这类样式参数，也就是 `StyleScope` 支持的所有内容。
+3. **添加 style 参数**：在函数签名中添加 `style: Style = Style`。始终确保默认值精确为 `Style`（例如 `style:
+   Style = Style`），而不是 `ChipStyleDefault` 之类的具体样式默认值或任何其他值。
+4. **声明状态跟踪**：如果组件可交互，就使用 interaction source 创建 `MutableStyleState`。在 Composable 内部更新状态字段（例如 `isEnabled`），以正确跟踪状态。
+5. **应用 styleable 修饰符**：把根元素上具体的布局修饰符替换为 `Modifier.styleable()`。
+6. **把默认值移到 ComponentStyles**：把组件定义中的硬编码值移到 `ComponentStyles.kt` 中专门的 `Style` 实例。
+7. **验证组件：** 把开始时截取的基线截图与新 composable 渲染出的 Compose Preview 做对比。忽略字符串内容，专注于布局和样式。反复调整 Compose 代码，直到视觉一致。验证通过后，为新 composable 编写一个 Compose UI 测试。
 
-#### Migration example
+#### 迁移示例
 
-Before Migration:
+迁移前：
 
 
 ```kotlin
@@ -176,7 +165,7 @@ fun CustomButton(
 
 <br />
 
-After Migration:
+迁移后：
 
 
 ```kotlin
@@ -219,8 +208,8 @@ fun CustomButton(
 
 <br />
 
-### Step 4: Validate Changes
+### 步骤 4：验证改动
 
-1. Build the project. Verify that there are no compilation errors.
-2. Run your module's screenshot tests.
-3. Compare visual outputs of the whole app between the previous and updated components. Verify that no visual layout regressions occur.
+1. 构建项目。确认没有编译错误。
+2. 运行模块的截图测试。
+3. 对比改动前后组件的整个应用的视觉输出。确认没有出现视觉布局回归。

@@ -1,10 +1,6 @@
 ---
 name: verified-email
-description: Provides a complete workflow for implementing verified email retrieval
-  on Android Credential Manager API. Use this skill to integrate a secure, OTP-less
-  email verification flow into an Android app. This skill solves the problem of high-friction
-  sign-up processes by leveraging cryptographically verified credentials from trusted
-  providers like Google.
+description: 提供在 Android Credential Manager API 上实现已验证邮箱获取的完整工作流。使用这个 skill 把安全、无需 OTP 的邮箱验证流程集成到 Android 应用中。这个 skill 借助来自 Google 等可信提供方的、经加密验证的凭据，解决注册流程摩擦大的问题。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -24,48 +20,44 @@ metadata:
   - identity.
 ---
 
-## Fundamentals
+## 基础知识
 
-- *[Overview of Digital Credentials](references/android/identity/digital-credentials/email-verification.md)*: Learn about cryptographically verifiable documents and the role of Credential Manager.
-- *[Glossary](references/android/identity/digital-credentials/email-verification-implementation.md)* : Definitions for `dcql_query`, `UserInfoCredential`, and `GetDigitalCredentialOption`.
+- *[Digital Credentials 概览](references/android/identity/digital-credentials/email-verification.md)*：了解可加密验证的文档，以及 Credential Manager 在其中扮演的角色。
+- *[术语表](references/android/identity/digital-credentials/email-verification-implementation.md)* ：`dcql_query`、`UserInfoCredential` 和 `GetDigitalCredentialOption` 的定义。
 
-### Standards \& Examples
+### 标准 \& 示例
 
-- *[OpenID4VP Standard](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#name-introduction)*: The specification used to create digital credentials requests.
-- *[Digital Credentials Demo](https://digital-credentials.dev/)*: Example requests and cross-platform testing tool.
-- *[W3C Verifiable Credentials](https://www.w3.org/TR/vc-data-model-2.0/)*: The data model for cryptographically secured claims.
-- *[SD-JWT](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/)*: Selective Disclosure JSON Web Token format used for responses.
-- *[mdoc](https://www.iso.org/standard/69084.html)*: ISO/IEC 18013-5 standard for mobile documents.
+- *[OpenID4VP 标准](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#name-introduction)*：用于创建 Digital Credentials 请求的规范。
+- *[Digital Credentials 演示](https://digital-credentials.dev/)*：示例请求与跨平台测试工具。
+- *[W3C 可验证凭据](https://www.w3.org/TR/vc-data-model-2.0/)*：经加密保护声明的数据模型。
+- *[SD-JWT](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/)*：用于响应的选择性披露 JSON Web Token 格式。
+- *[mdoc](https://www.iso.org/standard/69084.html)*：移动文档的 ISO/IEC 18013-5 标准。
 
-### Requirements
+### 要求
 
-- **SDK Version**: Minimum SDK 28 (Android 9) is required.
-- **GMS Version**: Google Play services version 25.49.x or higher.
+- **SDK 版本**：最低要求 SDK 28（Android 9）。
+- **GMS 版本**：Google Play services 版本 25.49.x 或更高。
 
-### Use Cases
+### 使用场景
 
-Email verification is applicable for the following use cases:
+邮箱验证适用于以下使用场景：
 
-- **Account Creation/Sign-up**: Remove friction by skipping manual email verification.
-- **Account Recovery**: Securely verify email ownership during recovery flows.
-- **Re-authentication**: Versatile verification for high-risk actions, independent of the initial sign-in method.
+- **账号创建/注册**：跳过手动邮箱验证，消除摩擦。
+- **账号恢复**：在恢复流程中安全地验证邮箱归属。
+- **重新认证**：为高风险操作提供通用验证，与最初的登录方式无关。
 
-### Limitations \& Nuances
+### 限制与细节
 
-- **Workspace Accounts**: Google does not issue verifiable credentials for Google Workspace Accounts.
-- **Freshness**: For non-@gmail.com addresses, Google verifies the email at account creation but there is no freshness claim; implement an additional challenge like an OTP.
+- **Workspace 账号**：Google 不会为 Google Workspace 账号签发可验证凭据。
+- **新鲜度**：对于非 @gmail.com 地址，Google 在创建账号时会验证邮箱，但不提供新鲜度（freshness）声明；需要实现 OTP 之类的额外挑战。
 
-### Scope \& Pre-requisites
+### 范围与前置条件
 
-**Crucial** : This skill focuses exclusively on the **Android client-side
-integration** . It does **not** implement the app's server-side cryptographic
-validation logic. Server-side validation of the returned credential is required
-for security and must be implemented in your backend.
+**至关重要**：这个 skill 只关注 **Android 客户端集成**。它**不**实现应用服务端的加密验证逻辑。出于安全考虑，必须对返回的凭据做服务端验证，并且必须在你的后端实现。
 
-## Codebase exploration for Use Cases
+## 为使用场景探索代码库
 
-Get started with the following queries in project source code to find relevant
-screens with different use cases to implement verified email:
+从在项目源码中运行以下查询开始，找到采用不同使用场景、需要实现已验证邮箱的相关屏幕：
 
 - `SignUpScreen`
 - `"Email address"`
@@ -74,59 +66,52 @@ screens with different use cases to implement verified email:
 - `"Forgot password?"`
 - `"Delete Account"`
 
-## Identifying Integration Points
+## 确定集成点
 
-To implement this feature effectively, you must first locate the relevant
-flows in your codebase. To initiate, start with the following strategies to
-cater to different use cases using verified email:
+要有效实现这个功能，你必须先在你的代码库中定位相关流程。开始之前，先用以下策略针对使用已验证邮箱的不同使用场景做适配：
 
-### 1. Search for Navigation Routes
+### 1. 搜索导航路由
 
-If your app uses Navigation, search for routes or destinations related
-to authentication:
+如果你的应用使用 Navigation，搜索与身份验证相关的路由或目的地：
 
-Look for:
+查找：
 
-- **Keywords** : `signup`, `registration`, `create_account`, `forgot_password`, `recovery`, `verify_email`.
-- **Code Pattern** : Search for `NavHost` or `composable` destinations using these strings.
+- **关键词**：`signup`、`registration`、`create_account`、`forgot_password`、`recovery`、`verify_email`。
+- **代码模式**：用这些字符串搜索 `NavHost` 或 `composable` 目的地。
 
-### 2. Locate Authentication ViewModels
+### 2. 定位身份验证 ViewModel
 
-Find the business logic handling user attributes and account creation, account
-recovery:
+找到处理用户属性、账号创建和账号恢复的业务逻辑：
 
-- **Keywords** : `SignUpViewModel`, `AuthViewModel`, `RegistrationRepository`.
-- **Code Pattern** : Look for methods like `onCreateAccount`, `onRecoverAccount`, or `validateEmail`.
+- **关键词**：`SignUpViewModel`、`AuthViewModel`、`RegistrationRepository`。
+- **代码模式**：查找 `onCreateAccount`、`onRecoverAccount` 或 `validateEmail` 之类的方法。
 
-### 3. Find instances of reauthentication for sensitive actions
+### 3. 找到敏感操作的重新认证实例
 
-For reauthentication use cases, find areas where users perform sensitive
-actions:
+对于重新认证使用场景，找到用户执行敏感操作的区域：
 
-- **Keywords** : `ChangePassword`, `UpdatePayment`, `DeleteAccount`, `UpdateDetails`, `EditUserDetails`
+- **关键词**：`ChangePassword`、`UpdatePayment`、`DeleteAccount`、`UpdateDetails`、`EditUserDetails`
 
-## Important pointers for Implementation
+## 实现要点提示
 
-- Construct a Digital Credential Request and present it to the user.
-- Make sure to follow the request JSON structure as mentioned in [documentation](references/android/identity/digital-credentials/email-verification-implementation.md).
-- While presenting the request to the user, check if result credential is DigitalCredential and credential.credentialJson as responseJsonString
-- Parse the response from the client.
-- Offer a passkey creation option if one is not already present.
-- Assume a local `SdJwtParser` to parse raw SD-JWT and return a `JSONObject`.
-- Use a `VerifiedUserInfo` data class to store the parsed name and email.
-- Leave a TODO for developers to handle the app's server-side validation and parsing.
-- Direct users to the home screen after API call success and show a snackbar with user details for reference purpose only.
+- 构造 Digital Credential 请求，并把它展示给用户。
+- 务必遵循 [文档](references/android/identity/digital-credentials/email-verification-implementation.md)中所述的请求 JSON 结构。
+- 向用户展示请求时，检查结果凭据是否为 DigitalCredential，以及 credential.credentialJson 是否为 responseJsonString。
+- 在客户端解析响应。
+- 如果没有现成的 passkey 创建选项，就提供一个。
+- 假设已有一个本地 `SdJwtParser`，用于解析原始 SD-JWT 并返回 `JSONObject`。
+- 使用 `VerifiedUserInfo` data class 存储解析出的姓名和邮箱。
+- 留下 TODO，让开发者处理应用服务端的验证与解析。
+- API 调用成功后把用户引导到主屏幕，并显示带用户详情的 snackbar，仅供参照。
 
-## Overview
+## 概述
 
-This guide describes how to implement verified email retrieval using the
-[Digital Credentials Verifier API](references/android/identity/digital-credentials/credential-verifier.md) through an [OpenID for Verifiable
-Presentations (OpenID4VP)](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) request.
+本指南介绍如何通过 [OpenID for Verifiable
+Presentations (OpenID4VP)](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) 请求，使用 [Digital Credentials Verifier API](references/android/identity/digital-credentials/credential-verifier.md) 实现已验证邮箱获取。
 
-## Add dependencies
+## 添加依赖
 
-In your app's `build.gradle` file, add the following dependencies for Credential
-Manager:
+在应用的 `build.gradle` 文件中，为 Credential Manager 添加以下依赖：
 
 ### Kotlin
 
@@ -146,24 +131,19 @@ dependencies {
 }
 ```
 
-## Initialize Credential Manager
+## 初始化 Credential Manager
 
-Use your app or activity context to create a `CredentialManager` object.
+使用应用或 activity 的 context 创建 `CredentialManager` 对象。
 
     // Use your app or activity context to instantiate a client instance of
     // CredentialManager.
     private val credentialManager = CredentialManager.create(context)
 
-## Construct the Digital Credential request
+## 构造 Digital Credential 请求
 
-To request a verified email, construct a [`GetCredentialRequest`](https://developer.android.com/reference/android/credentials/GetCredentialRequest)
-containing a [`GetDigitalCredentialOption`](https://developer.android.com/reference/androidx/credentials/GetDigitalCredentialOption). This option requires a
-`requestJson` string formatted as an OpenID for Verifiable Presentations
-(OpenID4VP) request.
+要请求已验证邮箱，构造一个包含 [`GetDigitalCredentialOption`](https://developer.android.com/reference/androidx/credentials/GetDigitalCredentialOption)的 [`GetCredentialRequest`](https://developer.android.com/reference/android/credentials/GetCredentialRequest)。这个选项需要一个按 OpenID for Verifiable Presentations（OpenID4VP）请求格式编写的 `requestJson` 字符串。
 
-The OpenID4VP request JSON must follow a specific structure. The current
-providers support a JSON structure with an outer `"digital": {"requests":
-[...]}` wrapper.
+OpenID4VP 请求 JSON 必须遵循特定结构。当前提供方支持带外层 `"digital": {"requests": [...]}` 包装的 JSON 结构。
 
         val nonce = generateSecureRandomNonce()
 
@@ -206,35 +186,29 @@ providers support a JSON structure with an outer `"digital": {"requests":
         val getDigitalCredentialOption = GetDigitalCredentialOption(requestJson = openId4vpRequest)
         val request = GetCredentialRequest(listOf(getDigitalCredentialOption))
 
-The request contains the following key information:
+该请求包含以下关键信息：
 
-- **DCQL query** : The `dcql_query` specifies the credential type and the
-  claims being requested (`email_verified`). You can request other claims to
-  determine the level of verification. A few possible claims are as follows:
+- **DCQL 查询**：`dcql_query` 指定凭据类型和被请求的声明（`email_verified`）。你可以请求其他声明来判断验证级别。以下是几个可用的声明：
 
-  - `email_verified`: In the response, this is a Boolean that indicates whether the email is verified.
-  - `hd` (hosted domain): In the response, this is empty.
+  - `email_verified`：响应中这是一个布尔值，表示邮箱是否已验证。
+  - `hd`（托管域）：响应中该值为空。
 
   > [!NOTE]
-  > **Note:** If `email_verified` is `true` and `hd` is empty in the response, it implies that the account is an authorized Google Account. Google does not issue [verifiable credentials](references/android/identity/digital-credentials/index.md) for Google Workspace Accounts. However, the `hd` field is present in verifiable credentials issued for non-workspace accounts. You are encouraged to implement handling this field to future-proof your app. If the email is non-@gmail.com, Google verified this email when the Google Account was created, but there is no freshness claim. Therefore, for non-Google emails, you should consider an additional challenge, such as an OTP, to verify the user. To understand the schema of the credential and the specific rules for validating fields like `email_verified`, refer to the [Google
-  > Identity guides](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token).
+  > **Note:** 如果响应中 `email_verified` 为 `true` 且 `hd` 为空，说明该账号是获授权的 Google 账号。Google 不会为 Google Workspace 账号签发[可验证凭据](references/android/identity/digital-credentials/index.md)。不过，为非 workspace 账号签发的可验证凭据中会出现 `hd` 字段。建议你实现该字段的处理，让应用具备前瞻性。如果邮箱不是 @gmail.com，Google 在创建 Google 账号时验证过该邮箱，但没有新鲜度声明。因此，对于非 Google 邮箱，你应考虑额外的挑战，例如 OTP，来验证用户。要了解凭据的 schema 以及校验 `email_verified` 这类字段的具体规则，请参阅 [Google
+  > Identity 指南](https://developers.google.com/identity/gsi/web/guides/verify-google-id-token)。
 
-- **nonce**: A unique, cryptographically secure random value is generated for
-  each request. This is critical for security, as it prevents replay attacks.
+- **nonce**：为每个请求生成唯一的、加密安全的随机值。这对安全至关重要，因为它能防止重放攻击。
 
-- `UserInfoCredential`: This value implies a specific type of digital
-  credential that contains user attributes. Including this in the request is
-  pivotal to distinguish the email verification use case.
+- `UserInfoCredential`：这个值表示一种包含用户属性的特定类型数字凭据。把它加入请求对于区分邮箱验证使用场景至关重要。
 
-Next, wrap the `openId4vpRequest` JSON in a `GetDigitalCredentialOption`, create
-a `GetCredentialRequest`, and call `getCredential()`.
+接下来，把 `openId4vpRequest` JSON 包装进 `GetDigitalCredentialOption`，创建 `GetCredentialRequest`，然后调用 `getCredential()`。
 
 > [!NOTE]
-> **Note:** The `hd` and `email_verified` fields are hidden from users in Credential Manager's built-in UI. You cannot make a request with only these hidden fields- in case of such requests, the response is the [`GetCredentialCancellationException`](https://developer.android.com/reference/kotlin/androidx/credentials/exceptions/GetCredentialCancellationException).
+> **Note:** `hd` 和 `email_verified` 字段在 Credential Manager 内置 UI 中对用户隐藏。你不能只带这些隐藏字段发起请求——这类请求的响应是 [`GetCredentialCancellationException`](https://developer.android.com/reference/kotlin/androidx/credentials/exceptions/GetCredentialCancellationException)。
 
-## Present the request to the user
+## 向用户展示请求
 
-Present the user with the request, using the Credential Manager built-in UI.
+使用 Credential Manager 内置 UI 向用户展示请求。
 
     coroutineScope {
         try {
@@ -261,22 +235,20 @@ Present the user with the request, using the Credential Manager built-in UI.
     }
 
 > [!NOTE]
-> **Note:** There is no equivalent of Sign in with Google's `preferImmediatelyAvailableCredentials` for Digital Credentials. If no verifiable credential is found (for example, no eligible account on device), the user will be shown a "No options available" or similar system screen.
+> **Note:** Digital Credentials 没有与 Sign in with Google 的 `preferImmediatelyAvailableCredentials` 等价的能力。如果找不到可验证凭据（例如设备上没有符合条件的账号），用户会看到一个「No options available」之类的系统界面。
 
-## Parse the response on the client
+## 在客户端解析响应
 
 > [!WARNING]
-> **Warning:** From August 2026, the [response JSON](https://developer.android.com/reference/androidx/credentials/DigitalCredential#getCredentialJson()) format has been updated to strictly match the W3C standards. It contains `data` and `protocol` keys, with the OpenID4VP `vp_token` nested in `data`, while legacy formats hold the `vp_token` directly. Ensure your client-side parsing and server-side validation handle both formats during the transition period, while the older implementation is phased out. Apps that begin to integrate the email verification flow after August 2026 need to use the new format only.
+> **Warning:** 从 2026 年 8 月起，[response JSON](https://developer.android.com/reference/androidx/credentials/DigitalCredential#getCredentialJson()) 格式已更新为严格符合 W3C 标准。它包含 `data` 和 `protocol` 键，OpenID4VP 的 `vp_token` 嵌套在 `data` 中，而旧版格式直接存放 `vp_token`。在旧实现逐步淘汰的过渡期内，请确保客户端解析和服务端验证都能处理这两种格式。2026 年 8 月之后才开始集成邮箱验证流程的应用只需使用新格式。
 
-After receiving the response, you can perform a preliminary parse on the client.
-This is useful for immediately updating the UI, for example, by showing the
-user's name.
+收到响应后，你可以在客户端做一次初步解析。这对立即更新 UI 很有用，例如显示用户姓名。
 
 > [!IMPORTANT]
-> **Important:** This step is not for validation. Full cryptographic verification must be performed on your server.
+> **Important:** 这一步不是用于验证。完整的加密验证必须在你的服务器上执行。
 
-The following code extracts the raw [Selective Disclosure JWT
-(SD-JWT)](https://datatracker.ietf.org/doc/rfc9901/) and uses a helper to decode its claims.
+以下代码提取原始的 [Selective Disclosure JWT
+(SD-JWT)](https://datatracker.ietf.org/doc/rfc9901/)，并使用辅助方法解码其中的声明。
 
     // 1. Parse the outer JSON wrapper to get the `vp_token`
     val responseData = JSONObject(responseJsonString)
@@ -300,14 +272,11 @@ The following code extracts the raw [Selective Disclosure JWT
         displayName = claims.optString("name", claims.getString("email"))
     )
 
-## Handle the response
+## 处理响应
 
-The Credential Manager API will return a [`DigitalCredential`](https://developer.android.com/reference/androidx/credentials/DigitalCredential)
-response.
+Credential Manager API 会返回一个 [`DigitalCredential`](https://developer.android.com/reference/androidx/credentials/DigitalCredential)响应。
 
-The following is an example of what the raw `responseJsonString` looks like, and
-what the claims look like after parsing the inner SD-JWT where you get
-additional metadata as well along with verified email:
+以下示例展示了原始 `responseJsonString` 的样子，以及解析内部 SD-JWT 后声明的样子——除了已验证邮箱，你还能拿到额外的元数据：
 
     /*
     // Example of the raw JSON response from credential.credentialJson:
@@ -344,44 +313,34 @@ additional metadata as well along with verified email:
      */
 
 > [!IMPORTANT]
-> **Important:** We highly recommend that after receiving the verified email, you trigger Credential Manager's [passkey creation](https://developer.android.com/identity/credential-manager/passkeys/create-passkeys).
+> **Important:** 强烈建议你在收到已验证邮箱后，触发 Credential Manager 的 [passkey 创建](https://developer.android.com/identity/credential-manager/passkeys/create-passkeys)流程。
 
-## Server-side validation for account creation
+## 账号创建的服务端验证
 
-Since the retrieved email is cryptographically verified, you can omit the email
-OTP verification step, significantly reducing sign-up friction and potentially
-increasing conversion. This process is best handled on your server. The client
-sends the raw response (containing the `vp_token`) and the original nonce to a
-new server endpoint.
+由于获取到的邮箱经过加密验证，你可以省略邮箱 OTP 验证步骤，大幅降低注册摩擦，并可能提升转化率。这个处理最好放在服务器上。客户端把原始响应（包含 `vp_token`）和原始 nonce 发送到一个新的服务端端点。
 
-For verification, your application must send the full `responseJsonString` to
-your server for cryptographic validation before creating an account or logging
-the user in.
+为完成验证，你的应用必须在创建账号或让用户登录之前，把完整的 `responseJsonString` 发送到服务器做加密验证。
 
-The digital credential provides two critical levels of verification for your
-server:
+数字凭据为你的服务器提供两个关键层面的验证：
 
-- **Authenticity of the data** : Verifying the issuer (`iss`) URL and the `SD-JWT` signature proves that a trusted authority issued this data.
-- **Identity of the presenter** : Verifying the `cnf` field and the Key Binding (`kb`) signature confirms that the credential is being shared by the same device it was originally issued to, preventing it from being intercepted or used on another device.
+- **数据真实性**：校验签发方（`iss`）URL 和 `SD-JWT` 签名，可证明该数据由可信机构签发。
+- **展示者身份**：校验 `cnf` 字段和密钥绑定（`kb`）签名，可确认凭据正是由最初签发给它的同一台设备分享的，从而防止凭据被拦截或在其他设备上使用。
 
-The validation on the server must achieve the following:
+服务端的验证必须做到以下几点：
 
-- **Verify issuer** : Ensure the `iss` (issuer) field matches `https://verifiablecredentials-pa.googleapis.com`.
-- **Verify signature**: Check the signature of the SD-JWT using the public keys (JWKs) available at https://verifiablecredentials-pa.googleapis.com/.well-known/vc-public-jwks.
+- **校验签发方**：确保 `iss`（issuer）字段匹配 `https://verifiablecredentials-pa.googleapis.com`。
+- **校验签名**：使用 https://verifiablecredentials-pa.googleapis.com/.well-known/vc-public-jwks 上提供的公钥（JWK）检查 SD-JWT 的签名。
 
 > [!NOTE]
-> **Note:** Use a standard library (such as [@sd-jwt/sd-jwt-vc](https://datatracker.ietf.org/doc/rfc9901/) for Node.js) to perform the verification steps as outlined in the [OpenID for Verifiable
-> Presentations specification](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html).
+> **Note:** 请使用标准库（例如 Node.js 的 [@sd-jwt/sd-jwt-vc](https://datatracker.ietf.org/doc/rfc9901/)）来执行 [OpenID for Verifiable
+> Presentations 规范](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)中列出的验证步骤。
 
-For full security, make sure that you also validate the `nonce` to prevent
-replay attacks.
+为了完整的安全性，还要确保校验 `nonce`，以防重放攻击。
 
-By combining these steps, your server can validate both the authenticity of the
-data and the identity of the presenter, ensuring the credential wasn't
-intercepted or spoofed before provisioning the new account.
+把这些步骤结合起来，你的服务器既能验证数据真实性，也能验证展示者身份，确保凭据在配置新账号之前没有被拦截或伪造。
 
 > [!WARNING]
-> **Warning:** As mentioned in [Parse the response on the client](#parse-response), from August 2026, the [response JSON](https://developer.android.com/reference/androidx/credentials/DigitalCredential#getCredentialJson()) format has been updated to match W3C standards. Ensure your client-side parsing and server-side validation handle both formats during the transition period, while the older implementation is phased out. Apps that begin to integrate the email verification flow after August 2026 need to use the new format only.
+> **Warning:** 如 [在客户端解析响应](#parse-response)所述，从 2026 年 8 月起，[response JSON](https://developer.android.com/reference/androidx/credentials/DigitalCredential#getCredentialJson()) 格式已更新为符合 W3C 标准。在旧实现逐步淘汰的过渡期内，请确保客户端解析和服务端验证都能处理这两种格式。2026 年 8 月之后才开始集成邮箱验证流程的应用只需使用新格式。
 
     try {
         // Send the raw credential response and the original nonce to your server.
@@ -402,30 +361,23 @@ intercepted or spoofed before provisioning the new account.
         // handle exceptions - Up to the developer
     }
 
-## Passkey creation
+## 创建 passkey
 
-An optional but highly recommended next step after provisioning an account is to
-immediately [create a passkey](references/android/identity/passkeys/create-passkeys.md) for that account. This provides a secure,
-passwordless method for the user to sign in. This flow is identical to a
-standard passkey registration.
+配置账号之后，一个可选但强烈推荐的做法是立即为该账号[创建 passkey](references/android/identity/passkeys/create-passkeys.md)。这为用户提供安全、无密码的登录方式。该流程与标准的 passkey 注册相同。
 
-## WebView support
+## WebView 支持
 
-For the flow to work on a [`WebView`](https://developer.android.com/reference/android/webkit/WebView), developers should implement a
-[JavaScript bridge](references/android/identity/sign-in/credential-manager-webview.md) (JS Bridge) to facilitate the handoff. This bridge
-allows the `WebView` object to signal the native app, which can then perform the
-actual call to the Credential Manager API.
+要让该流程在 [`WebView`](https://developer.android.com/reference/android/webkit/WebView) 中工作，开发者应实现 [JavaScript 桥](references/android/identity/sign-in/credential-manager-webview.md)（JS Bridge）来完成交接。这个桥让 `WebView` 对象能通知原生应用，然后由原生应用执行对 Credential Manager API 的实际调用。
 
-## See also
+## 另请参阅
 
-- [Overview of verified email retrieval](references/android/identity/digital-credentials/email-verification.md)
+- [已验证邮箱获取概览](references/android/identity/digital-credentials/email-verification.md)
 - [Credential Manager](references/android/identity/credential-manager/index.md)
 
-## Critical Security Guidelines
+## 关键安全指南
 
-To maintain the integrity of the email verification flow, the following security
-requirements are mandatory:
+为了保持邮箱验证流程的完整性，以下安全要求是强制性的：
 
-- **Server-side Validation** : Never trust claims parsed on the client for security-sensitive operations like account creation. Send the complete, raw `responseJsonString` and the original `nonce` to the app's server for full verification.
-- **Nonce Integrity** : Generate a unique, cryptographically secure nonce for every request and **never** reuse a nonce across multiple requests to prevent replay attacks.
-- **Cryptographic Checks** : The app's server must validate the issuer (`iss`) field, the SD-JWT signature, and the presenter identity using the `cnf` field.
+- **服务端验证**：对于账号创建这类安全敏感操作，绝不要信任客户端解析出的声明。把完整的原始 `responseJsonString` 和原始 `nonce` 发送到应用服务器做完整验证。
+- **nonce 完整性**：为每个请求生成唯一的、加密安全的 nonce，并且**绝不**在多个请求间复用 nonce，以防重放攻击。
+- **加密校验**：应用服务器必须校验签发方（`iss`）字段、SD-JWT 签名，并使用 `cnf` 字段校验展示者身份。

@@ -1,4 +1,4 @@
-This file defines the schema for the READ vertical in the Engage SDK.
+本文件定义 Engage SDK 中 READ 垂直领域的 schema。
 
     {
       "client": "com.google.android.engage.service.AppEngagePublishClient",

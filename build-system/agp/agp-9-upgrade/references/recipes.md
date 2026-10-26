@@ -1,48 +1,41 @@
-When migrating to AGP's new DSL, any Gradle code (plugins or logic in build
-scripts) that relied on the old DSL will stop working. Such code must be
-migrated.
+迁移到 AGP 的新 DSL 后，任何依赖旧 DSL 的 Gradle 代码（插件或构建脚本中的逻辑）都会失效。这类代码必须迁移。
 
-## Guidelines
+## 指南
 
-- **DO NOT** search the web for examples of how to do this. Use the **gradle-recipes** repository examples **only**.
-- **DO NOT** use AGP internals in migrated code.
-- **DO** use only public APIs in migrated code.
+- **不要**在网上搜索这类做法的示例。**只**使用 **gradle-recipes** 仓库中的示例。
+- **不要**在迁移后的代码中使用 AGP 内部实现。
+- **要**在迁移后的代码中只使用公开 API。
 
-In some cases, there is a one-to-one replacement for the old code. Some examples
-are in [the AGP 9.0.0 release notes](https://developer.android.com/build/releases/agp-9-0-0-release-notes).
+有些情况下，旧代码存在一对一的替代写法。部分示例见 [AGP 9.0.0 版本说明](https://developer.android.com/build/releases/agp-9-0-0-release-notes)。
 
-In other cases, there is no direct one-to-one replacement. For these situations,
-the [gradle-recipes repo](https://github.com/android/gradle-recipes) is a great resource. You can checkout one of its
-AGP 9.x branches, such as `agp-9.0`, `agp-9.1`, or `agp-9.2`. These branches
-contain recipes for common situations in Android projects. The following table
-lists the compatibility for recipes for each version of AGP.
+另一些情况下没有直接的一对一替代写法。这时 [gradle-recipes 仓库](https://github.com/android/gradle-recipes) 是很好的资源。你可以检出它的某个 AGP 9.x 分支，例如 `agp-9.0`、`agp-9.1` 或 `agp-9.2`。这些分支包含针对 Android 项目中常见情况的示例方案。下表列出各 AGP 版本对应的示例方案兼容情况。
 
-## Compatibility table
+## 兼容性对照表
 
-| AGP version | gradle-recipes branch |
+| AGP 版本 | gradle-recipes 分支 |
 |---|---|
 | 9.0.x | agp-9.0 |
 | 9.1.x | agp-9.1 |
 | 9.2.x | agp-9.2 |
 
-## Recipes and use-cases
+## 示例方案与使用场景
 
-The following table links use-cases to recipes.
+下表把使用场景与示例方案对应起来。
 
-| Recipe | Use-case |
+| 示例方案 | 使用场景 |
 |---|---|
-| addCustomBuildConfigFields | Add custom BuildConfig fields |
-| listenToArtifacts | Rename APK |
+| addCustomBuildConfigFields | 添加自定义 BuildConfig 字段 |
+| listenToArtifacts | 重命名 APK |
 
-Additional details for each use-case follow.
+下面给出各使用场景的更多细节。
 
-### Add custom BuildConfig fields
+### 添加自定义 BuildConfig 字段
 
-See the detailed guide at [BuildConfig](https://developer.android.com/agents/skills/build-system/agp/agp-9-upgrade/references/buildconfig).
+详细指南见 [BuildConfig](https://developer.android.com/agents/skills/build-system/agp/agp-9-upgrade/references/buildconfig)。
 
-### Renaming an APK
+### 重命名 APK
 
-In the old DSL, an APK could be renamed very simply. Here's an example:
+在旧 DSL 中，重命名 APK 非常简单。示例如下：
 
     android {
       applicationVariants.all {
@@ -56,7 +49,4 @@ In the old DSL, an APK could be renamed very simply. Here's an example:
       }
     }
 
-However, with AGP 9 and the new DSL, `applicationVariants` is no longer
-available. You must instead react to artifact creation using the
-`androidComponents.onVariants` API. A complete example of this is available in
-the **gradle-recipes** repository in the `listenToArtifacts` recipe.
+不过，在 AGP 9 和新 DSL 中，`applicationVariants` 已不再可用。你必须改用 `androidComponents.onVariants` API 响应构件的创建。完整示例见 **gradle-recipes** 仓库中的 `listenToArtifacts` 示例方案。

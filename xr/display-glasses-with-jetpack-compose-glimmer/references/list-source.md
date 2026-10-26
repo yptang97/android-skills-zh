@@ -1,5 +1,4 @@
-When creating a Glimmer List component, refer to the following source code in
-`GlimmerLazyColumnSamples.kt`:
+创建 Glimmer List 组件时，参考 `GlimmerLazyColumnSamples.kt` 中的以下源代码：
 
 
 ```kotlin

@@ -1,15 +1,13 @@
 ---
 name: leanback-to-compose-tv-migration
-description: Provides instructions and architectural patterns for migrating Android
-  TV applications from legacy Leanback UI Toolkit, Android Views, or Support Fragments
-  to Jetpack Compose for TV (androidx.tv). Use this skill for Leanback to Compose
-  migrations, including browse screen, settings screen, authentication screen, login
-  screen, or video playback screen migrations, or when replacing BrowseSupportFragment,
-  LeanbackSettingsFragment, PreferenceFragment, BaseLeanbackPreferenceFragmentCompat,
-  VideoSupportFragment, GuidedStepSupportFragment, SearchSupportFragment, VerticalGridSupportFragment,
-  Presenter, ArrayObjectAdapter, or CursorMapper with modern Compose equivalents,
-  implementing immersive carousels with focus memory, Media3 video playback with PlayerSurface,
-  or custom 10-foot hero layouts.
+description: 提供把 Android TV 应用从旧版 Leanback UI Toolkit、Android Views 或 Support Fragments
+  迁移到 Jetpack Compose for TV（androidx.tv）的说明与架构模式。适用于 Leanback 到 Compose
+  的迁移，包括浏览屏幕、设置屏幕、认证屏幕、登录屏幕或视频播放屏幕的迁移，或在你需要用现代
+  Compose 等价物替换 BrowseSupportFragment、LeanbackSettingsFragment、PreferenceFragment、
+  BaseLeanbackPreferenceFragmentCompat、VideoSupportFragment、GuidedStepSupportFragment、
+  SearchSupportFragment、VerticalGridSupportFragment、Presenter、ArrayObjectAdapter 或
+  CursorMapper 时使用；也适用于实现带焦点记忆的沉浸式轮播、使用 PlayerSurface 的 Media3 视频
+  播放，或自定义 10 英尺主视觉布局。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -33,51 +31,36 @@ metadata:
   - BrowseSupportFragment
 ---
 
-## The 10-foot UI
+## 10 英尺 UI
 
-A "10-foot UI" is a design paradigm for televisions that tailors an interface
-for viewing from approximately 3 meters (10 feet) away. When designing for this
-experience, account for these key characteristics:
+「10 英尺 UI」是面向电视的设计范式，它把界面调整为适合约 3 米（10 英尺）观看距离的形态。设计这类体验时，请考虑以下关键特征：
 
-- **Viewing distance**: Viewers are sitting far from the screen, "leaning back". Screen layouts are uncluttered, with text and UI elements that are large enough to be comfortably readable from a distance, without dense blocks of text.
-- **Color contrast**: To avoid washed out colors on TV displays with low contrast ratios, the design uses high-contrast palettes and distinct visual indicators so focused states remain visible across different TV panels.
-- **D-pad navigation** : Interaction relies on a directional remote control with limited 4-way navigation (`Up`, `Down`, `Left`, `Right`) with components organized into clear spatial grids and carousels without focus traps.
+- **观看距离**：观众坐得离屏幕较远，处于「向后靠」的观看状态。屏幕布局要简洁，文字与 UI 元素要大到能在远处舒适阅读，避免密集的文字块。
+- **色彩对比度**：为避免在对比度较低的电视屏幕上出现色彩发白，设计采用高对比度的配色和明确的视觉指示，使聚焦状态在不同电视面板上都清晰可见。
+- **D-pad 导航**：交互依赖方向键遥控器，仅支持有限的方向键操作（`Up`、`Down`、`Left`、`Right`），组件按清晰的空间网格与轮播排列，且不出现焦点陷阱。
 
-## Core architecture and library selection
+## 核心架构与库的选择
 
-When migrating an Android TV application to Jetpack Compose, you must use
-`androidx.tv` libraries and follow these 10-foot UI patterns:
+把 Android TV 应用迁移到 Jetpack Compose 时，你必须使用 `androidx.tv` 库，并遵循以下 10 英尺 UI 模式：
 
-- **UI modernization**: Focus on custom, cinematic layouts over legacy direct 1:1 templates. You must use Jetpack Compose for TV features like dynamic gradient hero backdrops, custom focus animations, custom navigation drawers, and custom layouts.
-- **Primary design system** : You must always use `androidx.tv.material3.*` (`androidx.tv:tv-material`) over mobile `androidx.compose.material3.*`. TV Material 3 provides built-in D-Pad focus handling, focus zoom scaling, and TV-optimized typography and shapes. To set up Compose for TV dependencies, follow [Compose for TV setup](references/android/training/tv/playback/compose/index.md).
-- **Focus zoom animation** : For interactive cards, you must use `CompactCard`, `ClassicCard`, or `WideCardContainer` with `scale =
-  CardDefaults.scale(focusedScale = 1.1f)` to provide standard TV focus animation.
-- **Coil image loading** : To use declarative `AsyncImage(model,
-  contentDescription, ...)` without passing an explicit `ImageLoader` parameter, you must include `io.coil-kt:coil-compose` in your Gradle dependencies.
-- **Explicit imports** : You must always import TV Material 3 classes explicitly (for example, `import androidx.tv.material3.Surface`, `import
-  androidx.tv.material3.ListItem`) instead of using wildcard imports (`import
-  androidx.tv.material3.*`).
-- **File naming conventions** : You must name Composable screen files after the screen (for example, name `BrowseScreen` as `BrowseScreen.kt`, `PlaybackScreen` as `PlaybackScreen.kt`, and `AuthenticationScreen` as `AuthenticationScreen.kt`). Don't use generic prefixes like `Main`.
-- **Overscan and bezels** : You must apply horizontal padding (for example, `horizontal = 48.dp` or `32.dp`, `vertical = 24.dp`) to root containers, carousels, and top bars to prevent clipping.
-- **Reading width constrainment** : You must constrain reading width using `Modifier.widthIn(max = 600.dp)` on text columns for long-form text.
-- **Media3 Compose dependencies** : Include `androidx.media3:media3-ui-compose` in `app/build.gradle` when modernizing media playback screens.
-- **Prohibition of legacy AndroidView wrappers** : Don't use legacy `AndroidView` wrappers to embed View-based components into Jetpack Compose screens. All migrated screens must use Compose components or Media3 Compose surfaces (`PlayerSurface`).
+- **UI 现代化**：关注自定义的电影感布局，而不是沿用旧版的 1:1 直接模板。你必须使用 Jetpack Compose for TV 的功能，例如动态渐变主视觉背景、自定义焦点动画、自定义导航抽屉和自定义布局。
+- **主设计系统**：你必须始终使用 `androidx.tv.material3.*`（`androidx.tv:tv-material`），而不是移动端的 `androidx.compose.material3.*`。TV Material 3 内置 D-Pad 焦点处理、焦点缩放，以及针对 TV 优化的字体排版与形状。要配置 Compose for TV 依赖，请参阅 [Compose for TV 配置](references/android/training/tv/playback/compose/index.md)。
+- **焦点缩放动画**：对可交互卡片，你必须使用 `CompactCard`、`ClassicCard` 或 `WideCardContainer`，并设置 `scale = CardDefaults.scale(focusedScale = 1.1f)`，以提供标准的 TV 焦点动画。
+- **Coil 图片加载**：要在不显式传入 `ImageLoader` 参数的情况下使用声明式 `AsyncImage(model, contentDescription, ...)`，你必须在 Gradle 依赖中包含 `io.coil-kt:coil-compose`。
+- **显式导入**：你必须始终显式导入 TV Material 3 的类（例如 `import androidx.tv.material3.Surface`、`import androidx.tv.material3.ListItem`），不要使用通配符导入（`import androidx.tv.material3.*`）。
+- **文件命名约定**：Composable 屏幕文件必须按屏幕命名（例如把 `BrowseScreen` 命名为 `BrowseScreen.kt`，`PlaybackScreen` 命名为 `PlaybackScreen.kt`，`AuthenticationScreen` 命名为 `AuthenticationScreen.kt`）。不要使用 `Main` 这类泛化前缀。
+- **过扫描与屏幕边框**：你必须对根容器、轮播和顶部栏应用水平内边距（例如 `horizontal = 48.dp` 或 `32.dp`、`vertical = 24.dp`），以防内容被裁切。
+- **阅读宽度限制**：对长文本，你必须用 `Modifier.widthIn(max = 600.dp)` 限制文字列的最大宽度。
+- **Media3 Compose 依赖**：在现代化媒体播放屏幕时，请在 `app/build.gradle` 中包含 `androidx.media3:media3-ui-compose`。
+- **禁止使用旧版 AndroidView 包装**：不要用旧版 `AndroidView` 包装把基于 View 的组件嵌入 Jetpack Compose 屏幕。所有迁移后的屏幕必须使用 Compose 组件或 Media3 Compose 表面（`PlayerSurface`）。
 
-## D-pad focus handling and navigation
+## D-pad 焦点处理与导航
 
-Jetpack Compose for TV (`androidx.tv.material3`) requires explicit focus
-management, as components don't receive initial focus automatically and
-navigation uses 2D spatial coordinates. To configure TV D-pad navigation, follow
-instructions in [TV Navigation guide](references/android/training/tv/get-started/navigation.md).
+Jetpack Compose for TV（`androidx.tv.material3`）需要显式管理焦点，因为组件不会自动获得初始焦点，且导航基于二维空间坐标。要配置 TV 的 D-pad 导航，请按 [TV Navigation 指南](references/android/training/tv/get-started/navigation.md)中的说明操作。
 
-### Initial focus
+### 初始焦点
 
-You must assign initial focus to the primary interactive element on every screen
-(such as the first action button, card, or `ListItem`) using `FocusRequester`
-when entering a screen. Define `val focusRequester = remember { FocusRequester()
-}`, attach `Modifier.focusRequester(focusRequester)` to the primary element, and
-request focus inside `LaunchedEffect(Unit) { focusRequester.requestFocus() }`:
-
+你必须用 `FocusRequester` 把初始焦点分配给每个屏幕上的主要可交互元素（例如第一个操作按钮、卡片或 `ListItem`）。定义 `val focusRequester = remember { FocusRequester() }`，把 `Modifier.focusRequester(focusRequester)` 附加到该主要元素上，并在 `LaunchedEffect(Unit) { focusRequester.requestFocus() }` 中请求焦点：
 
 ```kotlin
 val focusRequester = remember { FocusRequester() }
@@ -90,25 +73,13 @@ LaunchedEffect(Unit) {
 
 <br />
 
-*Note: For screens with dynamic state or pagers (like `OnboardingScreen` using
-`HorizontalPager`), you must pass the state key to `LaunchedEffect` (for example
-`LaunchedEffect(pagerState.currentPage)`) so that focus is re-applied when the
-page changes.*
+*注意：对于状态会变化或包含 pager 的屏幕（例如使用 `HorizontalPager` 的 `OnboardingScreen`），你必须把状态键传给 `LaunchedEffect`（例如 `LaunchedEffect(pagerState.currentPage)`），以便在页面切换时重新应用焦点。*
 
-### Bidirectional focus routing and avoiding focus traps
+### 双向焦点路由与避免焦点陷阱
 
-When interactive elements sit on opposite sides of the display, standard 2D
-spatial navigation fails to find targets across them. This creates focus traps
-where users are unable to navigate out of an area using the D-pad.
+当可交互元素分布在显示区域的两侧时，标准的二维空间导航无法在它们之间找到目标。这会形成焦点陷阱，用户无法用 D-pad 从某个区域导航出去。
 
-For symmetrical, bidirectional D-pad navigation without focus traps, you must
-rely on Compose's 2D spatial focus engine whenever possible. When connecting
-adjacent UI elements across scrollable containers (like `LazyColumn` or
-`LazyRow`), don't set directional overrides (`up = ...`, `down = ...`) targeting
-individual items inside lazy lists. When an item scrolls off-screen during
-vertical navigation, its `FocusRequester` becomes uninitialized, throwing
-`IllegalStateException` during focus searches:
-
+要实现对称、双向且没有焦点陷阱的 D-pad 导航，你应尽可能依赖 Compose 的二维空间焦点引擎。当跨越可滚动容器（例如 `LazyColumn` 或 `LazyRow`）连接相邻的 UI 元素时，不要为 lazy 列表内的单个条目设置方向覆盖（`up = ...`、`down = ...`）。当条目在垂直导航过程中滚出屏幕时，它的 `FocusRequester` 会变成未初始化状态，在焦点搜索时抛出 `IllegalStateException`：
 
 ```kotlin
 Row(
@@ -126,21 +97,11 @@ Row(
 
 <br />
 
-### Row focus recollection (`Modifier.focusRestorer`)
+### 行级焦点记忆（`Modifier.focusRestorer`）
 
-When navigating vertically between horizontal carousels (`LazyRow`), Compose's
-default 2D spatial focus engine searches along the X coordinate of the focused
-item. If a user scrolls right in Row 1 (for example to Item 4 at X=800dp) and
-presses DOWN to navigate to Row 2, spatial routing focuses whatever item sits at
-X=800dp in Row 2.
+在水平轮播（`LazyRow`）之间垂直导航时，Compose 默认的二维空间焦点引擎会沿当前聚焦条目的 X 坐标搜索。如果用户在 Row 1 中向右滚动（例如滚到 X=800dp 处的 Item 4），然后按 DOWN 想导航到 Row 2，空间路由会聚焦 Row 2 中位于 X=800dp 的那个条目。
 
-To make every row maintain its own recollection of card focus (restoring focus
-to the previously visited item when revisited), you must attach
-**`Modifier.focusRestorer`** (with no arguments) directly to the `LazyRow`.
-Don't pass custom fallback `FocusRequester` lambdas in lazy containers, as
-calling `requestFocus` on an unattached or off-screen item during rapid D-pad
-scrolling throws `IllegalStateException`.
-
+要让每一行各自记住卡片的焦点位置（再次访问时把焦点恢复到上次访问的条目），你必须把 **`Modifier.focusRestorer`**（不带参数）直接附加到 `LazyRow` 上。不要在 lazy 容器中传入自定义的兜底 `FocusRequester` lambda，因为在快速 D-pad 滚动时对未附加或已滚出屏幕的条目调用 `requestFocus` 会抛出 `IllegalStateException`。
 
 ```kotlin
 LazyRow(
@@ -181,22 +142,13 @@ LazyRow(
 
 <br />
 
-### Text input, hardware keyboard enter interception, and IME focus chaining
+### 文本输入、硬件键盘回车拦截与 IME 焦点串联
 
-When migrating search bars or login forms from Leanback
-(`SearchSupportFragment`, `GuidedStepSupportFragment`), don't use bare
-`BasicTextField` containers or empty `Surface(onClick = {})` wrappers, as they
-prevent D-pad CENTER from attaching the virtual keyboard (IME).
+从 Leanback（`SearchSupportFragment`、`GuidedStepSupportFragment`）迁移搜索栏或登录表单时，不要使用裸 `BasicTextField` 容器或空的 `Surface(onClick = {})` 包装，因为它们会导致 D-pad CENTER 键无法唤起虚拟键盘（IME）。
 
-1. **Clickable TV surface wrapper with Back-key interception
-   (`onPreviewKeyEvent`)** : Wrap standard M3 `TextField` inside a focusable TV `Surface(onClick = { focusRequester.requestFocus() }, scale =
-   ClickableSurfaceDefaults.scale(focusedScale = 1.01f), border =
-   ClickableSurfaceDefaults.border(focusedBorder = Border(BorderStroke(2.dp,
-   Color.White))))` to provide a focused border outline and D-pad focus scaling. You must attach `Modifier.onPreviewKeyEvent` on the text field or wrapper to intercept `Key.Back` and `Key.Escape` so the user's able to remove focus from the input field without exiting the screen.
-2. **Why Back-key interception is mandatory** : When editing a text field on Android TV, pressing the D-pad **Back** button normally navigates back and exits the screen. By intercepting `Key.Back` and `Key.Escape` on `KeyUp` in `onPreviewKeyEvent` to stop editing (clearing focus), the user's able to return to D-pad form navigation without being trapped in the text field or accidentally exiting the screen.
-3. **IME focus chaining** : For multi-field forms (such as Username and Password in authentication screens), attach `KeyboardActions(onNext = {
-   focusManager.moveFocus(FocusDirection.Down) })` with `ImeAction.Next` on top fields to route focus down to the next input box, and `ImeAction.Done` on the bottom field to route focus directly to the submit button:
-
+1. **可点击的 TV 表面包装并拦截返回键（`onPreviewKeyEvent`）**：把标准 M3 `TextField` 包在可聚焦的 TV `Surface(onClick = { focusRequester.requestFocus() }, scale = ClickableSurfaceDefaults.scale(focusedScale = 1.01f), border = ClickableSurfaceDefaults.border(focusedBorder = Border(BorderStroke(2.dp, Color.White))))` 中，以提供聚焦描边和 D-pad 焦点缩放。你必须在文本框或包装层上附加 `Modifier.onPreviewKeyEvent`，拦截 `Key.Back` 和 `Key.Escape`，使用户能在不退出屏幕的情况下移除输入框焦点。
+2. **为什么必须拦截返回键**：在 Android TV 上编辑文本框时，按 D-pad 的 **Back** 键通常会返回并退出屏幕。通过在 `onPreviewKeyEvent` 中拦截 `KeyUp` 上的 `Key.Back` 和 `Key.Escape` 来结束编辑（清除焦点），用户就能回到 D-pad 表单导航，而不会被困在文本框里或误退出屏幕。
+3. **IME 焦点串联**：对多字段表单（例如认证屏幕中的用户名和密码），在上方字段上附加 `KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })` 与 `ImeAction.Next`，把焦点向下传递给下一个输入框；在底部字段上使用 `ImeAction.Done`，把焦点直接交给提交按钮：
 
 ```kotlin
 Surface(
@@ -251,22 +203,14 @@ Surface(
 
 <br />
 
-## Lazy containers
+## Lazy 容器
 
-When implementing scrollable lists or grids in Jetpack Compose for TV, you must
-use standard `LazyColumn`, `LazyRow`, and `LazyVerticalGrid` from
-`androidx.compose.foundation.lazy` and `androidx.compose.foundation.lazy.grid`.
-For catalog browsing layouts, follow instructions in [Catalog Browser guide](references/android/training/tv/playback/compose/browse.md).
+在 Jetpack Compose for TV 中实现可滚动列表或网格时，你必须使用 `androidx.compose.foundation.lazy` 和 `androidx.compose.foundation.lazy.grid` 中的标准 `LazyColumn`、`LazyRow` 和 `LazyVerticalGrid`。对于目录浏览布局，请按 [Catalog Browser 指南](references/android/training/tv/playback/compose/browse.md)中的说明操作。
 
-1. **Pivot scrolling with `BringIntoViewSpec`** : When defining a custom pivot scroll line for catalog rows using `BringIntoViewSpec` and `CompositionLocalProvider(LocalBringIntoViewSpec provides ...)`, you must ensure your project compiles against Compose Foundation 1.7.0+ by adding `implementation platform('androidx.compose:compose-bom:2024.06.00')` (or newer) or `implementation 'androidx.compose.foundation:foundation:1.7.0'` in `app/build.gradle`. Without Compose Foundation 1.7.0+, `import
-   androidx.compose.foundation.gestures.LocalBringIntoViewSpec` will fail with `Unresolved reference: LocalBringIntoViewSpec`.
-2. **Row focus recollection (`Modifier.focusRestorer`)** : Annotate your composable with `@OptIn(ExperimentalFocusRestorerApi::class,
-   ExperimentalComposeUiApi::class)` and attach `Modifier.focusRestorer` on every category `LazyRow` to remember and restore the last focused card when navigating vertically across catalog rows.
+1. **用 `BringIntoViewSpec` 实现轴心滚动**：当使用 `BringIntoViewSpec` 与 `CompositionLocalProvider(LocalBringIntoViewSpec provides ...)` 为目录行定义自定义轴心滚动线时，你必须确保项目基于 Compose Foundation 1.7.0+ 编译，可在 `app/build.gradle` 中添加 `implementation platform('androidx.compose:compose-bom:2024.06.00')`（或更新版本），或添加 `implementation 'androidx.compose.foundation:foundation:1.7.0'`。若没有 Compose Foundation 1.7.0+，`import androidx.compose.foundation.gestures.LocalBringIntoViewSpec` 会失败并报 `Unresolved reference: LocalBringIntoViewSpec`。
+2. **行级焦点记忆（`Modifier.focusRestorer`）**：用 `@OptIn(ExperimentalFocusRestorerApi::class, ExperimentalComposeUiApi::class)` 注解你的 composable，并在每个分类 `LazyRow` 上附加 `Modifier.focusRestorer`，以便在目录行之间垂直导航时记住并恢复上次聚焦的卡片。
 
-When populated with focusable TV Material 3 components (`CompactCard`,
-`ListItem`, `Button`), standard Compose lazy containers handle 2D D-Pad focus
-routing, focus memory, and edge scrolling automatically:
-
+当用可聚焦的 TV Material 3 组件（`CompactCard`、`ListItem`、`Button`）填充时，标准 Compose lazy 容器会自动处理二维 D-Pad 焦点路由、焦点记忆和边缘滚动：
 
 ```kotlin
 @Composable
@@ -290,41 +234,36 @@ fun CatalogBrowser(
 
 <br />
 
-## Media3 video playback and transport controls
+## Media3 视频播放与播放控制条
 
-When migrating legacy Leanback video playback (`VideoSupportFragment` /
-`PlaybackGlue`), use Compose Media3 `PlayerSurface`
-(`androidx.media3.ui.compose.PlayerSurface`) combined with a translucent
-transport controls overlay:
+迁移旧版 Leanback 视频播放（`VideoSupportFragment` / `PlaybackGlue`）时，请使用 Compose Media3 的 `PlayerSurface`（`androidx.media3.ui.compose.PlayerSurface`），并配合半透明的播放控制覆盖层：
 
-1. **Mandatory Media3 transport control buttons (`PlayPauseButton`)** : Over the `PlayerSurface`, you must layer a translucent bottom controls bar (`Box(modifier = Modifier.align(Alignment.BottomCenter))`) containing explicit Media3 UI Compose buttons: at minimum `PlayPauseButton`, `SeekBackButton`, and `SeekForwardButton`. Never leave the transport controls overlay empty. To use these composables, you must add `implementation 'androidx.media3:media3-ui-compose-material3:1.6.0'` alongside `androidx.media3:media3-ui-compose` in your `app/build.gradle` dependencies.
-2. **D-pad directional seeking (`onPreviewKeyEvent`)** : To support seeking backward and forward with the remote control D-pad, attach `Modifier.onPreviewKeyEvent` on the container or controls overlay and intercept Compose `Key.DirectionLeft` and `Key.DirectionRight` (for example, `keyEvent.key == Key.DirectionLeft`) to seek backward and forward by 10 seconds (`exoPlayer.seekTo(exoPlayer.currentPosition - 10000)`). Never use legacy Android View keycodes (`KeyEvent.KEYCODE_DPAD_LEFT` or `nativeKeyEvent.keyCode`).
-3. **Prohibition of legacy AndroidView wrappers** : Don't wrap legacy `PlayerView` or `StyledPlayerView` in `AndroidView { ... }`. You must use `PlayerSurface` (`androidx.media3.ui.compose.PlayerSurface`) with `ExoPlayer` for video rendering in Compose for TV.
+1. **必须包含 Media3 播放控制按钮（`PlayPauseButton`）**：在 `PlayerSurface` 之上，你必须叠加一条半透明底部控制栏（`Box(modifier = Modifier.align(Alignment.BottomCenter))`），其中包含明确的 Media3 UI Compose 按钮：至少要有 `PlayPauseButton`、`SeekBackButton` 和 `SeekForwardButton`。绝不能让播放控制覆盖层为空。要使用这些 composable，你必须在 `app/build.gradle` 依赖中，与 `androidx.media3:media3-ui-compose` 一起添加 `implementation 'androidx.media3:media3-ui-compose-material3:1.6.0'`。
+2. **D-pad 方向键快进快退（`onPreviewKeyEvent`）**：要支持用遥控器 D-pad 前进和后退，请在容器或控制覆盖层上附加 `Modifier.onPreviewKeyEvent`，拦截 Compose 的 `Key.DirectionLeft` 和 `Key.DirectionRight`（例如 `keyEvent.key == Key.DirectionLeft`），以 10 秒为单位后退和前进（`exoPlayer.seekTo(exoPlayer.currentPosition - 10000)`）。绝不要使用旧版 Android View 的 keycode（`KeyEvent.KEYCODE_DPAD_LEFT` 或 `nativeKeyEvent.keyCode`）。
+3. **禁止使用旧版 AndroidView 包装**：不要用 `AndroidView { ... }` 包装旧版 `PlayerView` 或 `StyledPlayerView`。在 Compose for TV 中，你必须用 `PlayerSurface`（`androidx.media3.ui.compose.PlayerSurface`）配合 `ExoPlayer` 渲染视频。
 
-## Phased migration strategy
+## 分阶段迁移策略
 
-To migrate an app cleanly without breaking compilation or introducing circular
-dependencies, execute in five distinct phases:
+为了在不破坏编译、不引入循环依赖的前提下干净地完成迁移，请分五个阶段执行：
 
-- **Phase 1**: Foundation and design system
-- **Phase 2**: Leaf and standalone screens
-- **Phase 3**: Core browsing and discovery screens
-- **Phase 4**: Details and media playback
-- **Phase 5**: Final unification and cleanup
+- **阶段 1**：基础设施与设计系统
+- **阶段 2**：叶子屏幕与独立屏幕
+- **阶段 3**：核心浏览与发现屏幕
+- **阶段 4**：详情与媒体播放
+- **阶段 5**：最终统一与清理
 
-### Phase 1: Foundation and design system
+### 阶段 1：基础设施与设计系统
 
-- Create `TvTheme.kt` wrapping `TvMaterialTheme` with custom `ColorScheme`, `Typography`, and `Shapes`.
-- Build atomic reusable components: `MovieCard`, `SectionHeader`, `LoadingIndicator`, `ErrorState`.
+- 创建 `TvTheme.kt`，用自定义的 `ColorScheme`、`Typography` 和 `Shapes` 包装 `TvMaterialTheme`。
+- 构建原子化的可复用组件：`MovieCard`、`SectionHeader`、`LoadingIndicator`、`ErrorState`。
 
-### Phase 2: Leaf and standalone screens
+### 阶段 2：叶子屏幕与独立屏幕
 
-- Migrate screens with no outbound navigation first, such as error messages, onboarding screens, or settings screens, by replacing them with `ErrorDialog`, `OnboardingScreen`, and `SettingsScreen`.
-- Replace anything using `BaseLeanbackPreferenceFragmentCompat`, `BaseLeanbackPreferenceFragment`, or `LeanbackSettingsFragment` to use Compose, for example by using `ListItem` + `Switch` bound directly to `SharedPreferences` and replacing the `findPreference` implementation.
-- Ensure screens receive initial D-pad focus on the first or main component of that screen using `FocusRequester`, for example on the first `ListItem`.
-- Replace legacy `Fragment` classes with activities of type `ComponentActivity` that declaratively use components in Compose.
-- Clean up legacy style and theme references in `res/values/styles.xml` and `res/values/themes.xml` (such as removing `preferenceTheme` that points to `@style/PreferenceThemeOverlay.v14.Leanback`) that aren't supported once leanback dependencies are removed:
-
+- 先迁移没有出站导航的屏幕，例如错误提示、引导页或设置页，把它们分别替换为 `ErrorDialog`、`OnboardingScreen` 和 `SettingsScreen`。
+- 把使用 `BaseLeanbackPreferenceFragmentCompat`、`BaseLeanbackPreferenceFragment` 或 `LeanbackSettingsFragment` 的地方改为 Compose，例如使用直接绑定 `SharedPreferences` 的 `ListItem` + `Switch`，并替换 `findPreference` 的实现。
+- 确保每个屏幕用 `FocusRequester` 让该屏幕的第一个或主要组件获得初始 D-pad 焦点，例如聚焦第一个 `ListItem`。
+- 用 `ComponentActivity` 类型的 activity 替换旧版 `Fragment` 类，在 Compose 中以声明式方式使用组件。
+- 清理 `res/values/styles.xml` 与 `res/values/themes.xml` 中的旧版样式和主题引用（例如移除指向 `@style/PreferenceThemeOverlay.v14.Leanback` 的 `preferenceTheme`），这些在移除 leanback 依赖后不再受支持：
 
 ```kotlin
 @Composable
@@ -385,51 +324,44 @@ fun TvSettingsScreen(
 
 <br />
 
-### Phase 3: Core browsing and discovery screens
+### 阶段 3：核心浏览与发现屏幕
 
-- Migrate `VerticalGridScreen` (`LazyVerticalGrid`), `SearchScreen` (`BasicTextField` with live list filtering), and `BrowseScreen` (`LazyColumn` of `LazyRow`s).
-- Eradicate legacy `ArrayObjectAdapter`, `ListRowPresenter`, `CardPresenter`, and `HeaderItem` classes.
+- 迁移 `VerticalGridScreen`（`LazyVerticalGrid`）、`SearchScreen`（带实时列表过滤的 `BasicTextField`）和 `BrowseScreen`（由多个 `LazyRow` 组成的 `LazyColumn`）。
+- 彻底清除旧版 `ArrayObjectAdapter`、`ListRowPresenter`、`CardPresenter` 和 `HeaderItem` 类。
 
-### Phase 4: Details and media playback
+### 阶段 4：详情与媒体播放
 
-- Migrate `VideoDetailsScreen` and `GuidedStepScreen`.
-- Migrate `PlaybackScreen` using Compose Media3 `PlayerSurface` (`androidx.media3.ui.compose.PlayerSurface`) paired with a translucent bottom overlay containing Media3 Compose transport controls (such as `PlayPauseButton`, `SeekBackButton`, `SeekForwardButton`).
+- 迁移 `VideoDetailsScreen` 和 `GuidedStepScreen`。
+- 迁移 `PlaybackScreen`，使用 Compose Media3 的 `PlayerSurface`（`androidx.media3.ui.compose.PlayerSurface`），并搭配包含 Media3 Compose 播放控制（例如 `PlayPauseButton`、`SeekBackButton`、`SeekForwardButton`）的半透明底部覆盖层。
 
-### Phase 5: Final unification and cleanup
+### 阶段 5：最终统一与清理
 
-- Remove all remaining legacy `.java` activities, fragments, presenters, and XML layout files.
-- Ensure all activities extend `ComponentActivity` or `FragmentActivity` calling `setContent { ... }`.
-- Completely remove legacy Leanback themes and style declarations from `res/values/styles.xml` and `res/values/themes.xml` (for example, any styles inheriting from `Theme.Leanback` or referencing `lb_` styles).
+- 删除所有剩余旧版 `.java` activity、fragment、presenter 和 XML 布局文件。
+- 确保所有 activity 都继承 `ComponentActivity` 或 `FragmentActivity`，并调用 `setContent { ... }`。
+- 从 `res/values/styles.xml` 与 `res/values/themes.xml` 中彻底移除旧版 Leanback 主题与样式声明（例如任何继承自 `Theme.Leanback` 或引用 `lb_` 样式的样式）。
 
-## Component and class mapping guide
+## 组件与类映射指南
 
-| Legacy Leanback / View Class | Modern Jetpack Compose Equivalent |
+| 旧版 Leanback / View 类 | 现代 Jetpack Compose 等价物 |
 |---|---|
-| `BrowseSupportFragment` / `MainFragment` | `BrowseScreen` (`LazyColumn` containing categorized `LazyRow`s + Hero Banner) |
-| `DetailsSupportFragment` | `VideoDetailsScreen` (Poster image, text column, action buttons, related `LazyRow`) |
-| `VideoSupportFragment` / `PlaybackGlue` | `PlaybackScreen` (Media3 `ExoPlayer` + Compose `PlayerSurface`) |
-| `GuidedStepSupportFragment` | `GuidedStepScreen` (Split-screen layout: 40% left guidance pane, 60% right actions pane) |
-| `SearchSupportFragment` | `SearchScreen` (`BasicTextField` + live filtering + `LazyVerticalGrid`) |
-| `VerticalGridSupportFragment` | `VerticalGridScreen` (`LazyVerticalGrid(columns = GridCells.Fixed(5))`) |
-| `ArrayObjectAdapter` / `Presenter` | Declarative `@Composable` functions observing immutable `State<List<T>>` |
-| `CursorMapper` / `LoaderManager` / `CursorLoader` | Kotlin Coroutines / `withContext(Dispatchers.IO)` in a Repository object |
-| `OnboardingSupportFragment` | `OnboardingScreen` (`HorizontalPager` + D-Pad navigation buttons) |
-| `LeanbackSettingsFragment` / `PreferenceFragment` | `SettingsScreen` (`FocusRequester` on first `ListItem` + trailing `Switch` bound to `SharedPreferences`) |
+| `BrowseSupportFragment` / `MainFragment` | `BrowseScreen`（包含分类 `LazyRow` 的 `LazyColumn` + 主视觉横幅） |
+| `DetailsSupportFragment` | `VideoDetailsScreen`（海报图、文字列、操作按钮、相关推荐 `LazyRow`） |
+| `VideoSupportFragment` / `PlaybackGlue` | `PlaybackScreen`（Media3 `ExoPlayer` + Compose `PlayerSurface`） |
+| `GuidedStepSupportFragment` | `GuidedStepScreen`（分屏布局：左侧 40% 为引导面板，右侧 60% 为操作面板） |
+| `SearchSupportFragment` | `SearchScreen`（`BasicTextField` + 实时过滤 + `LazyVerticalGrid`） |
+| `VerticalGridSupportFragment` | `VerticalGridScreen`（`LazyVerticalGrid(columns = GridCells.Fixed(5))`） |
+| `ArrayObjectAdapter` / `Presenter` | 观察不可变 `State<List<T>>` 的声明式 `@Composable` 函数 |
+| `CursorMapper` / `LoaderManager` / `CursorLoader` | Kotlin 协程 / Repository 对象中的 `withContext(Dispatchers.IO)` |
+| `OnboardingSupportFragment` | `OnboardingScreen`（`HorizontalPager` + D-Pad 导航按钮） |
+| `LeanbackSettingsFragment` / `PreferenceFragment` | `SettingsScreen`（首个 `ListItem` 上的 `FocusRequester` + 绑定 `SharedPreferences` 的尾部 `Switch`） |
 
-## Reference implementations and battle-tested patterns
+## 参考实现与经过验证的模式
 
-### Modern TV immersive list architecture (`BrowseScreen`)
+### 现代 TV 沉浸式列表架构（`BrowseScreen`）
 
-When building a 10-foot TV browse screen or Immersive List, don't place a hero
-banner before or outside a scrolling list, and don't fight Compose's automatic
-`BringIntoView` system with programmatic `animateScrollToItem` calls.
+构建 10 英尺 TV 浏览屏幕或沉浸式列表时，不要把主视觉横幅放在滚动列表之前或之外，也不要用程序化 `animateScrollToItem` 调用去对抗 Compose 自动的 `BringIntoView` 系统。
 
-Instead, use `BringIntoViewSpec` with `LocalBringIntoViewSpec` from Compose
-Foundation to define exact TV pivot scrolling (for example, pivoting active rows
-at 35% from the top edge of the display). Combine this with a reshaping
-immersive row: when lower rows are focused (`focusedCategoryIndex > 0`), hide
-the hero text and display a normal section header on Row 0:
-
+改为使用 Compose Foundation 的 `BringIntoViewSpec` 与 `LocalBringIntoViewSpec` 定义精确的 TV 轴心滚动（例如把活动行定位在距显示区域顶部 35% 的位置）。再配合可变形的沉浸式行：当下方行获得焦点（`focusedCategoryIndex > 0`）时，隐藏主视觉文字，并在 Row 0 上显示普通的区块标题：
 
 ```kotlin
 @Composable
@@ -571,15 +503,9 @@ private fun PositionFocusedItemInLazyLayout(
 
 <br />
 
-### Media3 playback in Compose TV (`PlaybackScreen`)
+### Compose TV 中的 Media3 播放（`PlaybackScreen`）
 
-Implement a custom playback screen using
-`androidx.media3.ui.compose.PlayerSurface` as the video rendering canvas. Layer
-Material3 transport controls (`SeekBackButton`, `PlayPauseButton`,
-`SeekForwardButton` from `androidx.media3:media3-ui-compose-material3`) over the
-surface in a translucent bottom overlay, and handle D-pad remote key events with
-an auto-hide timeout:
-
+用 `androidx.media3.ui.compose.PlayerSurface` 作为视频渲染画布实现自定义播放屏幕。把 Material3 播放控制（`androidx.media3:media3-ui-compose-material3` 中的 `SeekBackButton`、`PlayPauseButton`、`SeekForwardButton`）放在半透明底部覆盖层中叠加到表面之上，并用自动隐藏超时处理 D-pad 遥控按键事件：
 
 ```kotlin
 @OptIn(UnstableApi::class)
@@ -700,12 +626,9 @@ fun Media3PlaybackScreen(
 
 <br />
 
-### Replacing CursorLoader with reactive coroutine flow
+### 用响应式协程 Flow 替换 CursorLoader
 
-Replace legacy `LoaderManager.LoaderCallbacks<Cursor>` and `CursorObjectAdapter`
-with a repository returning a `Flow` that observes database changes and triggers
-asynchronous fetching when empty:
-
+用返回 `Flow` 的 repository 替换旧版 `LoaderManager.LoaderCallbacks<Cursor>` 和 `CursorObjectAdapter`，该 `Flow` 观察数据库变化，并在为空时触发异步拉取：
 
 ```kotlin
 object VideoFlowRepository {

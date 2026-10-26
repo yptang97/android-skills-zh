@@ -1,14 +1,13 @@
-## Remove `Camera1` implementation
+## 移除 `Camera1` 实现
 
-1. Delete all `android.hardware.Camera` instances.
-2. Delete `SurfaceView` and `SurfaceHolder.Callback` implementations `surfaceCreated`, `surfaceChanged`, and `surfaceDestroyed`.
-3. Remove custom lifecycle handling that opens or releases the camera in `onResume` or `onPause`.
-4. Remove manual matrix calculations for orientation.
+1. 删除所有 `android.hardware.Camera` 实例。
+2. 删除 `SurfaceView` 和 `SurfaceHolder.Callback` 中 `surfaceCreated`、`surfaceChanged` 和 `surfaceDestroyed` 的实现。
+3. 移除在 `onResume` 或 `onPause` 中打开或释放相机的自定义生命周期处理。
+4. 移除针对方向的手动矩阵计算。
 
-## Initialize `ProcessCameraProvider`
+## 初始化 `ProcessCameraProvider`
 
-Request the `ProcessCameraProvider` and bind use cases to the Activity or
-Fragment lifecycle.
+请求 `ProcessCameraProvider`，并把使用场景绑定到 Activity 或 Fragment 的生命周期。
 
 
 ```kotlin
@@ -40,15 +39,15 @@ LaunchedEffect(context, lifecycleOwner) {
 
 <br />
 
-## Implement the preview and tap-to-focus
+## 实现预览与点击对焦
 
-Choose exactly one of the following patterns based on the app's UI toolkit:
+根据应用的 UI 工具包，从下列模式中只选一种：
 
-### Option A: For Android Views
+### 方案 A：面向 Android Views
 
-Use `androidx.camera.view.PreviewView`.
+使用 `androidx.camera.view.PreviewView`。
 
-1. **Set up preview**:
+1. **配置预览**：
 
 
    ```kotlin
@@ -57,7 +56,7 @@ Use `androidx.camera.view.PreviewView`.
 
    <br />
 
-2. **Handle tap-to-focus**:
+2. **处理点击对焦**：
 
 
    ```kotlin
@@ -69,11 +68,11 @@ Use `androidx.camera.view.PreviewView`.
 
    <br />
 
-### Option B: For Jetpack Compose
+### 方案 B：面向 Jetpack Compose
 
-Use `androidx.camera.compose.CameraXViewfinder`.
+使用 `androidx.camera.compose.CameraXViewfinder`。
 
-1. **Set up preview and SurfaceRequest**:
+1. **配置预览与 SurfaceRequest**：
 
 
    ```kotlin
@@ -87,7 +86,7 @@ Use `androidx.camera.compose.CameraXViewfinder`.
 
    <br />
 
-2. **Render viewfinder**:
+2. **渲染取景器**：
 
 
    ```kotlin
@@ -102,7 +101,7 @@ Use `androidx.camera.compose.CameraXViewfinder`.
 
    <br />
 
-3. **Handle tap-to-focus in Compose**:
+3. **在 Compose 中处理点击对焦**：
 
 
    ```kotlin
@@ -119,7 +118,7 @@ Use `androidx.camera.compose.CameraXViewfinder`.
 
    <br />
 
-4. **Update target rotation for Compose**:
+4. **为 Compose 更新目标旋转**：
 
 
    ```kotlin
@@ -134,10 +133,9 @@ Use `androidx.camera.compose.CameraXViewfinder`.
 
    <br />
 
-## Capture a photo
+## 拍摄照片
 
-Use the `ImageCapture` use case to take the picture. The `ImageProxy` handles
-rotation directly.
+使用 `ImageCapture` 使用场景拍照。`ImageProxy` 会直接处理旋转。
 
 
 ```kotlin
@@ -174,10 +172,9 @@ imageCapture.takePicture(
 
 <br />
 
-## Switch cameras
+## 切换摄像头
 
-To flip between front and rear cameras, change the `CameraSelector` and
-retrigger the `ProcessCameraProvider` logic.
+要在前置和后置摄像头之间切换，更改 `CameraSelector` 并重新触发 `ProcessCameraProvider` 逻辑。
 
 
 ```kotlin
@@ -190,9 +187,9 @@ lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
 
 <br />
 
-## Follow constraints
+## 遵循约束
 
-- **Don't manage the camera lifecycle manually** : Bind the camera to a `LifecycleOwner` through the `ProcessCameraProvider`. Avoid manual camera open or close logic in `onResume` or `onPause`.
-- **Don't calculate focus matrices manually** : `MeteringPointFactory` handles coordinate transformations, including device rotation offsets. Avoid custom matrix implementations.
-- **Don't forget to close the `ImageProxy`** : Remember to invoke `image.close()` in the capture callback. Skipping this call locks the capture pipeline and interrupts subsequent photos.
-- **Don't wrap `PreviewView` in `AndroidView` for Compose code** : For Compose UI layouts, use `CameraXViewfinder`. Compiling `PreviewView` in an `AndroidView` is an earlier fallback option that introduces resizing issues.
+- **不要手动管理相机生命周期**：通过 `ProcessCameraProvider` 把相机绑定到 `LifecycleOwner`。避免在 `onResume` 或 `onPause` 中手动打开或关闭相机的逻辑。
+- **不要手动计算对焦矩阵**：`MeteringPointFactory` 会处理坐标变换，包括设备旋转偏移。避免自定义矩阵实现。
+- **不要忘记关闭 `ImageProxy`**：记得在拍摄回调中调用 `image.close()`。跳过这次调用会锁住拍摄管线并中断后续拍照。
+- **不要在 Compose 代码中把 `PreviewView` 包进 `AndroidView`**：对于 Compose UI 布局，使用 `CameraXViewfinder`。在 `AndroidView` 中编译 `PreviewView` 是较早的兜底方案，会引入尺寸调整问题。

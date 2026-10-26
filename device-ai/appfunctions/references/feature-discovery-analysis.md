@@ -1,71 +1,65 @@
-Analyzes Android codebases to identify and recommend high-value AppFunctions.
+分析 Android 代码库，识别并推荐高价值的 AppFunctions。
 
-## Instructions
+## 指令
 
-### Discover features
+### 发现功能
 
-1. **Analyze manifest and entry points** : Scan `AndroidManifest.xml` and Activity, Fragment, and Service classes to identify core user journeys, for example, search, create, or share.
-2. **Identify atomic tasks**: Look for methods or logic that represent distinct, self-contained user outcomes.
-3. **Evaluate AI value**: Prioritize tasks that are frequently used or difficult to navigate using touch UI, but instead be expressed using voice or text, for example "Remind me to call Alice when I get home."
-4. **Recommend and justify**: List recommendations with a rationale. Focus on how an AI assistant adds value, such as efficiency, hands-free use, or multi-step automation.
+1. **分析清单与入口点**：扫描 `AndroidManifest.xml` 以及 Activity、Fragment 和 Service 类，
+   识别核心用户流程，例如搜索、创建或分享。
+2. **识别原子任务**：查找代表独立、自成一体的用户结果的方法或逻辑。
+3. **评估 AI 价值**：优先考虑使用频繁、或难以通过触摸 UI 操作而更适合用语音或文本表达的
+   任务，例如「提醒我到家后给 Alice 打电话。」
+4. **给出推荐并说明理由**：列出推荐项并附上理由。重点说明 AI 助手如何带来价值，例如效率、
+   免手操作或多步自动化。
 
-## Critical constraints
+## 关键约束
 
-### Tool-first thinking
+### 工具优先的思路
 
-Avoid recommending functions that are purely informational or redundant with
-existing system actions. Focus on "mutations" (writing data) or "rich queries"
-(finding specific entities).
+避免推荐纯信息性、或与现有系统操作重复的功能。重点关注「变更」（写入数据）或「富查询」
+（查找特定实体）。
 
-### Security and privacy
+### 安全与隐私
 
-Don't recommend exposing functions that handle raw credentials, financial
-secrets, or irreversible destructive actions without explicit user confirmation
-steps.
+不要推荐暴露原始凭据、财务机密的功能，也不要在缺少明确用户确认步骤的情况下推荐不可逆的
+破坏性操作。
 
-## Examples
+## 示例
 
-### Example 1: Media app discovery
+### 示例 1：媒体应用的功能发现
 
-**Recommended AppFunction** : `playArtistRadio`
+**推荐的 AppFunction**：`playArtistRadio`
 
-**Rationale**: Lets you start a personalized music stream using a voice
-command, bypassing several layers of navigation in the "Search" and "Artist"
-menus.
+**理由**：让你能通过一条语音命令启动个性化音乐流，绕过「搜索」和「艺术家」菜单里的多层
+导航。
 
-**Input required** : `artistName` as a `String`.
+**需要的输入**：`artistName`，类型为 `String`。
 
-### Example 2: Chat app contact discovery
+### 示例 2：聊天应用的联系人发现
 
-**Recommended AppFunction** : `searchContacts`
+**推荐的 AppFunction**：`searchContacts`
 
-**Rationale** : Serves as a "rich query" to resolve a human-readable contact
-name, email, or chat group to a unique identifier (`endpointValue`), which is a
-prerequisite before executing actions like sending messages or
-initiating calls. Also allows retrieving recently contacted entities when given
-a blank query.
+**理由**：作为「富查询」，把人类可读的联系人姓名、邮箱或聊天群组解析为唯一标识符
+（`endpointValue`），这是执行发送消息或发起通话等操作的前提。在查询为空时，还能取出最近
+联系过的实体。
 
-**Input required** : Query as a `String`, and Filter Type as a `String`
-constrained to `"INDIVIDUAL"` or `"GROUP"`.
+**需要的输入**：查询，类型为 `String`；筛选类型，类型为 `String`，取值限定为
+`"INDIVIDUAL"` 或 `"GROUP"`。
 
-### Example 3: Chat app message sending
+### 示例 3：聊天应用的消息发送
 
-**Recommended AppFunction** : `send`
+**推荐的 AppFunction**：`send`
 
-**Rationale**: This mutation function lets you send text messages and
-optional image attachments to a contact or group using natural language
-commands, for example, "Tell Alice I'm running 5 minutes late." This
-eliminates multi-step UI navigation across contact lists and conversation
-threads.
+**理由**：这个变更函数让你能用自然语言命令向联系人或群组发送文本消息和可选的图片附件，
+例如「告诉 Alice 我要迟到 5 分钟。」这消除了在联系人列表和会话之间多步 UI 导航的成本。
 
-**Input required** : Endpoint Value as a `String`, Message Body as a `String`,
-and Image URIs as an optional `List` of URIs.
+**需要的输入**：端点值，类型为 `String`；消息正文，类型为 `String`；图片 URI，类型为可选的
+URI `List`。
 
-### Example 4: Chat app voice calling
+### 示例 4：聊天应用的语音通话
 
-**Recommended AppFunction** : `makeCall`
+**推荐的 AppFunction**：`makeCall`
 
-**Rationale**: Lets you initiate voice calls hands-free to a contact or
-group using an AI agent without navigating the app's UI.
+**理由**：让你能借助 AI agent 免手向联系人或群组发起语音通话，而无需在应用 UI 中导航。
 
-**Input required** : `endpointValue` as a `String`.
+**需要的输入**：`endpointValue`，类型为 `String`。

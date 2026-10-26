@@ -1,24 +1,23 @@
-When you use ML Kit for features such as face mesh, object detection, or pose
-detection, the most common failure point is the coordinate disparity between the
-analysis image and the viewfinder UI.
+当你使用 ML Kit 实现 face mesh、对象检测或姿态
+检测等功能时，最常见的失败点是
+分析图像与取景器 UI 之间的坐标不一致。
 
-## The mapping mindset
+## 坐标映射思路
 
-| Dimension | Analysis frame | Viewfinder UI on the screen |
+| 维度 | 分析帧 | 屏幕上的取景器 UI |
 |---|---|---|
-| Resolution | Fixed, such as 640x480 | Dynamic, such as 1080x2400 |
-| Rotation | 0° for the raw buffer | 90° or 270° in portrait or landscape mode |
-| Origin | Top-left of buffer at (0,0) | Top-left of screen at (0,0) |
+| 分辨率 | 固定，例如 640x480 | 动态，例如 1080x2400 |
+| 旋转 | 原始缓冲区为 0° | 竖屏或横屏模式下为 90° 或 270° |
+| 原点 | 缓冲区左上角 (0,0) | 屏幕左上角 (0,0) |
 
 *** ** * ** ***
 
-## Follow the implementation guide
+## 遵循实现指南
 
-### Coordinate transformation matrix
+### 坐标变换矩阵
 
-Android provides the `Viewport` and `UseCaseGroup` APIs to calculate the
-transformation matrix automatically. **Don't** calculate aspect ratio scaling
-manually.
+Android 提供 `Viewport` 和 `UseCaseGroup` API 来自动计算变换矩阵。
+**不要**手动计算宽高比缩放。
 
 
 ```kotlin
@@ -30,22 +29,22 @@ val transform = previewView.viewPort?.let { viewPort ->
 
 <br />
 
-### Handling the "double rotation" bug
+### 处理「双重旋转」bug
 
-ML Kit results, bounding boxes, are relative to the **rotated buffer**. If the
-device is in portrait, the buffer is often 480x640, landscape, but the screen
-is 1080x1920.
+ML Kit 的结果（边界框）是相对**旋转后的缓冲区**的。如果
+设备处于竖屏，缓冲区往往横向为 480x640，而屏幕
+是 1080x1920。
 
-To map the coordinates, use the following workflow:
+要映射坐标，请使用以下工作流：
 
-1. Query `imageProxy.imageInfo.rotationDegrees`.
-2. Pass this rotation to the ML Kit `InputImage`.
-3. Use the `MappingUtils.transformRect` method to map the result `Rect` to the screen.
+1. 查询 `imageProxy.imageInfo.rotationDegrees`。
+2. 把这个旋转传入 ML Kit 的 `InputImage`。
+3. 使用 `MappingUtils.transformRect` 方法把结果 `Rect` 映射到屏幕。
 
-### Face mesh and pose normalization
+### face mesh 与姿态归一化
 
-For high-precision spatial analysis, for example, "Is the user's hand at a
-specific screen button?", use **normalized coordinates from 0.0 to 1.0**.
+对于高精度空间分析，例如「用户的手是否正位于某个
+特定的屏幕按钮上？」，请使用 **0.0 到 1.0 的归一化坐标**。
 
 
 ```kotlin
@@ -56,20 +55,20 @@ val screenY = landmark.position.y / analysisHeight * screenHeight
 
 <br />
 
-**Warning** : Always account for **mirrored lenses** . If the `LENS_FACING_FRONT`
-is used, you must flip the X-coordinate: `actualX = screenWidth - screenX`.
+**警告** ：始终要考虑**镜像镜头** 。如果使用了 `LENS_FACING_FRONT`，
+你必须翻转 X 坐标：`actualX = screenWidth - screenX`。
 
-### Overlays and canvas clipping
+### overlay 与 canvas 裁剪
 
-Use a custom `GraphicOverlay` view on top of the `PreviewView`.
+在 `PreviewView` 之上使用自定义 `GraphicOverlay` 视图。
 
-- **Buffer lock** : Ensure your `GraphicOverlay` clears its canvas every time a new `ImageAnalysis` frame is processed to prevent "ghosting" of bounding boxes.
+- **缓冲区锁定** ：确保 `GraphicOverlay` 每处理一个新的 `ImageAnalysis` 帧就清空一次自己的 canvas，以避免边界框出现「残影」。
 
 *** ** * ** ***
 
-## Spatial pitfalls
+## 空间映射常见陷阱
 
-- **The "stretched box" bug** : Caused by assuming the Analysis Frame aspect ratio, 4:3, matches the screen aspect ratio, 21:9. Use `PreviewView.SCALE_TYPE_FILL_CENTER` and map coordinates accordingly.
-- **Latency** : If ML processing exceeds 50 ms, the bounding box trails behind the user's face.
-  - **Fix** : Use `ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST` to avoid queuing stale frames.
-- **Sensor vs. display rotation** : On some tablets, the sensor is mounted horizontally. Always query `display.rotation` and `cameraInfo.sensorRotationDegrees`.
+- **「盒子被拉伸」bug** ：原因在于假设分析帧的宽高比 4:3 与屏幕宽高比 21:9 一致。请使用 `PreviewView.SCALE_TYPE_FILL_CENTER` 并相应映射坐标。
+- **延迟** ：如果 ML 处理耗时超过 50 ms，边界框就会落后于用户的脸部。
+  - **修复** ：使用 `ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST` 避免排队处理过期的帧。
+- **传感器与显示旋转不一致** ：在某些平板上，传感器是横向安装的。请始终查询 `display.rotation` 和 `cameraInfo.sensorRotationDegrees`。

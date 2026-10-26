@@ -1,42 +1,42 @@
-## 1. Project health \& build validation
+## 1. 项目健康度 \& 构建验证
 
-Before performing any analysis, you must confirm the project is in a functional state.
-\* **Integrity check:** Verify the project syncs (Gradle) and builds successfully.
-\* **Error resolution:** If there are pre-existing build errors or sync failures, you must report these immediately and attempt to fix. **Do not proceed** with migration until a stable baseline is established.
+在开始任何分析之前，你必须确认项目处于可正常工作状态。
+\* **完整性检查：** 确认项目能完成 sync（Gradle）并成功构建。
+\* **错误处理：** 如果已存在构建错误或 sync 失败，你必须立即报告这些情况并尝试修复。在建立起稳定的基线之前，**不要继续**迁移。
 
-## 2. Compose pattern \& consistency analysis
+## 2. Compose 模式 \& 一致性分析
 
-If Jetpack Compose is already present, you must align with the established implementation style.
-\* **Pattern identification:** Scan the codebase for `@Composable` functions. Identify the project's "Best Practices" regarding state hoisting, composable construction and naming conventions, and file organization.
-\* **Theming review:** Determine how `MaterialTheme` or custom theme systems are implemented.
-\* Identify if the project uses a custom design system theme.
-\* Map how attributes, styles, and other theme components are accessed in Compose.
+如果项目已经使用 Jetpack Compose，你必须与既有的实现风格保持一致。
+\* **模式识别：** 扫描代码库中的 `@Composable` 函数。识别项目在状态提升（state hoisting）、Composable 构造与命名约定、文件组织方面的「最佳实践」。
+\* **主题审查：** 判断 `MaterialTheme` 或自定义主题系统是如何实现的。
+\* 识别项目是否使用自定义设计系统主题。
+\* 梳理属性、样式以及其他主题组件在 Compose 中的访问方式。
 
-## 3. Design system \& infrastructure audit
+## 3. 设计系统 \& 基础设施审查
 
-Understand the design system classification (e.g. Material 2, Material 3, or custom design system).
-\* **Resource mapping:** Locate central XML definitions:
-\* `colors.xml` (Light/Dark variants)
+了解设计系统的类别（例如 Material 2、Material 3 或自定义设计系统）。
+\* **资源映射：** 定位集中的 XML 定义：
+\* `colors.xml`（Light/Dark 变体）
 \* `dimens.xml`
 \* `styles.xml` / `themes.xml`
-\* **Hybrid analysis:** Determine if the project is **XML-only** , **Compose-only** , or **Hybrid** .
-\* **Reuse constraint:** If a Compose theming layer (e.g., `AppTheme.kt`) already exists, **DO NOT** generate a new one. You must reuse the existing infrastructure and contribute to it by following its existing implementation pattern.
+\* **混合分析：** 判断项目是**仅 XML**、**仅 Compose**，还是**混合**。
+\* **复用约束：** 如果已经存在 Compose 主题层（例如 `AppTheme.kt`），**不要**新建一个。你必须复用现有基础设施，并按照其既有实现模式在其中扩展。
 
-## 4. Candidate layout decomposition
+## 4. 候选布局拆解
 
-Analyze the specific XML layout targeted for migration. You must extract and document the following requirements for the new composable:
-\* **Inputs:** UI State objects, primitive parameters, and click listeners.
-\* **Styling:** Specific color constants, typography styles, and shape definitions referenced in the XML.
-\* **Resources:** Identifying string resources, drawables, and dimensions.
-\* **Layout logic:** Modifiers required to replicate the XML constraints (padding, alignment, weight).
+分析要迁移的那个具体 XML 布局。你必须为新的 Composable 提取并记录以下要求：
+\* **输入：** UI 状态对象、基础类型参数和点击监听器。
+\* **样式：** XML 中引用的具体颜色常量、排版样式和形状定义。
+\* **资源：** 确认字符串资源、drawable 和尺寸。
+\* **布局逻辑：** 复刻 XML 约束（内边距、对齐、weight）所需的 Modifier。
 
-## 5. Architectural \& non-UI analysis
+## 5. 架构 \& 非 UI 分析
 
-Understand the environment in which the UI resides to ensure proper integration.
-\* **State management:** Identify the usage of `ViewModel`, `Flow`, or `LiveData`.
-\* **Dependency Injection:** Check for Hilt, Koin, or manual DI to understand how dependencies are provided to the UI layer.
-\* **Testing \& architecture:** Note the architectural pattern (MVI, MVVM, or custom architecture setup.) and existing UI testing frameworks to ensure the migrated code remains testable. Unless the user explicitly requests, **DO NOT** make any changes to any non-UI code that aren't strictly required for the migration of the XML View.
+了解 UI 所处的环境，确保集成得当。
+\* **状态管理：** 识别 `ViewModel`、`Flow` 或 `LiveData` 的使用情况。
+\* **依赖注入：** 检查是否使用 Hilt、Koin 或手动 DI，弄清依赖如何提供给 UI 层。
+\* **测试 \& 架构：** 记录架构模式（MVI、MVVM 或自定义架构方案）以及现有的 UI 测试框架，确保迁移后的代码仍可测试。除非用户明确要求，**不要**对非 UI 代码做任何迁移 XML View 并非严格必需的改动。
 
 *** ** * ** ***
 
-> **Pro-tip:** Always prioritize the "Existing infrastructure" over "Default templates." If the project has a custom way of handling spacing or colors, composable code, or any other project layer, your generated Compose code must reflect that specific implementation.
+> **专业提示：** 始终优先选择「现有基础设施」而非「默认模板」。如果项目对间距、颜色、Composable 代码或任何其他项目层有自己的处理方式，你生成的 Compose 代码必须体现这一具体实现。

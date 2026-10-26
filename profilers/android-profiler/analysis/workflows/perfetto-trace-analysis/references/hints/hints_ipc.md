@@ -1,4 +1,4 @@
-Expert hints for IPC, binder transactions, and cross-process dependencies.
+针对 IPC、binder 事务和跨进程依赖的专家提示。
 keywords:
 - ipc
 - binder
@@ -9,13 +9,13 @@ keywords:
 
 ## - system_server
 
-- Look for multiple outbound binder transactions from the same process (`system_server`) that carry similar data to different destinations in a short time frame. This "binder storm" indicates a lack of multiplexing.
-- To trace data across processes, correlate slices using flow events by linking a slice's ID to `flow.source_slice_id` or `flow.dest_slice_id`.
-- To detect binder spam, query the `binder_transaction` table and group by thread ID (`tid`), `service_name`, and `method_name` to find high numbers of identical calls.
-- When high binder concurrency is found, identify the bottleneck server process by grouping transactions by `server_upid`.
-- To analyze latency of a slow binder transaction, calculate time spent outside the server by subtracting `server_dur` from total `dur` in the `binder_transaction` table.
-- When a thread is suspected of binder spam, correlate its `tid` with the `cpu_slice` table to check for high CPU consumption.
-- To find code responsible for binder spam, get the `utid` of the problematic thread and use it to query `stack_profile_callsite`.
-- To find callers of a problematic function, filter `stack_profile_callsite` for frames mapping to it, then trace upwards using `parent_id`.
-- A long-running slice on one thread causally linked to a slice on another thread (for example, binder from `system_server` to SystemUI) indicates a scheduling dependency bottleneck.
-- To find asynchronous operations that might cause UI jank, look for a binder transaction from a controlling process that returns quickly, followed by a long-running slice in the receiving process.
+- 寻找同一进程（`system_server`）在短时间内向不同目标发出多个携带相似数据的出站 binder 事务。这种「binder 风暴」说明缺少多路复用。
+- 要跨进程跟踪数据，可用 flow 事件关联 slice，把 slice 的 ID 与 `flow.source_slice_id` 或 `flow.dest_slice_id` 关联起来。
+- 要发现 binder 洪泛，查询 `binder_transaction` 表，按线程 ID（`tid`）、`service_name` 和 `method_name` 分组，找出大量完全相同的调用。
+- 发现 binder 并发过高时，按 `server_upid` 对事务分组，定位瓶颈所在的服务端进程。
+- 要分析某个慢 binder 事务的延迟，用 `binder_transaction` 表中的总 `dur` 减去 `server_dur`，算出花在服务端之外的时间。
+- 怀疑某线程存在 binder 洪泛时，把它的 `tid` 与 `cpu_slice` 表关联，检查 CPU 消耗是否偏高。
+- 要找出造成 binder 洪泛的代码，先取得问题线程的 `utid`，再用它查询 `stack_profile_callsite`。
+- 要找出某个问题函数的调用方，在 `stack_profile_callsite` 中筛选映射到它的帧，然后用 `parent_id` 向上追溯。
+- 一个线程上的长 slice 与另一个线程上的 slice 存在因果关联（例如从 `system_server` 到 SystemUI 的 binder 调用），说明存在调度依赖瓶颈。
+- 要找出可能导致 UI 卡顿的异步操作，寻找控制进程发出、随后很快返回的 binder 事务，以及紧跟着出现在接收进程中的长 slice。

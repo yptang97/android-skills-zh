@@ -1,9 +1,9 @@
 ---
 name: ml-kit-genai-prompt-api
-description: Analyzes Android codebases to implement ML Kit GenAI Prompt API. Use
-  this skill to send natural language requests on-device to Gemini Nano, use structured
-  output with Prompt API, implement prefix caching, optimize the current prompt, or
-  apply best practices."
+description: 分析 Android 代码库以实现 ML Kit GenAI Prompt API。使用
+  这个 skill 在端侧向 Gemini Nano 发送自然语言请求，配合 Prompt API 使用结构化
+  输出，实现前缀缓存，优化当前提示词，或
+  应用最佳实践。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -16,31 +16,31 @@ metadata:
   - Gemini Nano
 ---
 
-This skill provides step-by-step guidance for integrating and optimizing the ML
-Kit GenAI Prompt API in Android apps.
+这个 skill 提供在 Android 应用中集成和优化 ML
+Kit GenAI Prompt API 的分步指导。
 
-## Prerequisites
+## 前置条件
 
-- Android API level must be 26 or higher. If `minSdk` is below 26, update it to 26.
-- Add the ML Kit GenAI Prompt API dependency (`com.google.mlkit:genai-prompt`) to the app-level `build.gradle` file, with version at least `1.0.0-beta4`.
-- If `com.google.mlkit:genai-schema-compiler` dependency is used and KSP plugin version is below 2.3.6, update it to 2.3.6.
+- Android API 级别必须为 26 或更高。如果 `minSdk` 低于 26，请把它更新为 26。
+- 把 ML Kit GenAI Prompt API 依赖（`com.google.mlkit:genai-prompt`）添加到应用级的 `build.gradle` 文件，版本至少为 `1.0.0-beta4`。
+- 如果使用了 `com.google.mlkit:genai-schema-compiler` 依赖，且 KSP 插件版本低于 2.3.6，请把它更新为 2.3.6。
 
-## Detailed steps
+## 详细步骤
 
-### 1. Prompt optimization
+### 1. 提示词优化
 
-To optimize prompts for use with the ML Kit Prompt API, follow the
-[prompt optimization guide](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prompt-optimization).
+要为 ML Kit Prompt API 优化提示词，请遵循
+[提示词优化指南](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prompt-optimization)。
 
-### 2. Prefix caching optimization
+### 2. 前缀缓存优化
 
-If the prompt is more than 200 words, implement the [prefix caching API](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prefix-caching).
+如果提示词超过 200 个单词，请实现[前缀缓存 API](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prefix-caching)。
 
-### 3. Lifecycle and best practices
+### 3. 生命周期与最佳实践
 
-- The model must be fully downloaded and available before calling the first inference. Follow the guide on [implementing a generative model](https://developer.android.com/agents/skills/device-ai/prompt-api/references/get-started) to check that the `FeatureStatus` of a model is `AVAILABLE` before making an inference.
-- Release ML Kit instances by calling `close()` when an `Activity`,
-  `Fragment`, or `ViewModel` is destroyed. Example:
+- 在调用第一次推理之前，模型必须已完全下载并可用。请遵循[实现生成式模型](https://developer.android.com/agents/skills/device-ai/prompt-api/references/get-started)指南，在推理前确认模型的 `FeatureStatus` 为 `AVAILABLE`。
+- 在 `Activity`、
+  `Fragment` 或 `ViewModel` 被销毁时，调用 `close()` 释放 ML Kit 实例。示例：
 
 
   ```kotlin
@@ -53,30 +53,30 @@ If the prompt is more than 200 words, implement the [prefix caching API](https:/
 
   <br />
 
-### 4. Structured output
+### 4. 结构化输出
 
-When implementing or refactoring a prompt to use structured output, follow
-these rules:
+在实现或重构提示词以使用结构化输出时，遵循
+以下规则：
 
-1. **Check for API availability:** Verify Structured Output feature is available on the device with `isStructuredOutputFeatureAvailable()` before using it. Refer to the [Structured Output API guide](https://developer.android.com/agents/skills/device-ai/prompt-api/references/structured-output) for full instructions.
-2. **Return type:** Return the `@Generable` typed object from the function
-   signature instead of a `String` or JSON string.
+1. **检查 API 可用性：**使用 `isStructuredOutputFeatureAvailable()` 确认设备支持结构化输出功能。完整说明请参阅[结构化输出 API 指南](https://developer.android.com/agents/skills/device-ai/prompt-api/references/structured-output)。
+2. **返回类型：**从函数签名返回 `@Generable` 类型对象，
+   而不是返回 `String` 或 JSON 字符串。
 
-   For example:
+   例如：
 
        fun parseEmail(email: String): String {
            ... 
        }
 
-   should be refactored to:
+   应重构为：
 
        fun parseEmail(email: String): ParsedEmail? {
            ...
        }
 
-3. **Example:**
+3. **示例：**
 
-   This is the example code before refactoring:
+   这是重构前的示例代码：
 
 
    ```kotlin
@@ -91,7 +91,7 @@ these rules:
 
    <br />
 
-   This is the example code after using Structured Output API:
+   这是使用 Structured Output API 后的示例代码：
 
 
    ```kotlin

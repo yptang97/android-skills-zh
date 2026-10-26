@@ -1,5 +1,4 @@
-When creating a Glimmer Icon component, refer to the following source code in
-`Icon.kt`:
+创建 Glimmer Icon 组件时，请参考 `Icon.kt` 中的以下源代码：
 
 
 ```kotlin

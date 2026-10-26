@@ -1,5 +1,4 @@
-When creating a Glimmer Card component, refer to the following implementation
-samples in `CardSamples.kt`:
+创建 Glimmer Card 组件时，参考 `CardSamples.kt` 中的以下实现示例：
 
 
 ```kotlin

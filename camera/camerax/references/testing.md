@@ -1,25 +1,25 @@
-Automated testing for camera features is notoriously difficult because you
-can't easily mock physical hardware, lighting, or motion. This guide provides
-patterns for reliable, hermetic camera tests.
+相机功能的自动化测试出了名地困难，因为你
+无法轻松伪造物理硬件、光照或运动。本指南提供
+可靠、隔离的相机测试模式。
 
-## Develop a testing mindset
+## 建立测试思路
 
-| Challenge | Conventional approach | Camera technical approach |
+| 挑战 | 常规做法 | 相机技术做法 |
 |---|---|---|
-| **Frameworks** | `Mockito` or `MockK` | **Fakes over mocks** |
-| **Assertions** | `assertEquals`, `assertTrue` | **Google Truth, `assertThat`** |
-| **Environment** | Implied environments | **Explicit `@RunWith` annotations** |
-| **Async operations** | `Thread.sleep` | **Explicit `timeoutMillis` or `IdlingResource`** |
+| **框架** | `Mockito` 或 `MockK` | **用 Fake 代替 mock** |
+| **断言** | `assertEquals`、`assertTrue` | **Google Truth、`assertThat`** |
+| **环境** | 隐式环境 | **显式 `@RunWith` 注解** |
+| **异步操作** | `Thread.sleep` | **显式 `timeoutMillis` 或 `IdlingResource`** |
 
 *** ** * ** ***
 
-## Follow the implementation guide
+## 遵循实现指南
 
-### Fakes over mocks
+### 用 Fake 代替 mock
 
-**Don't use Mockito.** Relying on mocks for complex, rapidly changing interfaces
-like `ImageProxy` or `CameraInfo` makes tests brittle. Instead, build "Fake"
-implementations that verify state rather than behavior.
+**不要使用 Mockito。** 对 `ImageProxy` 或 `CameraInfo` 这类复杂、快速变化的接口
+依赖 mock 会让测试变得脆弱。应当构建「Fake」
+实现，用它们验证状态而不是行为。
 
 
 ```kotlin
@@ -31,10 +31,10 @@ val fakeImage = FakeImageProxy(w = 640, h = 480)
 
 <br />
 
-### Mock camera capabilities
+### 伪造相机能力
 
-Use `FakeAppConfig` from `androidx.camera:camera-testing` to simulate specific
-hardware constraints in tests, such as a device without a flash.
+使用 `androidx.camera:camera-testing` 中的 `FakeAppConfig` 在测试中模拟
+特定的硬件限制，例如一台没有闪光灯的设备。
 
 
 ```kotlin
@@ -44,26 +44,26 @@ val cameraProvider = ProcessCameraProvider.awaitInstance(context)
 
 <br />
 
-### Use Truth assertions
+### 使用 Truth 断言
 
-Use Google Truth, `assertThat`, instead of standard JUnit assertions. It
-provides more readable assertion chains and useful failure messages.
+使用 Google Truth 的 `assertThat`，而不是标准的 JUnit 断言。它
+提供更易读的断言链和更有用的失败信息。
 
-### Test asynchronous lifecycles
+### 测试异步生命周期
 
-Camera initialization is asynchronous. Use `IdlingResource` to ensure
-your test waits for the `UseCase` to be bound before asserting.
+相机初始化是异步的。使用 `IdlingResource` 确保
+你的测试在断言之前等到 `UseCase` 已经绑定。
 
-To test asynchronous lifecycles, use the following pattern:
+要测试异步生命周期，请使用以下模式：
 
-1. Wrap the `ProcessCameraProvider` initialization in a `CountDownLatch` or `IdlingResource`.
-2. Assert only after the `cameraControl` instance is non-null.
+1. 用 `CountDownLatch` 或 `IdlingResource` 包住 `ProcessCameraProvider` 的初始化。
+2. 只有在 `cameraControl` 实例非 null 之后才做断言。
 
 *** ** * ** ***
 
-## Testing pitfalls
+## 测试常见陷阱
 
-- **Resource leaks** : To prevent "Camera in Use" errors, in your `@After` block, call `cameraProvider.unbindAll`.
-- **The "flaky initializer"**: Camera tests often fail on CI because the "Virtual Camera" takes too long to warm up. Use a sufficient explicit timeout for the first initialization.
-- **Permission blockers** : To bypass the system permission dialogs, in your Espresso tests, use `GrantPermissionRule`.
-- **Resolution mismatch** : Tests on emulators often default to 640x480. Ensure your `ResolutionSelector` handles this low-res fallback correctly.
+- **资源泄漏** ：为避免「Camera in Use」错误，请在 `@After` 块中调用 `cameraProvider.unbindAll`。
+- **「初始化不稳定」** ：相机测试在 CI 上经常失败，因为「Virtual Camera」预热太慢。请为首次初始化设置足够长的显式超时。
+- **权限阻塞** ：要绕过系统权限对话框，请在 Espresso 测试中使用 `GrantPermissionRule`。
+- **分辨率不匹配** ：在模拟器上测试时往往默认 640x480。请确保你的 `ResolutionSelector` 能正确处理这种低分辨率回退。

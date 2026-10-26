@@ -1,5 +1,4 @@
-When creating a Glimmer List component, refer to the following source code in
-`GlimmerLazyListState.kt` for creating a state for the list:
+在创建 Glimmer 的列表组件时，为列表创建状态可参考 `GlimmerLazyListState.kt` 中的以下源码：
 
 
 ```kotlin

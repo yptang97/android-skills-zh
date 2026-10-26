@@ -1,31 +1,26 @@
-System instructions let you give the model a persona, set the tone of its
-responses, or provide specific rules it must follow. These instructions are
-separate from the user's prompt and are treated with higher priority by the
-model to ensure it behaves as expected.
+系统指令让你可以为模型设定人设、设定其回复的语气，或提供它必须遵循的具体规则。这些指令与用户的提示词是分开的，模型会以更高的优先级处理它们，以确保模型按预期表现。
 
-Common use cases include:
+常见使用场景包括：
 
-- **Setting a persona:** For example, "You are a helpful math tutor."
-- **Enforcing output format:** For example, "Always respond in bullet points."
-- **Setting constraints:** For example, "Do not answer questions about politics."
+- **设定人设：**例如「你是一位乐于助人的数学家教。」
+- **强制输出格式：**例如「总是用项目符号回答。」
+- **设定约束：**例如「不要回答关于政治的问题。」
 
-## Prerequisites
+## 前置条件
 
-System instructions work on devices running Gemini Nano V3 and higher. For a
-list of supported devices, see [Prompt API device support](https://developer.android.com/ml-kit/genai#prompt-device).
+系统指令在运行 Gemini Nano V3 及更高版本的设备上可用。支持的设备列表见 [Prompt API 设备支持](https://developer.android.com/ml-kit/genai#prompt-device)。
 
-## Limitations
+## 限制
 
-We don't recommend using system instructions with
-[prefix caching](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prefix-caching). In general, use system instructions for
-short instructions that define how the model should behave; use prefix
-caching if you need to repeat a large part of your prompt across queries and
-need to optimize performance.
+不建议把系统指令与
+[前缀缓存](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prefix-caching) 一起使用。一般来说，用系统指令来表达
+定义模型行为的简短指令；如果你需要在多次查询中重复提示词的大部分内容并
+需要优化性能，则使用前缀
+缓存。
 
-## How to use system instructions
+## 如何使用系统指令
 
-To provide system instructions, create a `SystemInstruction` object and pass it
-to the `GenerateContentRequest` builder:
+要提供系统指令，创建一个 `SystemInstruction` 对象，并把它传给 `GenerateContentRequest` 构建器：
 
     import com.google.mlkit.genai.prompt.SystemInstruction
     import com.google.mlkit.genai.prompt.TextPart
@@ -48,8 +43,7 @@ to the `GenerateContentRequest` builder:
         // Handle SDK-specific exceptions
     }
 
-You can further simplify the code by passing the system instructions directly
-into the `generateContentRequest` request builder:
+你还可以把系统指令直接传入 `generateContentRequest` 请求构建器，进一步简化代码：
 
     val request = generateContentRequest(
         SystemInstruction("You are a pirate. Speak like one."),
@@ -59,13 +53,13 @@ into the `generateContentRequest` request builder:
         temperature = 0.7f
     }
 
-## Best practices
+## 最佳实践
 
-Here are some best practices when using system instructions:
+以下是使用系统指令的一些最佳实践：
 
-- **Be clear and direct:** The model follows clear, direct instructions better than ambiguous ones. Here are some examples:
-  - Vague (avoid): "Don't write too much. Try to be helpful and friendly, and format the output nicely."
-  - Clear (preferred): "You are a friendly customer support assistant. Limit your responses to a maximum of 3 sentences. Format any lists using bullet points."
-- **Be concise:** While system instructions are powerful, very long instructions can consume the model's limited context window.
-- **Factor in token counts:** Make sure that your token counting logic includes the system instructions to avoid underestimating request size. We recommend keeping your system instructions to under 150 words (100-200 tokens).
-- **Test and iterate:** Model behavior can vary based on phrasing. Test with various user inputs to ensure the model maintains its persona consistently.
+- **清晰直接：**模型对清晰、直接的指令比对含糊的指令执行得更好。示例如下：
+  - 含糊（避免）：「不要写太多。尽量有帮助、友好，并把输出格式排好看。」
+  - 清晰（推荐）：「你是一位友好的客户支持助理。回复最多 3 句话。任何列表都用项目符号。」
+- **简洁：**系统指令虽然强大，但过长的指令会消耗模型有限的上下文窗口。
+- **把 Token 计数算进去：**确保你的 Token 计数逻辑包含系统指令，以免低估请求大小。建议把系统指令控制在 150 词（100-200 个 Token）以内。
+- **测试并迭代：**模型行为会因措辞而变化。用各种用户输入测试，确保模型始终如一地保持其人设。

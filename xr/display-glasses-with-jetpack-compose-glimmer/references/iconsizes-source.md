@@ -1,5 +1,4 @@
-When creating a Glimmer Icon component, refer to the following source code in
-`IconSizes.kt` for setting icon sizes:
+创建 Glimmer Icon 组件时，设置图标尺寸可参考 `IconSizes.kt` 中的以下源代码：
 
 
 ```kotlin

@@ -1,71 +1,65 @@
-## Description
+## 说明
 
-Use this document when you need to add or redesign tooltips in a Jetpack Compose
-application targeting Android large screens and desktop environments. Do not use
-Compose Multiplatform Desktop TooltipArea.
+当需要在面向 Android 大屏和桌面环境的 Jetpack Compose 应用中添加或重新设计工具提示（tooltip）时，使用本文档。不要使用 Compose Multiplatform 的 Desktop TooltipArea。
 
-Expected output:
+预期输出：
 
-- Brief analysis of targets and input methods, followed by an implementation that preserves accessibility, focus, and design-system rules.
+- 简要分析目标与输入方式，然后给出保留无障碍、焦点和设计系统规则的实现。
 
-## Workflow
+## 工作流
 
-### Step 1: Identify tooltip targets and text
+### 步骤 1：确认工具提示的目标与文本
 
-Search the code and write down every candidate before implementing. Decide
-targets and wording yourself.
+在实现之前先搜索代码并把每个候选都写下来。目标和措辞由你自行决定。
 
-1. Icon-only controls: `IconButton`, `IconToggleButton`, `FloatingActionButton`, `TopAppBar` `navigationIcon` and `actions`, toolbar and toolbox icons, a `clickable` `Icon` with a `contentDescription`, and navigation items (`NavigationBarItem`, `NavigationRailItem`, `NavigationDrawerItem`, `navigationSuiteItems`, `Tab`) whose label is hidden, like `alwaysShowLabel = false` or a collapsed rail.
-2. Unclear toolbar actions and controls with hidden keyboard shortcuts.
-3. Skip controls that are already clear from visible text. Never use a tooltip as the only source of a label, instruction, validation error, or disabled-state requirement.
-4. Check whether long-press already starts dragging, selection, or a context menu. Skip the tooltip if it conflicts.
+1. 仅图标控件：`IconButton`、`IconToggleButton`、`FloatingActionButton`、`TopAppBar` 的 `navigationIcon` 和 `actions`、工具栏与工具箱图标、带 `contentDescription` 的 `clickable` `Icon`，以及标签被隐藏的导航项（`NavigationBarItem`、`NavigationRailItem`、`NavigationDrawerItem`、`navigationSuiteItems`、`Tab`），例如 `alwaysShowLabel = false` 或折叠的导航栏（rail）。
+2. 含义不清的工具栏操作，以及隐藏了键盘快捷键的控件。
+3. 跳过那些通过可见文本已经足够清楚的控件。绝不要把工具提示作为标签、指令、校验错误或禁用状态要求的唯一来源。
+4. 检查长按是否已经触发拖拽、选择或上下文菜单。如果冲突，跳过工具提示。
 
-For each tooltip, use a localized string and brief, sentence-case text:
+对每个工具提示，使用本地化字符串和简短、句式大小写（sentence-case）的文本：
 
-- Start from the control's accessibility label: for an icon-only control the `Icon`'s `contentDescription` is normally the right tooltip text. Reuse the same string resource for both so they cannot drift, and keep the `contentDescription` on the icon --- a tooltip never replaces it.
-- Prefer verbs for actions: `Add column`, `Export CSV`, `Mute track`.
-- Keep plain tooltips short and clear.
-- Do not repeat visible button text unless the tooltip adds a shortcut or consequence.
-- Add shortcut hints only when accurate, e.g., `Save (Ctrl+S)`.
-- For disabled controls, explain the requirement: `Select a row first`.
+- 从控件的无障碍标签出发：对于仅图标控件，`Icon` 的 `contentDescription` 通常就是正确的工具提示文本。两者复用同一个字符串资源，以免出现漂移，并保留图标上的 `contentDescription` --- 工具提示永远不替代它。
+- 描述动作时优先用动词：`Add column`、`Export CSV`、`Mute track`。
+- 纯文本工具提示要保持简短清晰。
+- 不要重复按钮上可见的文字，除非工具提示补充了快捷键或后果。
+- 只在准确时添加快捷键提示，例如 `Save (Ctrl+S)`。
+- 对于禁用状态的控件，说明其要求：`Select a row first`。
 
-### Step 2: Implement the tooltips
+### 步骤 2：实现工具提示
 
-Iterate through the identified targets and implement tooltips for each according
-to the following patterns:
+遍历已确认的目标，按以下模式为每个目标实现工具提示：
 
-- **Reuse existing components:** Use a shared wrapper for repeated tooltips and inline `TooltipBox` for one-off tooltips.
-- **Tooltip type:** Use `PlainTooltip` for a short label. Use `RichTooltip` for extra details or one action.
-- **Tooltip trigger:** Use the default hover-effect, long-press, and
-  keyboard-focus behavior unless the tooltip should only be shown from code.
+- **复用已有组件：** 对重复出现的工具提示使用共享包装组件，对一次性工具提示使用内联 `TooltipBox`。
+- **工具提示类型：** 简短标签使用 `PlainTooltip`。额外细节或单个操作使用 `RichTooltip`。
+- **工具提示触发方式：** 使用默认的悬停效果、长按和键盘焦点行为，除非工具提示只应从代码中显示。
 
-- **API:** `TooltipBox(positionProvider, tooltip = { PlainTooltip { Text(...) }
-  }, state = rememberTooltipState()) { control }`. Check the Material 3
-  version in the Gradle files first: on 1.4.0 or newer use
+- **API：** `TooltipBox(positionProvider, tooltip = { PlainTooltip { Text(...) }
+  }, state = rememberTooltipState()) { control }`。先检查 Gradle 文件中的 Material 3 版本：在 1.4.0 或更新版本上使用
   `TooltipDefaults.rememberTooltipPositionProvider(positioning =
-  TooltipAnchorPosition.Above)`; on 1.3.x that function does not exist, use
-  `TooltipDefaults.rememberPlainTooltipPositionProvider()`.
+  TooltipAnchorPosition.Above)`；在 1.3.x 上该函数不存在，使用
+  `TooltipDefaults.rememberPlainTooltipPositionProvider()`。
 
-Follow these rules:
+遵循以下规则：
 
-- Give each `TooltipBox` its own `TooltipState`.
-- Wrap exactly one control. Keep its click, focus, enabled state, and accessibility on the control, and keep the wrapper bounds tight.
-- For a rich tooltip with an action, use `rememberTooltipState(isPersistent =
-  true)`, set `hasAction = true`, and dismiss it after the action.
-- Before finishing, re-run the searches from Step 1: every match now has a tooltip or a stated reason to skip it. Do not stop at the first screen.
+- 给每个 `TooltipBox` 自己的 `TooltipState`。
+- 只包装一个控件。把点击、焦点、启用状态和无障碍都保留在控件上，并让包装边界保持紧凑。
+- 带操作的富工具提示要使用 `rememberTooltipState(isPersistent =
+  true)`, set `hasAction = true`，并在执行操作后关闭它。
+- 结束前重新运行步骤 1 中的搜索：每一处匹配现在都有工具提示，或有明确的跳过理由。不要只处理第一个屏幕就停止。
 
-#### Show tooltips from code (optional)
+#### 从代码中显示工具提示（可选）
 
-Use this only for brief, nonessential help, such as feature education.
+仅用于简短、非必需的帮助，例如功能引导。
 
-- Call `tooltipState.show()` from a coroutine.
-- Call `tooltipState.dismiss()` directly when the tooltip is no longer needed.
-- Set `enableUserInput = false` if hover-effect, long-press, and keyboard focus should not show it.
-- Trigger `show()` from a user event or a one-time effect, not directly during composition.
+- 在协程中调用 `tooltipState.show()`。
+- 不再需要工具提示时直接调用 `tooltipState.dismiss()`。
+- 如果不应通过悬停效果、长按和键盘焦点显示它，设置 `enableUserInput = false`。
+- 从用户事件或一次性 effect 中触发 `show()`，不要在组合期间直接触发。
 
-## Reference links
+## 参考链接
 
-Consult these references before proceeding with the implementation.
+在开始实现之前，先查阅以下参考资料。
 
-- AndroidX Material 3 tooltip [samples](https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/TooltipSamples.kt)
-- Material Design 3 tooltip [guidelines](https://m3.material.io/components/tooltips/guidelines)
+- AndroidX Material 3 工具提示[示例](https://android.googlesource.com/platform/frameworks/support/+/androidx-main/compose/material3/material3/samples/src/main/java/androidx/compose/material3/samples/TooltipSamples.kt)
+- Material Design 3 工具提示[指南](https://m3.material.io/components/tooltips/guidelines)

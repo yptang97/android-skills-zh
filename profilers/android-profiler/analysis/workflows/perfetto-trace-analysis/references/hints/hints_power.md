@@ -1,4 +1,4 @@
-Expert hints for battery drain, power rails, network traffic, and wake locks.
+关于耗电、电源轨、网络流量和唤醒锁的专家提示。
 keywords:
 - power
 - battery
@@ -8,12 +8,12 @@ keywords:
 - modem
 - bluetooth
 
-## - drain
+## - 耗电
 
-- When investigating overall battery drain, start by querying the `power_rails` track and summing energy consumed (`power_ma * duration`) for each rail.
-- To check if a device is sleeping correctly during screen-off periods, query the `suspend_state` track; a lack of time in "suspended" state indicates a wakefulness problem.
-- To find the root cause of the device failing to suspend, query the `kernel_wakelock` track and aggregate total duration for each wake lock.
-- If a top kernel wake lock name contains `bt_` or `bcm` (for example, `bt_host_wake`), cross-reference its timing with events in the `bluetooth_scan_results` track.
-- If the modem rail in `power_rails` shows high consumption, query the `network_packets` table and aggregate traffic volume by UID to identify the app.
-- When analyzing network traffic from a shared UID, use the `socket_tag` associated with network packets for granular attribution.
-- Convert impact into a common energy unit like milliwatt-hours (mWh) to compare the severity of different issues.
+- 排查整体耗电时，先查询 `power_rails` 轨道，并对每条电源轨累加能耗（`power_ma * duration`）。
+- 要确认设备在熄屏期间是否正常休眠，查询 `suspend_state` 轨道；如果「suspended」状态的时间不足，说明存在保持唤醒的问题。
+- 要找出设备无法进入休眠的根本原因，查询 `kernel_wakelock` 轨道，并按每个唤醒锁汇总总时长。
+- 如果排名靠前的内核唤醒锁名称中包含 `bt_` 或 `bcm`（例如 `bt_host_wake`），就把它的时间与 `bluetooth_scan_results` 轨道中的事件做交叉比对。
+- 如果 `power_rails` 中的 modem 电源轨显示高能耗，查询 `network_packets` 表，按 UID 汇总流量，从而定位到具体应用。
+- 分析来自共享 UID 的网络流量时，利用与网络数据包关联的 `socket_tag` 做更细粒度的归因。
+- 把影响折算成统一的能量单位（例如毫瓦时，mWh），以便比较不同问题的严重程度。

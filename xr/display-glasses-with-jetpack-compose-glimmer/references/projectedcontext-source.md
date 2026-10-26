@@ -1,5 +1,4 @@
-When using a Projected Context to launch the Glasses Projected activity on the
-Projected Device, refer to the following source code in `ProjectedContext.kt`:
+使用 Projected Context 在 Projected Device 上启动 Glasses Projected activity 时，请参考 `ProjectedContext.kt` 中的以下源代码：
 
 
 ```kotlin

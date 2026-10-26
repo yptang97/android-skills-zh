@@ -1,5 +1,4 @@
-When creating a Glimmer Title Chip component, refer to the following
-implementation samples in `TitleChipSamples.kt`:
+创建 Glimmer Title Chip 组件时，请参考 `TitleChipSamples.kt` 中的以下实现示例：
 
 
 ```kotlin

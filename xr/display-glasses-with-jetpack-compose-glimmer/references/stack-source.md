@@ -1,5 +1,4 @@
-When creating a Glimmer Stack component, refer to the following source code in
-`Stack.kt`:
+创建 Glimmer Stack 组件时，参考 `Stack.kt` 中的以下源代码：
 
 
 ```kotlin

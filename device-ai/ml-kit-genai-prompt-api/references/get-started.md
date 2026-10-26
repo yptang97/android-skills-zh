@@ -1,32 +1,31 @@
-This page describes how to do the following:
+本页介绍如何完成以下操作：
 
-- Configure your project to use Prompt API
-- Provide text-only input and receive a response
-- Provide an image input with related text input and receive a response
+- 把项目配置为使用 Prompt API
+- 提供纯文本输入并获取响应
+- 提供图像输入并附上相关文本输入，获取响应
 
-For more details about the Prompt API, see the
-reference documentation for Kotlin ([com.google.mlkit.genai.prompt](https://developer.android.com/android/reference/kotlin/com/google/mlkit/genai/prompt/package-summary)) and
-Java ([com.google.mlkit.genai.prompt.java](https://developer.android.com/android/reference/com/google/mlkit/genai/prompt/java/package-summary),
-[com.google.mlkit.genai.prompt](https://developer.android.com/android/reference/com/google/mlkit/genai/prompt/package-summary)).
+有关 Prompt API 的更多细节，参见 Kotlin（[com.google.mlkit.genai.prompt](https://developer.android.com/android/reference/kotlin/com/google/mlkit/genai/prompt/package-summary)）和
+Java（[com.google.mlkit.genai.prompt.java](https://developer.android.com/android/reference/com/google/mlkit/genai/prompt/java/package-summary)、
+[com.google.mlkit.genai.prompt](https://developer.android.com/android/reference/com/google/mlkit/genai/prompt/package-summary)）的参考文档。
 
-## Configure project
+## 配置项目
 
 > [!NOTE]
-> **Note:** This API requires Android API level 26 or higher.
+> **注意：** 此 API 需要 Android API 级别 26 或更高。
 
-Add the ML Kit Prompt API as a dependency in your `build.gradle` configuration:
+在 `build.gradle` 配置中把 ML Kit Prompt API 添加为依赖：
 
     implementation("com.google.mlkit:genai-prompt:1.0.0-beta2")
 
-If you need your responses in a certain format using the Structured Output API,
-you need to configure KSP and add additional dependencies. For details, see
-[Generate structured output](https://developer.android.com/agents/skills/device-ai/prompt-api/references/structured-output).
+如果你需要用 Structured Output API 让响应符合特定格式，
+需要配置 KSP 并添加额外依赖。详情见
+[生成结构化输出](https://developer.android.com/agents/skills/device-ai/prompt-api/references/structured-output)。
 
-## Implement generative model
+## 实现生成式模型
 
-To implement the code in your project, follow these steps:
+要在项目中实现这些代码，按以下步骤操作：
 
-- Create a `generativeModel` object:
+- 创建一个 `generativeModel` 对象：
 
   ### Kotlin
 
@@ -39,8 +38,8 @@ To implement the code in your project, follow these steps:
       GenerativeModelFutures generativeModelFutures = GenerativeModelFutures
           .from(Generation.INSTANCE.getClient());
 
-- Check if Gemini Nano is `AVAILABLE,` `DOWNLOADABLE`, or `UNAVAILABLE`. Then,
-  download the feature if it is downloadable:
+- 检查 Gemini Nano 是 `AVAILABLE,`、`DOWNLOADABLE` 还是 `UNAVAILABLE`。然后，
+  如果可下载，就下载该功能：
 
   ### Kotlin
 
@@ -125,7 +124,7 @@ To implement the code in your project, follow these steps:
           }
       }, ContextCompat.getMainExecutor(context));
 
-## Provide text-only input
+## 提供纯文本输入
 
 ### Kotlin
 
@@ -139,7 +138,7 @@ To implement the code in your project, follow these steps:
       .build())
       .get();
 
-Alternatively, add optional parameters:
+也可以添加可选参数：
 
 ### Kotlin
 
@@ -166,14 +165,13 @@ Alternatively, add optional parameters:
     GenerateContentResponse response =
             generativeModelFutures.generateContent(requestBuilder.build()).get();
 
-For more information about the optional parameters, see [Optional
-configurations](https://developer.android.com/agents/skills/device-ai/ml-kit-genai-prompt-api/references/get-started#optional-configurations).
+有关可选参数的更多信息，见[可选
+配置](https://developer.android.com/agents/skills/device-ai/ml-kit-genai-prompt-api/references/get-started#optional-configurations)。
 
-## Provide multimodal (image and text) input
+## 提供多模态（图像与文本）输入
 
-Bundle an image and a text input together in the `generateContentRequest()`
-function, with the text prompt being a question or command related to the
-image. You can bundle multiple images and text together in the same request.
+在 `generateContentRequest()` 函数中把图像和文本输入打包在一起，
+文本提示词是与该图像相关的问题或命令。你可以在同一个请求中打包多张图像和文本。
 
 ### Kotlin
 
@@ -194,14 +192,13 @@ image. You can bundle multiple images and text together in the same request.
         .build())
     .get();
 
-## Process inference result
+## 处理推理结果
 
-- Run the inference and retrieve the result. You can choose to either wait for
-  the full result or stream the response as it's generated for both text-only
-  and multimodal prompts.
+- 运行推理并取回结果。对纯文本提示和多模态提示，你都可以选择等待
+  完整结果，或在生成过程中流式返回响应。
 
-  - This uses non-streaming inference, which retrieves the entire result from
-    the AI model before returning the result:
+  - 这种方式使用非流式推理，即从 AI 模型取回完整结果后
+    再返回：
 
   ### Kotlin
 
@@ -217,8 +214,8 @@ image. You can bundle multiple images and text together in the same request.
                       .build())
               .get();
 
-  - The following snippets are examples of using streaming inference, which
-    retrieves the result in chunks as it's being generated:
+  - 以下代码片段是使用流式推理的示例，流式推理会在结果生成过程中
+    分块取回：
 
   ### Kotlin
 
@@ -241,32 +238,32 @@ image. You can bundle multiple images and text together in the same request.
                   fullResponse.append(chunk);
               });
 
-For more information about streaming and non-streaming inference, see [Streaming
-versus non-streaming](https://developer.android.com/ml-kit/genai#streaming-vs-non).
+有关流式与非流式推理的更多信息，见[流式
+与非流式](https://developer.android.com/ml-kit/genai#streaming-vs-non)。
 
-## Latency optimization
+## 延迟优化
 
-To optimize for the first inference call, your application may optionally call
-`warmup()`. This loads Gemini Nano into memory and initializes runtime
-components.
+为优化首次推理调用，你的应用可以选择调用
+`warmup()`。这会把 Gemini Nano 加载到内存中并初始化运行时
+组件。
 
-## Optional configurations
+## 可选配置
 
-As part of each `GenerateContentRequest`, you can set the following optional
-parameters:
+在每个 `GenerateContentRequest` 中，你可以设置以下可选
+参数：
 
-- `temperature` : Controls the degree of randomness in token selection.
-- `seed` : Enables generating stable and deterministic results.
-- `topK` : Controls randomness and diversity in results.
-- `candidateCount` : Requests the number of unique responses returned. Note that the exact number of responses may not be the same as `candidateCount` because duplicate responses are automatically removed.
-- `maxOutputTokens` : Defines the maximum number of tokens that can be generated in the response.
+- `temperature`：控制 token 选择中的随机程度。
+- `seed`：用于生成稳定且确定性的结果。
+- `topK`：控制结果的随机性和多样性。
+- `candidateCount`：请求返回的不重复响应数量。注意实际响应数可能与 `candidateCount` 不同，因为重复的响应会被自动移除。
+- `maxOutputTokens`：定义响应中可生成的 token 上限。
 
-For more guidance on setting optional configurations, see
-[`GenerateContentRequest`](https://developer.android.com/android/reference/kotlin/com/google/mlkit/genai/prompt/GenerateContentRequest).
+关于设置可选配置的更多指引，见
+[`GenerateContentRequest`](https://developer.android.com/android/reference/kotlin/com/google/mlkit/genai/prompt/GenerateContentRequest)。
 
-## Supported features and limitations
+## 支持的功能与限制
 
-- Input must be under 4000 tokens (or approximately 3000 English words). For more information, see the [`countTokens`](https://developer.android.com/android/reference/com/google/mlkit/genai/prompt/GenerativeModel#countTokens(com.google.mlkit.genai.prompt.GenerateContentRequest)) reference.
-- Use cases that require long output (more than 4K tokens) should be avoided.
-- AICore enforces an inference quota per app. For more information, see [Quota
-  per application](https://developer.android.com/ml-kit/genai#quota-per).
+- 输入必须少于 4000 个 token（约 3000 个英文单词）。更多信息见 [`countTokens`](https://developer.android.com/android/reference/com/google/mlkit/genai/prompt/GenerativeModel#countTokens(com.google.mlkit.genai.prompt.GenerateContentRequest)) 参考。
+- 应避免需要长输出（超过 4K token）的使用场景。
+- AICore 对每个应用强制执行推理配额。更多信息见[每应用
+  配额](https://developer.android.com/ml-kit/genai#quota-per)。

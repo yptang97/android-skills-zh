@@ -1,4 +1,4 @@
-This file defines the schema for the LISTEN vertical in the Engage SDK.
+本文件定义 Engage SDK 中 LISTEN 垂类的 schema。
 
     {
       "client": "com.google.android.engage.service.AppEngagePublishClient",

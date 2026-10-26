@@ -1,5 +1,4 @@
-Records Java/native heap dumps, system traces, or custom configs via
-Perfetto helper scripts on Android.
+通过 Android 上的 Perfetto 辅助脚本记录 Java/原生堆转储、系统跟踪或自定义配置。
 keywords:
 - perfetto
 - record
@@ -7,24 +6,24 @@ keywords:
 - heap dump
 - memory leak
 
-## - custom config
+## - 自定义配置
 
-> \[!IMPORTANT\] **Scope:** This guide is **strictly for recording traces on
-> Android devices** . For other platforms (Linux, macOS, or Chrome), refer to the
-> platform documentation on [perfetto.dev/docs](https://perfetto.dev/docs/).
+> \[!IMPORTANT\] **范围：** 本指南**仅适用于在
+> Android 设备上记录跟踪** 。其他平台（Linux、macOS 或 Chrome）请参阅
+> [perfetto.dev/docs](https://perfetto.dev/docs/) 上的平台文档。
 
-Rather than running raw `adb` commands, use the official Perfetto helper
-scripts. They automatically handle pushing configurations, starting tracing
-daemons, pulling the trace file, and optionally opening it in the browser.
+与其直接运行原始的 `adb` 命令，不如使用官方的 Perfetto 辅助
+脚本。它们会自动处理推送配置、启动跟踪
+守护进程、拉取跟踪文件，并可选在浏览器中打开。
 
-Ensure **Developer options** and **USB debugging** are enabled, and your device
-is connected via USB before starting.
+开始前请确保已启用**开发者选项**和 **USB 调试**，并且设备
+已通过 USB 连接。
 
 *** ** * ** ***
 
-## 0. Download the Helper Scripts
+## 0. 下载辅助脚本
 
-Download the helper scripts from the official Perfetto repository:
+从官方 Perfetto 仓库下载辅助脚本：
 
     TOOLS_URL="https://raw.githubusercontent.com/google/perfetto/main/tools"
 
@@ -42,23 +41,23 @@ Download the helper scripts from the official Perfetto repository:
 
 *** ** * ** ***
 
-## 1. Memory Tracing
+## 1. 内存跟踪
 
-Use these tools to analyze memory leaks, object retention, C/C++ allocations, or
-system-wide memory counters.
+使用这些工具分析内存泄漏、对象滞留、C/C++ 分配，或
+系统级内存计数器。
 
-### A. Java Heap Dump (ART)
+### A. Java 堆转储（ART）
 
-Capture a snapshot of all Java objects in a process to investigate memory leaks.
-Reference docs: <https://perfetto.dev/docs/data-sources/java-heap-profiler>.
+抓取某个进程中所有 Java 对象的快照，用于排查内存泄漏。
+参考文档：<https://perfetto.dev/docs/data-sources/java-heap-profiler>。
 
     # Trigger a Java heap dump for a specific app
     ./java_heap_dump -n YOUR_APP_PACKAGE_NAME -o ./heap_dump.perfetto-trace
 
-### B. Native C/C++ Heap Profiling (heapprofd)
+### B. 原生 C/C++ 堆内存分析（heapprofd）
 
-Track C/C++ memory allocations (malloc/free) to find native leaks. Reference
-docs: <https://perfetto.dev/docs/data-sources/native-heap-profiler>.
+跟踪 C/C++ 内存分配（malloc/free）以定位原生泄漏。参考
+文档：<https://perfetto.dev/docs/data-sources/native-heap-profiler>。
 
     # Profile native allocations for a specific app
     ./heap_profile -n YOUR_APP_PACKAGE_NAME
@@ -66,20 +65,20 @@ docs: <https://perfetto.dev/docs/data-sources/native-heap-profiler>.
     # Profile with custom sampling interval (default is 4096 bytes)
     ./heap_profile -n YOUR_APP_PACKAGE_NAME -i 2048
 
-### C. System-wide Memory Counters
+### C. 系统级内存计数器
 
-Track RSS, Swap, and process stats over time. Reference docs:
-<https://perfetto.dev/docs/data-sources/memory-counters-sys-stats>.
+随时间跟踪 RSS、Swap 和进程统计。参考文档：
+<https://perfetto.dev/docs/data-sources/memory-counters-sys-stats>。
 
-**Note:** To record memory counters, you must use a custom config via
-`record_android_trace` (see Section 4).
+**注意：**要记录内存计数器，你必须通过
+`record_android_trace` 使用自定义配置（见第 4 节）。
 
 *** ** * ** ***
 
-## 2. Stack Sampling / Callstack Profiling (traced_perf)
+## 2. 栈采样 / 调用栈分析（traced_perf）
 
-Identify CPU hotspots in C/C++ or Rust code by periodically sampling callstacks.
-Reference docs: <https://perfetto.dev/docs/data-sources/cpu-profiler>.
+通过周期性采样调用栈，定位 C/C++ 或 Rust 代码中的 CPU 热点。
+参考文档：<https://perfetto.dev/docs/data-sources/cpu-profiler>。
 
     # Profile CPU usage by sampling callstacks at 100Hz (default) for 10 seconds
     ./cpu_profile -n YOUR_APP_PACKAGE_NAME -d 10000
@@ -89,34 +88,34 @@ Reference docs: <https://perfetto.dev/docs/data-sources/cpu-profiler>.
 
 *** ** * ** ***
 
-## 3. System Tracing (CPU, Scheduling, \& ATrace)
+## 3. 系统跟踪（CPU、调度、\& ATrace）
 
-Investigate jank, slow transitions, CPU scheduling, and system calls. Reference
-docs: <https://perfetto.dev/docs/data-sources/ftrace>.
+排查卡顿、缓慢的转场、CPU 调度和系统调用。参考
+文档：<https://perfetto.dev/docs/data-sources/ftrace>。
 
-You can specify duration, buffer size, and categories directly on the command
-line:
+你可以直接在命令行指定时长、缓冲区大小和
+类别：
 
     # Record scheduling, frequency, and window manager events for 5 seconds
     ./record_android_trace -t 5s -b 32mb sched gfx wm -a YOUR_APP_PACKAGE_NAME
 
-Common categories: `sched` (CPU scheduling), `freq` (CPU frequency), `gfx`
-(Graphics), `am` (Activity Manager), `wm` (Window Manager), `view` (View
-System).
+常用类别：`sched`（CPU 调度）、`freq`（CPU 频率）、`gfx`
+（图形）、`am`（Activity Manager）、`wm`（Window Manager）、`view`（View
+System）。
 
 *** ** * ** ***
 
-## 4. Custom Configs (Mix \& Match Data Sources)
+## 4. 自定义配置（混搭数据源）
 
-If you need a custom mixture of data sources (e.g., combining Java heap dumps
-with ftrace), or control that command-line flags do not offer (ring buffers,
-long traces, per-counter polling), synthesize a config:
+如果你需要自定义的数据源组合（例如把 Java 堆转储
+与 ftrace 结合），或者需要命令行参数未提供的控制项（环形缓冲区、
+长时间跟踪、按计数器轮询），请自行合成配置：
 
-1. **Read the config reference:** `$SKILL_ROOT/recording/workflows/perfetto-trace-recording/references/trace_config_reference.md` explains config structure and data sources, pointing to exemplar configs in `$SKILL_ROOT/recording/workflows/perfetto-trace-recording/references/example-configs/` that you can start from and merge. For other sources, consult the official guide at <https://perfetto.dev/docs/data-sources/>.
-2. **Save the Config:** Write the synthesized text configuration to a local file (e.g., `config.pftxt`).
-3. **Execute the Trace:** Run the trace using the general recorder script `record_android_trace` (specialized scripts do not accept custom configs):
+1. **阅读配置参考：**`$SKILL_ROOT/recording/workflows/perfetto-trace-recording/references/trace_config_reference.md` 说明了配置结构与数据源，并指向 `$SKILL_ROOT/recording/workflows/perfetto-trace-recording/references/example-configs/` 下的示例配置，你可以基于它们起步并合并。其他数据源请查阅官方指南 <https://perfetto.dev/docs/data-sources/>。
+2. **保存配置：**把合成出的文本配置写入本地文件（例如 `config.pftxt`）。
+3. **执行跟踪：**用通用记录脚本 `record_android_trace` 运行跟踪（专用脚本不接受自定义配置）：
 
     ./record_android_trace -c config.pftxt -o ./my_trace.perfetto-trace
 
-If the config has a typo, this fails fast with a parse error naming the bad
-field - fix the config and retry.
+如果配置中有拼写错误，运行会立即失败并给出指出错误字段名的
+解析错误——修正配置后重试。

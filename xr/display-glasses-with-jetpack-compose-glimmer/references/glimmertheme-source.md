@@ -1,5 +1,4 @@
-When implementing Glimmer styles, refer to the following source code in
-`GlimmerTheme.kt`:
+实现 Glimmer 样式时，参考 `GlimmerTheme.kt` 中的以下源代码：
 
 
 ```kotlin

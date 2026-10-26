@@ -1,100 +1,93 @@
-# Execution Mandates
+# 执行强制要求
 
-### Technical Rules
+### 技术规则
 
-1.  **Absolute Paths Only**: Always resolve and use absolute paths.
-2.  **Containment**: Write all artifacts strictly within `{{TEMP_DIR}}`.
-3.  **Fail-fast**: If any required input file is missing, stop immediately and
-    report the failure.
+1.  **只用绝对路径**：始终解析并使用绝对路径。
+2.  **限定范围**：把所有构件严格写在 `{{TEMP_DIR}}` 内。
+3.  **快速失败**：如果缺少任何必需的输入文件，立即停止并
+    报告失败。
 
-### Surgical Input Protocol & Efficient Search (MANDATORY)
+### 精准输入协议与高效搜索（强制）
 
--   **Direct Evidence First**: Prioritize files listed in the **Context &
-    Evidence** sections. Use the provided file/line evidence (e.g., from Data
-    Sources or Sinks) to jump directly to the relevant code. Do not perform
-    broad workspace searches if these surgical starting points are available.
--   **Path Filtering Over File Crawling**: Locate target files by name, path, or
-    extension *first* using directory/file listing tools before performing any
-    text/content-based searches. Restrict searches and file reads strictly to
-    the target `{{APP_DIR}}`.
--   **Strict Exclusions (The Noise Wall)**: Configure search, glob, and find
-    tools to ignore build, cache, dependencies, and testing folders. You MUST
-    exclude matches from: `**/build/**`, `**/.gradle/**`, `**/.scratch/**`,
-    `**/androidTest/**`, `**/test/**`, `**/node_modules/**`.
--   **Targeted Extensions**: Restrict content searches and file reads strictly
-    to source and configuration files: `.java`, `.kt`, `.xml`, `.gradle`, `.kts`
-    (and `.js`, `.ts`, `.jsx`, `.tsx`, `.dart` if a hybrid/cross-platform
-    environment is analyzed). Never search or read inside compiled `.class`
-    files, binary resources, or output assets.
--   **Surgical Queries & Limiters**: Use highly specific search patterns (e.g.,
-    search for `getLastKnownLocation` or `deleteAccount` instead of general
-    words like `location` or `delete`). If search tools support limits or
-    pagination, cap results at a maximum of 50 matches. Do not load unlimited
-    search results into your context window.
--   **Parallel Reading Required (Turn Efficiency)**: You are operating under a
-    strict maximum turn limit. To prevent timeouts, you MUST request to read
-    multiple target files concurrently in a single response. Do not read the
-    evidence files sequentially one-by-one. Issue all of your file-reading tool
-    calls simultaneously whenever possible.
+-   **直接证据优先**：优先使用 **上下文与
+    证据** 小节中列出的文件。使用提供的文件/行号证据（例如来自 Data
+    Sources 或 Sinks）直接跳到相关代码。如果已有这些精准起点，
+    不要做广泛的工作区搜索。
+-   **按路径筛选而非遍历文件**：先使用目录/文件列举工具，按名称、路径或
+    扩展名定位目标文件，然后再做任何基于文本/内容的搜索。把搜索和文件读取严格限制在
+    目标 `{{APP_DIR}}` 内。
+-   **严格排除（噪声墙）**：把搜索、glob 和 find
+    工具配置为忽略构建、缓存、依赖和测试目录。你必须
+    排除来自以下位置的匹配：`**/build/**`、`**/.gradle/**`、`**/.scratch/**`、
+    `**/androidTest/**`、`**/test/**`、`**/node_modules/**`。
+-   **限定扩展名**：把内容搜索和文件读取严格
+    限制在源码与配置文件：`.java`、`.kt`、`.xml`、`.gradle`、`.kts`
+    （如果分析的是混合/跨平台环境，还包括 `.js`、`.ts`、`.jsx`、`.tsx`、`.dart`）。
+    绝不要在编译后的 `.class` 文件、二进制资源或输出资源中搜索或读取。
+-   **精准查询与限制器**：使用高度具体的搜索模式（例如
+    搜索 `getLastKnownLocation` 或 `deleteAccount`，而不是 `location` 或 `delete` 这类
+    泛词）。如果搜索工具支持限制或
+    分页，把结果上限设为最多 50 条匹配。不要把无限量的
+    搜索结果加载进上下文窗口。
+-   **必须并行读取（提升轮次效率）**：你在严格的
+    轮次上限下运行。为避免超时，你必须在单个响应中请求读取
+    多个目标文件。不要逐个顺序读取
+    证据文件。尽可能同时发起所有文件读取工具
+    调用。
 
-### Evidentiary Standard & Guardrails (CRITICAL)
+### 证据标准与护栏（关键）
 
-To prevent over-auditing, false positives, and speculative "prosecution" of
-compliant code during extrapolation:
+为防止在推断过程中过度审计、误报，以及对合规代码的推测性「起诉」：
 
-1.  **Presumption of Compliance**: Treat code as compliant unless there is
-    *definitive, visible evidence* in the provided files of a policy violation.
-    If code is ambiguous, or if network/database logic is hidden behind
-    abstractions (e.g., calling an interface or repository method like
-    `clearSession()`), you must assume standard compliant behavior. Do NOT guess
-    or speculate about what happens behind interfaces.
-2.  **Benefit of the Doubt**: When compliance cannot be strictly verified due to
-    code abstractions or missing source file contexts, you must downgrade your
-    finding:
-    -   Never flag a `🔴 Critical` or `🟡 Important` finding based on suspicion or
-        lack of context.
-    -   Instead, output a `🔵 Suggestion` (informational) to advise the developer
-        on what to double-check in their backend or configuration.
-3.  **Exclusion of Local State**: Local-only processing (e.g., caching theme
-    settings, user-selected visual configurations, or on-device-only database
-    operations) is explicitly exempt from Data Safety collection or Account
-    Deletion mandates.
-4.  **Concrete Attributions**: Every `🔴 Critical` or `🟡 Important` finding must
-    cite the exact file, line number, or configuration block containing the
-    direct violation. If you cannot cite the exact line of code containing the
-    violation, you cannot flag it as a violation.
-5.  **Empty-List Discipline**: If no policy violations, discrepancies, or review
-    items are identified during your audit, you MUST represent this as an empty
-    array `[]` for that field (e.g., `"findings": []`, `"verified_findings":
-    []`, or `"manual_verification_required": []`). **DO NOT** populate arrays
-    with "dummy" objects, placeholder strings, or `"N/A"` / `"None"` values.
-6.  **Heuristics & Extrapolation Boundaries**: Whenever applying specific
-    heuristics defined in your goal (e.g., searching for implicit logger leaks
-    or
-    SDK siphoning), you must strictly bound them to the provided evidence and
-    their immediate callers. You are strictly forbidden from initiating broad,
-    unbounded searches for custom paths or variables across the wider codebase.
-    Base your extrapolation only within the specific files already provided to
-    you in the prompt.
+1.  **合规推定**：除非提供的文件中存在
+    *确定、可见的证据* 表明违反政策，否则把代码视为合规。
+    如果代码含义不明，或网络/数据库逻辑被
+    抽象层隐藏（例如调用 `clearSession()` 之类的接口或仓库方法），
+    你必须假定为标准合规行为。不要猜测
+    或推测接口背后发生了什么。
+2.  **疑点利益**：当因代码抽象或缺少源文件上下文而
+    无法严格验证合规性时，你必须下调结论级别：
+    -   绝不基于猜测或缺少上下文来标记 `🔴 Critical` 或 `🟡 Important` 结论。
+    -   而是输出 `🔵 Suggestion`（提示性），建议开发者
+        在后端或配置中复核什么。
+3.  **排除本地状态**：仅本地处理的场景（例如缓存主题
+    设置、用户选择的视觉配置，或仅端侧的数据库
+    操作）明确不属于数据安全收集或账号删除
+    的强制要求范围。
+4.  **具体归因**：每个 `🔴 Critical` 或 `🟡 Important` 结论都必须
+    引用包含直接违规的确切文件、行号或配置块。
+    如果你无法引用包含违规的确切代码行，
+    就不能把它标记为违规。
+5.  **空列表纪律**：如果审计过程中没有发现任何政策违规、不一致或待复核
+    项，你必须把该字段表示为空
+    数组 `[]`（例如 `"findings": []`、`"verified_findings":
+    []` 或 `"manual_verification_required": []`）。**不要** 用「占位」对象、占位符字符串或 `"N/A"` / `"None"` 值填充
+    数组。
+6.  **启发式与推断边界**：每当应用目标中定义的特定
+    启发式（例如搜索隐式 logger 泄漏
+    或
+    SDK 抽走数据）时，你必须把它们严格限定在所提供的证据及其
+    直接调用方范围内。严禁在整个代码库中发起广泛、
+    无界的搜索来查找自定义路径或变量。
+    只在提示词中已提供的具体文件内做推断。
 
-### Finalization & Output Mandates (CRITICAL)
+### 收尾与输出强制要求（关键）
 
--   **Iterative Saving**: If your investigation requires multiple steps, save
-    partial or intermediate JSON states to disk as you progress. Do not hold all
-    data in memory until the very end to prevent data loss upon interruption.
--   **Strict File Output (NO TRIPLE BACKTICKS)**: You MUST save your final JSON
-    output to disk at the exact path specified in the goal schema using your
-    file-writing capabilities.
-    -   **CRITICAL: The content written to the file MUST be pure, raw JSON. DO
-        NOT wrap the contents inside the JSON file with Markdown code blocks
-        (such as triple backticks `json ...`). Writing markdown blocks into the
-        file makes the JSON unparseable by the compiler.**
--   **NO Chat Summaries**: **MANDATORY: DO NOT summarize your findings, explain
-    your reasoning, or output JSON in your final chat response.** Your chat
-    output wastes context and is ignored by the orchestrator.
--   **Verification Before Termination**: You MUST only terminate and return the
-    "SUCCESS" string *after* you have explicitly verified that your JSON file
-    successfully wrote to disk and contains valid JSON (e.g., by reading the
-    file back or checking the directory contents).
--   **Final response**: Your final response MUST be exactly the word: "SUCCESS"
-    and nothing else.
+-   **迭代保存**：如果调查需要多个步骤，请在进行过程中把
+    部分或中间 JSON 状态保存到磁盘。不要把全部
+    数据留在内存里到最后才写，以免中断时丢失数据。
+-   **严格的文件输出（禁止三反引号）**：你必须用文件写入
+    能力，把最终 JSON 输出保存到目标 schema 中指定的确切路径。
+    -   **关键：写入文件的内容必须是纯净的原始 JSON。不要
+        在 JSON 文件内容外面包 Markdown 代码块
+        （例如三反引号 `json ...`）。把 markdown 块
+        写进文件会让编译器无法解析该 JSON。**
+-   **不要聊天总结**：**强制要求：不要在最终聊天回复中总结结论、解释
+    推理或输出 JSON。** 你的聊天
+    输出会浪费上下文，并会被编排器忽略。
+-   **终止前验证**：只有在你已明确验证 JSON 文件
+    成功写入磁盘且包含合法 JSON（例如回读
+    文件或检查目录内容）*之后*，才可以终止并返回
+    "SUCCESS" 字符串。
+-   **最终响应**：你的最终响应必须严格只有这个词："SUCCESS"，
+    不得有其他内容。

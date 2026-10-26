@@ -1,5 +1,4 @@
-When creating a Glimmer Title Chip component, refer to the following source code
-in `TitleChip.kt`:
+创建 Glimmer Title Chip 组件时，请参考 `TitleChip.kt` 中的以下源代码：
 
 
 ```kotlin

@@ -1,15 +1,12 @@
 ---
 name: android-for-cars-parked-apps
-description: Adapt existing Android video streaming apps, games, and web browsers
-  to run as parked apps on Android Auto and Android Automotive OS. Covers manifest
-  configuration, Google Play hardware feature declarations, compatibility mode, back
-  navigation affordances, orientation and display continuity, controllable system
-  bar insets, irregular display cutouts, driver distraction lifecycle handling, MediaSession
-  playback restrictions with CarUxRestrictionsManager, background audio while driving,
-  and browser sensitive data protection. Use this skill when migrating, building,
-  or auditing parked apps for cars to meet Car App Quality guidelines. Don't use for
-  media audio apps, templated Car App Library navigation, point of interest, internet
-  of things, weather, or communication apps designed for use while driving.
+description: 把现有的 Android 视频流媒体应用、游戏和网页浏览器改造为可在 Android Auto
+  与 Android Automotive OS 上作为驻车应用（parked app）运行。涵盖清单配置、Google Play
+  硬件功能声明、兼容模式、返回导航入口、方向与显示连续性、可控系统栏 insets、不规则
+  显示挖孔、驾驶分心生命周期处理、配合 CarUxRestrictionsManager 的 MediaSession 播放
+  限制、行驶中的后台音频，以及浏览器敏感数据保护。在迁移、构建或审查面向汽车的驻车
+  应用以满足 Car App Quality 指南时使用这个 skill。不要用于为行驶中使用而设计的媒体
+  音频应用、模板化 Car App Library 导航、兴趣点、物联网、天气或通信类应用。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -24,103 +21,89 @@ metadata:
   - adaptive
 ---
 
-Adapt existing Android video apps, games, and web browsers to run as parked
-apps on Android Auto and Android Automotive OS. Follow these steps to meet the
-car app quality guidelines for Google Play distribution.
+把现有的 Android 视频应用、游戏和网页浏览器改造为可在 Android Auto 与 Android
+Automotive OS 上作为驻车应用运行。按以下步骤操作，以满足 Google Play 分发的
+Car App Quality 指南。
 
-## Prerequisites
+## 前置条件
 
-- Begin with an existing adaptive Android app in one of the supported parked app categories: video streaming apps, games, or web browsers.
+- 从一个已存在的自适应 Android 应用开始，且属于受支持的驻车应用类别之一：视频流媒体应用、游戏或网页浏览器。
 
-## Glossary
+## 术语表
 
-- **Parked apps**: Parked apps run on Android Auto and Android Automotive OS only while the vehicle is parked. The three parked categories are video, games, and browsers; other categories can't be published as parked apps.
-- **Android Auto**: Android Auto is a phone-powered projection system. Apps execute on the user's phone and are projected to the in-car display over a wired or wireless connection. Android Auto is a separate platform from Android Automotive OS.
-- **Android Automotive OS**: Android Automotive OS, or AAOS, is a variant of Android that runs directly on the vehicle itself. Android Automotive OS is a separate platform from Android Auto.
-- **Video category**: Video apps display streaming videos while parked. Generally available on Android Automotive OS; unsupported on Android Auto.
-- **Games category**: Game apps provide gameplay while parked. Generally available on Android Automotive OS and Android Auto.
-- **Browsers category**: Web browsers let users browse the web while parked. Available in beta on Android Automotive OS; unsupported on Android Auto.
-- **Media category**: Not a parked category. Media apps play audio content (music, radio, audiobooks, excluding video) while driving or parked.
-- **Android for Cars platform**: Android for Cars is an umbrella term that consists of Android Auto and Android Automotive OS.
-- **Generally available categories**: Permitted on internal testing, closed testing, open testing, and production Google Play tracks for a supported platform.
-- **Beta categories**: Permitted on internal or closed testing tracks; open testing and production tracks require acceptance into an early access program.
-- **Audio while driving**: A beta feature on Android Automotive OS that lets video apps play audio while the vehicle is in motion.
-- **Car app quality guidelines** : When auditing an app against the Tier 3 (*Car ready* ), Tier 2 (*Car optimized* ), or Tier 1 (*Car differentiated* ) criteria, **MUST** check [car app quality guidelines](references/android/docs/quality-guidelines/car-app-quality/index.md).
-- **Android Automotive OS compatibility mode** : Compatibility mode (`android.software.car.display_compatibility`) is a system feature on select vehicles providing a system back affordance, safe area rendering, density scaling, and opaque driving-mode blocking (moving activities to *Stopped*). Compatibility mode is only relevant to apps that support Android Automotive OS; it isn't relevant for apps that only support Android Auto.
+- **驻车应用（parked apps）**：驻车应用仅在车辆驻车时于 Android Auto 和 Android Automotive OS 上运行。驻车类别有三类：视频、游戏和浏览器；其他类别不能作为驻车应用发布。
+- **Android Auto**：Android Auto 是手机驱动的投屏系统。应用在用户手机上执行，并通过有线或无线连接投射到车内显示屏。Android Auto 是与 Android Automotive OS 相互独立的平台。
+- **Android Automotive OS**：Android Automotive OS（简称 AAOS）是直接运行在车辆上的 Android 变体。Android Automotive OS 是与 Android Auto 相互独立的平台。
+- **视频类别**：视频应用在驻车时播放流媒体视频。在 Android Automotive OS 上普遍可用；Android Auto 不支持。
+- **游戏类别**：游戏应用在驻车时提供游戏玩法。在 Android Automotive OS 和 Android Auto 上普遍可用。
+- **浏览器类别**：网页浏览器让用户在驻车时浏览网页。在 Android Automotive OS 上为 beta；Android Auto 不支持。
+- **媒体类别**：不属于驻车类别。媒体应用在行驶或驻车时播放音频内容（音乐、电台、有声书，不含视频）。
+- **Android for Cars 平台**：Android for Cars 是包含 Android Auto 与 Android Automotive OS 的统称。
+- **普遍可用类别**：在受支持的平台上，可用于 Google Play 的内部测试、封闭测试、开放测试和生产轨道。
+- **Beta 类别**：可用于内部或封闭测试轨道；开放测试和生产轨道需要先加入早期访问计划。
+- **行驶中的音频**：Android Automotive OS 上的 beta 功能，允许视频应用在车辆行驶时播放音频。
+- **Car App Quality 指南**：审查应用是否符合 Tier 3（*Car ready*）、Tier 2（*Car optimized*）或 Tier 1（*Car differentiated*）标准时，**必须**查看 [car app quality guidelines](references/android/docs/quality-guidelines/car-app-quality/index.md)。
+- **Android Automotive OS 兼容模式**：兼容模式（`android.software.car.display_compatibility`）是部分车型上的系统特性，提供系统级返回入口、安全区域渲染、密度缩放，以及不透明的驾驶模式阻断（把活动置为 *Stopped*）。兼容模式只与支持 Android Automotive OS 的应用相关，对仅支持 Android Auto 的应用不适用。
 
-## Codebase exploration
+## 代码库探查
 
-Search the codebase for `AndroidManifest.xml` (or create
-`Assets/Plugins/Android/AndroidManifest.xml` in Unity projects),
-`res/xml/automotive_app_desc.xml`, `build.gradle`, `build.gradle.kts`,
-or `gradle/libs.versions.toml` files. Locate existing video players,
-`MediaSession` classes, `requestedOrientation` calls, and `WindowInsets`
-handlers. Unless instructed otherwise by the user, ask permission before adding
-dependencies.
+在代码库中搜索 `AndroidManifest.xml`（Unity 项目里则是创建
+`Assets/Plugins/Android/AndroidManifest.xml`）、
+`res/xml/automotive_app_desc.xml`、`build.gradle`、`build.gradle.kts`
+或 `gradle/libs.versions.toml` 文件。定位已有的视频播放器、
+`MediaSession` 类、`requestedOrientation` 调用和 `WindowInsets`
+处理逻辑。除非用户另有指示，添加依赖前先征求许可。
 
-## Step 1: Configure the app manifest
+## 步骤 1：配置应用清单
 
-Declare the app category, target platforms, hardware feature requirements, and
-activity configuration in `AndroidManifest.xml`.
+在 `AndroidManifest.xml` 中声明应用类别、目标平台、硬件功能要求和
+Activity 配置。
 
-### 1.1: Identify the app category
+### 1.1：确定应用类别
 
-- **Video apps** : Video apps **MUST** set `android:appCategory="video"` on `<application>` and **MUST NOT** include `app/src/main/res/xml/automotive_app_desc.xml` with `uses name="video"`.
-- **Games** : Games **MUST** set `android:appCategory="game"` on `<application>`. Declare `android.hardware.gamepad` with `android:required="false"` if controller input is supported by the app.
-- **Browsers** : Browsers **MUST** include `<category
-  android:name="android.intent.category.APP_BROWSER"/>` in the `MAIN` `<intent-filter>` of an exported `<activity>` (`android:exported="true"`).
+- **视频应用**：视频应用**必须**在 `<application>` 上设置 `android:appCategory="video"`，并且**不得**包含带 `uses name="video"` 的 `app/src/main/res/xml/automotive_app_desc.xml`。
+- **游戏**：游戏**必须**在 `<application>` 上设置 `android:appCategory="game"`。如果应用支持手柄输入，用 `android:required="false"` 声明 `android.hardware.gamepad`。
+- **浏览器**：浏览器**必须**在导出的 `<activity>`（`android:exported="true"`）的 `MAIN` `<intent-filter>` 中包含 `<category android:name="android.intent.category.APP_BROWSER"/>`。
 
-### 1.2: Identify target platforms and hardware features
+### 1.2：确定目标平台与硬件功能
 
-- **Android Auto** : Apps targeting Android Auto (Android 15+) **MUST** add `<category android:name="android.intent.category.CAR_LAUNCHER"/>` to an `<intent-filter>` in the `AndroidManifest.xml` file. Add it to the `MAIN` `<intent-filter>` unless the user specifies a different intent filter. **NEVER** add this category if the app is solely targeting Android Automotive OS.
-- **Android Automotive OS** : Apps targeting Android Automotive OS **MUST** declare `<uses-feature android:name="android.hardware.type.automotive"
-  android:required="false"/>` (`"false"` for mobile or multi-form-factor tracks; `"true"` only if the app will be published on the dedicated Automotive OS track) in the `AndroidManifest.xml` file. **NEVER** add this feature tag if the app is solely targeting Android Auto.
-- **Unrequired hardware features (`DO-1`)** : To satisfy Google Play feature requirements and `DO-1`, declare unsupported features (`android.hardware.wifi`, `android.hardware.screen.portrait`, `android.hardware.screen.landscape`, `android.hardware.camera`) with `android:required="false"`, and remove `android:required="true"` on features absent in cars.
-- **Display continuity (`LS-C1`)** : Configure `android:configChanges` for `screenSize`, `smallestScreenSize`, `orientation`, `screenLayout`, and `density` on `<activity>` so moving to or from a distant display does not recreate the activity or stutter playback.
-- **Compatibility mode and distraction** : Declaring compatibility mode is optional and is only relevant for apps that support Android Automotive OS. **NEVER** add compatibility mode for apps that only support Android Auto. Adding `android.hardware.type.automotive` disables compatibility mode unless `<meta-data android:name="android.software.car.display_compatibility"
-  android:value="true"/>` is added to `<application>`. When an app declares `android.software.car.display_compatibility` in `AndroidManifest.xml`, the app **MUST** check `PackageManager.hasSystemFeature("android.software.car.display_compatibility")` at runtime and hide duplicate in-app back or close affordances when it returns `true`. Parked apps **MUST NOT** include `<meta-data android:name="distractionOptimized" android:value="true"/>` on any `<activity>` (`DD-2`, `DD-3`).
+- **Android Auto**：面向 Android Auto（Android 15+）的应用**必须**在 `AndroidManifest.xml` 文件的某个 `<intent-filter>` 中加入 `<category android:name="android.intent.category.CAR_LAUNCHER"/>`。除非用户指定了其他 intent filter，否则加到 `MAIN` `<intent-filter>` 中。如果应用只面向 Android Automotive OS，**绝不要**加这个类别。
+- **Android Automotive OS**：面向 Android Automotive OS 的应用**必须**在 `AndroidManifest.xml` 文件中声明 `<uses-feature android:name="android.hardware.type.automotive" android:required="false"/>`（移动或多形态因子轨道用 `"false"`；只有在专用 Automotive OS 轨道发布时才用 `"true"`）。如果应用只面向 Android Auto，**绝不要**加这个 feature 标签。
+- **非必需硬件功能（`DO-1`）**：为满足 Google Play 的 feature 要求与 `DO-1`，把不受支持的功能（`android.hardware.wifi`、`android.hardware.screen.portrait`、`android.hardware.screen.landscape`、`android.hardware.camera`）用 `android:required="false"` 声明，并去掉汽车上不存在的功能上的 `android:required="true"`。
+- **显示连续性（`LS-C1`）**：在 `<activity>` 上为 `screenSize`、`smallestScreenSize`、`orientation`、`screenLayout` 和 `density` 配置 `android:configChanges`，这样切换到远端显示屏或从其上切回时，Activity 不会被重建，播放也不会卡顿。
+- **兼容模式与驾驶分心**：声明兼容模式是可选的，只与支持 Android Automotive OS 的应用相关。**绝不要**为仅支持 Android Auto 的应用添加兼容模式。添加 `android.hardware.type.automotive` 会禁用兼容模式，除非在 `<application>` 中加入 `<meta-data android:name="android.software.car.display_compatibility" android:value="true"/>`。当应用在 `AndroidManifest.xml` 中声明 `android.software.car.display_compatibility` 时，应用**必须**在运行时检查 `PackageManager.hasSystemFeature("android.software.car.display_compatibility")`，并在其返回 `true` 时隐藏应用内重复的返回或关闭入口。驻车应用**不得**在任何 `<activity>` 上包含 `<meta-data android:name="distractionOptimized" android:value="true"/>`（`DD-2`、`DD-3`）。
 
-## Step 2: Provide back navigation and orientation support
+## 步骤 2：提供返回导航与方向支持
 
-### 2.1: Add in-app back and close affordances
+### 2.1：添加应用内返回与关闭入口
 
-Android Automotive OS vehicles aren't required to have a hardware or software
-back button or gesture navigation (`AN-1`). Provide explicit UI back and close
-controls on every non-root screen, including detail screens and full-screen
-players:
+Android Automotive OS 车辆不要求配备硬件或软件返回按钮，也不要求手势导航（`AN-1`）。
+在每个非根屏幕上提供显式的 UI 返回与关闭控件，包括详情屏幕和全屏播放器：
 
-- **If `AndroidManifest.xml` does not declare
-  `android.software.car.display_compatibility`**: Display explicit in-app back and close controls unconditionally.
-- **If `AndroidManifest.xml` declares
-  `android.software.car.display_compatibility` with `android:value="true"`** : Show in-app back and close controls only when `PackageManager.hasSystemFeature("android.software.car.display_compatibility")` returns `false`.
+- **如果 `AndroidManifest.xml` 未声明 `android.software.car.display_compatibility`**：无条件显示应用内的返回与关闭控件。
+- **如果 `AndroidManifest.xml` 声明了带 `android:value="true"` 的 `android.software.car.display_compatibility`**：仅在 `PackageManager.hasSystemFeature("android.software.car.display_compatibility")` 返回 `false` 时显示应用内返回与关闭控件。
 
-### 2.2: Guard runtime orientation requests
+### 2.2：为运行时方向请求加防护
 
-Vehicle displays have fixed orientations. Requesting landscape on a
-fixed-portrait car display causes letterboxing or flickering loops (`DO-1`).
-Remove hardcoded `android:screenOrientation` manifest attributes and check
-`PackageManager.FEATURE_SCREEN_LANDSCAPE` and
-`PackageManager.FEATURE_SCREEN_PORTRAIT` before setting `requestedOrientation`.
+车载显示屏的方向是固定的。在固定竖屏的车载显示屏上请求横屏会导致黑边或
+闪烁循环（`DO-1`）。移除硬编码的 `android:screenOrientation` 清单属性，并在设置
+`requestedOrientation` 之前检查 `PackageManager.FEATURE_SCREEN_LANDSCAPE` 和
+`PackageManager.FEATURE_SCREEN_PORTRAIT`。
 
-## Step 3: Adapt to system bars and irregular display cutouts
+## 步骤 3：适配系统栏与不规则显示挖孔
 
-### 3.1: Track controllable system bar insets
+### 3.1：跟踪可控系统栏 insets
 
-On Android Automotive OS, OEMs are permitted to lock system bars visible so
-climate and vehicle controls remain accessible (`AR-1`). Track controllable
-insets with `OnControllableInsetsChangedListener`, hide only controllable bars,
-and apply `windowInsetsPadding` for uncontrollable `statusBars`,
-`navigationBars`, and `displayCutout` insets.
+在 Android Automotive OS 上，OEM 可以把系统栏锁定为常显，以保证空调和车辆控制仍然可达（`AR-1`）。用 `OnControllableInsetsChangedListener` 跟踪可控 insets，只隐藏可控的系统栏，并对不可控的 `statusBars`、`navigationBars` 和 `displayCutout` insets 应用 `windowInsetsPadding`。
 
-### 3.2: Render into irregular display cutouts safely
+### 3.2：安全地渲染到不规则显示挖孔区域
 
-To meet Tier 1 criterion `AR-2` on curved or non-rectangular car displays,
-**NEVER** use `LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT` (`0`) or
-`LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` (`1`). Configure
-`LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS` (`3`) or
-`LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER` (`2`) using the `car` resource qualifier
-in `res/values-car-v30/integers.xml`:
-
+要在曲面或非矩形车载显示屏上满足 Tier 1 标准 `AR-2`，
+**绝不要**使用 `LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT`（`0`）或
+`LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`（`1`）。用
+`res/values-car-v30/integers.xml` 中的 `car` 资源限定符配置
+`LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS`（`3`）或
+`LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER`（`2`）：
 
 ```xml
 <integer name="windowLayoutInDisplayCutoutMode">3</integer>
@@ -128,21 +111,17 @@ in `res/values-car-v30/integers.xml`:
 
 <br />
 
-Protect interactive UI, app bars, and scrollable lists with
-`WindowInsets.safeDrawing`.
+用 `WindowInsets.safeDrawing` 保护交互式 UI、应用栏和可滚动列表。
 
-## Step 4: Meet driver distraction and media playback requirements
+## 步骤 4：满足驾驶分心与媒体播放要求
 
-### 4.1: Pause playback on lifecycle transitions and block driving resumption
+### 4.1：在生命周期切换时暂停播放，并阻止行驶中恢复播放
 
-When a vehicle begins moving, the OS covers parked activities with a blocking
-overlay and triggers `onPause` (and `onStop` on compatibility mode vehicles). To
-satisfy `DD-2`, `DD-3`, and `MC-1`:
+车辆开始移动时，系统会用阻断式遮罩覆盖驻车 Activity，并触发 `onPause`（在兼容模式车辆上还触发 `onStop`）。为满足 `DD-2`、`DD-3` 和 `MC-1`：
 
-1. Pause playback on `ON_PAUSE` or `ON_STOP` using `LifecycleEventEffect` from `androidx.lifecycle:lifecycle-runtime-compose`.
-2. Expose a `MediaSession` (`androidx.media3:media3-session`) with play, pause, or stop commands and item metadata (`MC-1`), and release it in `onCleared`.
-3. Add `useLibrary("android.car")` in `build.gradle.kts`, wrap `ExoPlayer` in `ForwardingSimpleBasePlayer`, listen to `CarUxRestrictionsManager`, pause playback when `isRequiresDistractionOptimization` becomes `true`, and remove `COMMAND_PLAY_PAUSE` in `getState` so external `MediaSession` controls can't resume playback while driving:
-
+1. 使用 `androidx.lifecycle:lifecycle-runtime-compose` 中的 `LifecycleEventEffect`，在 `ON_PAUSE` 或 `ON_STOP` 时暂停播放。
+2. 暴露一个 `MediaSession`（`androidx.media3:media3-session`），提供播放、暂停或停止命令以及条目元数据（`MC-1`），并在 `onCleared` 中释放它。
+3. 在 `build.gradle.kts` 中加入 `useLibrary("android.car")`，把 `ExoPlayer` 包装在 `ForwardingSimpleBasePlayer` 中，监听 `CarUxRestrictionsManager`，在 `isRequiresDistractionOptimization` 变为 `true` 时暂停播放，并在 `getState` 中移除 `COMMAND_PLAY_PAUSE`，使外部 `MediaSession` 控件在行驶中无法恢复播放：
 
 ```kotlin
 @UnstableApi
@@ -197,32 +176,24 @@ class CarAwarePlayer(context: Context) :
 
 <br />
 
-### 4.2: Support background audio while driving (optional beta feature)
+### 4.2：支持行驶中的后台音频（可选 beta 功能）
 
-Because this is an optional beta feature, **NEVER** implement this feature
-unless the user requests it. To implement the feature:
+由于这是可选的 beta 功能，除非用户要求，**绝不要**实现它。要实现该功能：
 
-1. Declare `<uses-feature
-   android:name="com.android.car.background_audio_while_driving"
-   android:required="false" />` in `AndroidManifest.xml`, along with `FOREGROUND_SERVICE` and `FOREGROUND_SERVICE_MEDIA_PLAYBACK` permissions.
-2. Check runtime vehicle support with `CarFeatures.isFeatureEnabled(context,
-   CarFeatures.FEATURE_BACKGROUND_AUDIO_WHILE_DRIVING)` from `androidx.car.app:app`. Only set `shouldPreventPlay` when `!isBackgroundAudioWhileDrivingSupported &&
-   restrictions.isRequiresDistractionOptimization`.
-3. Host the `MediaSession` and player inside an exported `MediaSessionService` with `android:foregroundServiceType="mediaPlayback"`, and connect from the UI using `MediaController.Builder` and `buildAsync`.
+1. 在 `AndroidManifest.xml` 中声明 `<uses-feature android:name="com.android.car.background_audio_while_driving" android:required="false" />`，并一并声明 `FOREGROUND_SERVICE` 和 `FOREGROUND_SERVICE_MEDIA_PLAYBACK` 权限。
+2. 用 `androidx.car.app:app` 中的 `CarFeatures.isFeatureEnabled(context, CarFeatures.FEATURE_BACKGROUND_AUDIO_WHILE_DRIVING)` 检查运行时的车辆支持情况。只在 `!isBackgroundAudioWhileDrivingSupported && restrictions.isRequiresDistractionOptimization` 时设置 `shouldPreventPlay`。
+3. 把 `MediaSession` 和播放器放在导出的 `MediaSessionService` 中，并设置 `android:foregroundServiceType="mediaPlayback"`，然后在 UI 中用 `MediaController.Builder` 和 `buildAsync` 建立连接。
 
-## Step 5: Protect sensitive data in browser apps
+## 步骤 5：保护浏览器应用中的敏感数据
 
-Because vehicles are shared devices, browsers **MUST** block access to
-saved passwords and payment methods unless protected by a profile lock (`SD-1`).
-Before syncing passwords or payment data to the vehicle, browsers **MUST**
-prompt the user to authenticate and display a notice on the car screen stating
-that their data will be synchronized to the car (`SD-2`).
+车辆是共享设备，因此浏览器**必须**阻止访问已保存的密码和支付方式，除非有配置文件锁保护（`SD-1`）。
+在把密码或支付数据同步到车辆之前，浏览器**必须**提示用户进行身份验证，
+并在车载屏幕上显示通知，说明其数据将被同步到车辆（`SD-2`）。
 
-Check whether a PIN, pattern, or password is set using `KeyguardManager`, open
-`Settings.ACTION_SECURITY_SETTINGS` if unset, and authenticate with
-`BiometricPrompt` using `BiometricManager.Authenticators.DEVICE_CREDENTIAL`
-only (vehicles don't have biometric hardware):
-
+用 `KeyguardManager` 检查是否设置了 PIN、图案或密码；如果未设置，打开
+`Settings.ACTION_SECURITY_SETTINGS`；然后只用 `BiometricPrompt` 配合
+`BiometricManager.Authenticators.DEVICE_CREDENTIAL` 验证身份
+（车辆没有生物识别硬件）：
 
 ```kotlin
 val keyguardManager = context.getSystemService<KeyguardManager>()
@@ -245,35 +216,34 @@ if (!isDeviceSecure) {
 
 <br />
 
-## Step 6: Verify implementation
+## 步骤 6：验证实现
 
-Build the app using `./gradlew assembleDebug`. Find and fix any build errors.
+用 `./gradlew assembleDebug` 构建应用。找出并修复所有构建错误。
 
-## Post-implementation guidance
+## 实现后指引
 
-Provide this guidance to the user after implementation:
+实现完成后，向用户提供以下指引：
 
-- For Android Auto apps, install the app on a phone and test using the Desktop Head Unit (DHU).
-- For Android Automotive OS, install the app on the Android Automotive OS emulator in Android Studio.
-- If the app is in a beta category for the target platform, acceptance into the early access program is required before submitting the app to an open testing or production track.
-- If the app implements the beta audio while driving feature, acceptance into the early access program is required before submitting the app to an open testing or production track.
-- Test the app against the relevant criteria in the car app quality guidelines before submitting the app.
+- 对于 Android Auto 应用，把应用安装到手机上，并使用 Desktop Head Unit（DHU）测试。
+- 对于 Android Automotive OS，把应用安装到 Android Studio 中的 Android Automotive OS 模拟器上。
+- 如果应用在目标平台上属于 beta 类别，提交到开放测试或生产轨道前必须先加入早期访问计划。
+- 如果应用实现了 beta 的行驶中音频功能，提交到开放测试或生产轨道前必须先加入早期访问计划。
+- 提交应用之前，按 car app quality guidelines 中的相关标准测试应用。
 
-## Antipatterns
+## 反模式
 
-- **NEVER** include `<meta-data android:name="distractionOptimized"
-  android:value="true"/>` on any `<activity>` in a parked app, or include `res/xml/automotive_app_desc.xml` with `uses name="video"` in a video app.
-- **NEVER** assume a hardware or software back button exists on Android Automotive OS.
-- **NEVER** assume system bars are positioned only at the top and bottom or can always be hidden.
-- **NEVER** use `LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT` or `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` on Android Automotive OS.
-- **NEVER** infer UX restrictions from vehicle speed or gear state instead of reading `isRequiresDistractionOptimization` from `CarUxRestrictionsManager`.
-- **NEVER** use biometric authenticators (`BIOMETRIC_STRONG`, `BIOMETRIC_WEAK`) with `BiometricPrompt` on browser apps on Android Automotive OS; use `DEVICE_CREDENTIAL` only.
-- **NEVER** add the `CAR_LAUNCHER` intent category if the user only requests Android Automotive OS support.
-- **NEVER** add the `android.hardware.type.automotive` feature tag if the user only requests Android Auto support.
+- **绝不要**在驻车应用的任何 `<activity>` 上包含 `<meta-data android:name="distractionOptimized" android:value="true"/>`，也不要在视频应用中包含带 `uses name="video"` 的 `res/xml/automotive_app_desc.xml`。
+- **绝不要**假定 Android Automotive OS 上存在硬件或软件返回按钮。
+- **绝不要**假定系统栏只在顶部和底部，或总能被隐藏。
+- **绝不要**在 Android Automotive OS 上使用 `LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT` 或 `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`。
+- **绝不要**根据车速或挡位推断 UX 限制，而应从 `CarUxRestrictionsManager` 读取 `isRequiresDistractionOptimization`。
+- **绝不要**在 Android Automotive OS 的浏览器应用中用 `BiometricPrompt` 搭配生物识别验证器（`BIOMETRIC_STRONG`、`BIOMETRIC_WEAK`）；只用 `DEVICE_CREDENTIAL`。
+- 如果用户只要求支持 Android Automotive OS，**绝不要**添加 `CAR_LAUNCHER` intent 类别。
+- 如果用户只要求支持 Android Auto，**绝不要**添加 `android.hardware.type.automotive` feature 标签。
 
-## Best practices
+## 最佳实践
 
-- **MUST** declare `android:required="false"` on unsupported hardware features (`wifi`, `screen.portrait`, `screen.landscape`, `camera`) and guard `requestedOrientation` calls by checking `FEATURE_SCREEN_LANDSCAPE` and `FEATURE_SCREEN_PORTRAIT` (`DO-1`).
-- **MUST** provide in-app back and close affordances (`AN-1`) for Android Automotive OS when not in compatibility mode and protect all interactive UI and text from system bars and display cutouts using `WindowInsets.safeDrawing` and `OnControllableInsetsChangedListener` (`AR-1`, `AR-2`).
-- **MUST** pause playback when UX restrictions become active and strip `COMMAND_PLAY_PAUSE` from `MediaSession` while driving unless audio while driving is supported and enabled (`DD-2`, `DD-4`, `MC-1`).
-- **MUST** require profile lock authentication and display an on-screen sync disclosure before saving, accessing, or syncing browser passwords or payment information (`SD-1`, `SD-2`).
+- **必须**在不受支持的硬件功能（`wifi`、`screen.portrait`、`screen.landscape`、`camera`）上声明 `android:required="false"`，并通过检查 `FEATURE_SCREEN_LANDSCAPE` 和 `FEATURE_SCREEN_PORTRAIT` 来保护 `requestedOrientation` 调用（`DO-1`）。
+- **必须**在非兼容模式时为 Android Automotive OS 提供应用内的返回与关闭入口（`AN-1`），并使用 `WindowInsets.safeDrawing` 和 `OnControllableInsetsChangedListener` 保护所有交互式 UI 与文本，避免被系统栏和显示挖孔遮挡（`AR-1`、`AR-2`）。
+- **必须**在 UX 限制生效时暂停播放，并在行驶中从 `MediaSession` 中移除 `COMMAND_PLAY_PAUSE`，除非行驶中音频受支持且已启用（`DD-2`、`DD-4`、`MC-1`）。
+- **必须**在保存、访问或同步浏览器密码或支付信息之前，要求配置文件锁验证，并在屏幕上显示同步声明（`SD-1`、`SD-2`）。

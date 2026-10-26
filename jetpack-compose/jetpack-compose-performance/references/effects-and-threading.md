@@ -1,15 +1,12 @@
-## 1. Main thread blocking, offloading, and caching
+## 1. 主线程阻塞、卸载与缓存
 
-Move non-UI work off the main thread, avoid heavy object allocations directly
-inside Composable bodies, and cache expensive calculations across recompositions
-using `remember`.
+把非 UI 工作移出主线程，避免在 Composable 主体里直接分配重量级对象，并用 `remember` 在多次重组之间缓存昂贵的计算。
 
-### 1. Cache expensive computations in composable body
+### 1. 在 composable 主体里缓存昂贵的计算
 
-If a Composable body performs sorting, filtering, or heavy string manipulation
-on a collection, wrap the calculation in `remember`:
+如果 Composable 主体要对集合做排序、过滤或繁重的字符串操作，就把这段计算包进 `remember`：
 
-- **Bad (Recalculated on every recomposition pass)**:
+- **坏做法（每次重组都重新计算）**：
 
 
   ```kotlin
@@ -25,7 +22,7 @@ on a collection, wrap the calculation in `remember`:
 
   <br />
 
-- **Optimized (Cached calculation using remember)**:
+- **优化做法（用 remember 缓存计算）**：
 
 
   ```kotlin
@@ -42,17 +39,15 @@ on a collection, wrap the calculation in `remember`:
 
   <br />
 
-For collections with very few elements (3 to 5 items), wrapping calculations in
-`remember` introduces allocation overhead without measurable benefit. Benchmark
-caching changes using Macro benchmark.
+对于元素极少的集合（3 到 5 项），把计算包进 `remember` 会引入分配开销，却没有可衡量的收益。用
+Macro benchmark 对缓存改动做基准测试。
 
-### 2. Avoid heavy object allocations in composition
+### 2. 避免在组合中分配重量级对象
 
-Never allocate or compute heavy objects (such as `RoundedPolygon`, complex
-paths, `Paint`, or date formatters) directly in the Composable body. Wrap them
-in `remember { ... }` or hoist them out of the Composable.
+绝不要在 Composable 主体里直接分配或计算重量级对象（例如 `RoundedPolygon`、复杂 path、`Paint`
+或日期格式化器）。把它们包进 `remember { ... }`，或提升到 Composable 之外。
 
-- **Bad (New date formatter allocated on every frame/recomposition)**:
+- **坏做法（每一帧/每次重组都新建日期格式化器）**：
 
 
   ```kotlin
@@ -65,8 +60,7 @@ in `remember { ... }` or hoist them out of the Composable.
 
   <br />
 
-- **Optimized (Formatter allocated once and reused across timestamp
-  updates)**:
+- **优化做法（格式化器只分配一次，在多次时间戳更新间复用）**：
 
 
   ```kotlin
@@ -84,16 +78,14 @@ in `remember { ... }` or hoist them out of the Composable.
 
   <br />
 
-Conversion functions like `.toShape()` or `painterResource()` are `@Composable`
-themselves and internally handle caching.
+`.toShape()` 或 `painterResource()` 这类转换函数本身就是 `@Composable`，内部已处理缓存。
 
-### 3. Offload I/O and heavy work to `Dispatchers.IO` with `produceState`
+### 3. 用 `produceState` 把 I/O 和繁重工作交给 `Dispatchers.IO`
 
-Never perform blocking operations (like database queries, disk I/O, heavy file
-parsing, or blocking binder transactions) directly on the main thread. Offload
-them to `Dispatchers.IO` using `produceState`:
+绝不要在主线程上直接执行阻塞操作（例如数据库查询、磁盘 I/O、繁重的文件解析或阻塞的 binder
+事务）。用 `produceState` 把它们交给 `Dispatchers.IO`：
 
-- **Bad (Blocking I/O on main UI thread)**:
+- **坏做法（在主 UI 线程上做阻塞 I/O）**：
 
 
   ```kotlin
@@ -109,7 +101,7 @@ them to `Dispatchers.IO` using `produceState`:
 
   <br />
 
-- **Optimized (Offloaded to IO dispatcher via `produceState`)**:
+- **优化做法（通过 `produceState` 交给 IO 调度器）**：
 
 
   ```kotlin
@@ -123,20 +115,18 @@ them to `Dispatchers.IO` using `produceState`:
 
   <br />
 
-## 2. Side effect execution and lifecycle rules
+## 2. 副作用执行与生命周期规则
 
-Structure side effects to be lifecycle-aware, idempotent, and properly scoped.
-Prohibit direct side-effects in the Composable body, prefer `SideEffect` for
-non-suspending operations, hoist flow or receiver subscriptions out of item
-composables, and always use `collectAsStateWithLifecycle()`.
+组织结构化的副作用：生命周期感知、幂等、作用域正确。
+禁止在 Composable 主体里直接写副作用，非挂起操作优先用 `SideEffect`，把 flow 或 receiver 订阅提升到列表项
+composable 之外，并始终使用 `collectAsStateWithLifecycle()`。
 
-### 1. Prohibit direct side-effects in composable bodies
+### 1. 禁止在 composable 主体里直接写副作用
 
-The Composable body must remain idempotent and free of direct side effects. Side
-effects placed directly in composition run on every recomposition attempt
-(including speculative, interrupted, or discarded passes).
+Composable 主体必须保持幂等，并且不含直接的副作用。直接写在组合中的副作用会在每一次重组尝试时执行
+（包括推测性、被中断或被丢弃的重组过程）。
 
-- **Bad (Side-effect runs directly in composition pass)**:
+- **坏做法（副作用直接在组合过程中执行）**：
 
 
   ```kotlin
@@ -150,7 +140,7 @@ effects placed directly in composition run on every recomposition attempt
 
   <br />
 
-- **Optimized (Wrapped in SideEffect or user event handler)**:
+- **优化做法（包在 SideEffect 或用户事件处理器里）**：
 
 
   ```kotlin
@@ -166,13 +156,13 @@ effects placed directly in composition run on every recomposition attempt
 
   <br />
 
-### 2. Prohibit `LaunchedEffect` for non-suspend operations
+### 2. 禁止用 `LaunchedEffect` 处理非挂起操作
 
-Never wrap synchronous, non-suspending operations in `LaunchedEffect`.
-`LaunchedEffect` creates a standalone coroutine, allocates coroutine context
-machinery, and dispatches to a thread even when no suspension occurs.
+绝不要把同步的、非挂起的操作包进 `LaunchedEffect`。
+即使不发生挂起，`LaunchedEffect` 也会创建一个独立协程、分配协程上下文
+机制，并调度到线程上。
 
-- **Bad (Unnecessary coroutine allocation for synchronous call)**:
+- **坏做法（为同步调用做不必要的协程分配）**：
 
 
   ```kotlin
@@ -183,8 +173,8 @@ machinery, and dispatches to a thread even when no suspension occurs.
 
   <br />
 
-- **Optimized (Use `SideEffect` for synchronous execution on successful
-  composition)**:
+- **优化做法（组合成功时用 `SideEffect` 做同步
+  执行）**：
 
 
   ```kotlin
@@ -196,31 +186,28 @@ machinery, and dispatches to a thread even when no suspension occurs.
 
   <br />
 
-- **Warning** : Never use `DisposableEffect(keys) { ... onDispose {} }` with an
-  empty `onDispose` block to trigger a keyed synchronous effect. Check the
-  project's Compose version in `gradle/libs.versions.toml` or
-  `build.gradle(.kts)`: use `SideEffect(keys)` on Compose 1.12+, or
-  `SideEffect { ... }` with a `remember`ed key check on pre-1.12 versions.
+- **警告**：绝不要用 `DisposableEffect(keys) { ... onDispose {} }` 搭配空的
+  `onDispose` 块来触发带 key 的同步副作用。检查项目在 `gradle/libs.versions.toml` 或
+  `build.gradle(.kts)` 里的 Compose 版本：Compose 1.12+ 用 `SideEffect(keys)`，1.12 之前的版本
+  用 `SideEffect { ... }` 配合 `remember` 缓存的 key 检查。
 
-### 3. Lifecycle-aware flow collection (`collectAsStateWithLifecycle`)
+### 3. 生命周期感知的 flow 收集（`collectAsStateWithLifecycle`）
 
-In Android UI development, use `collectAsStateWithLifecycle()` when collecting
-Kotlin `Flow`s that actively produce background work.
-`collectAsStateWithLifecycle` (from
-`androidx.lifecycle:lifecycle-runtime-compose`) automatically subscribes and
-cancels flow collection based on the Android `Lifecycle` state (defaulting to
-`Lifecycle.State.STARTED`), preventing background CPU usage, battery drain,
-resource leaks, and unnecessary UI updates when the app or screen is stopped.
+在 Android UI 开发中，收集会主动产生后台工作的 Kotlin `Flow` 时，使用 `collectAsStateWithLifecycle()`。
+`collectAsStateWithLifecycle`（来自
+`androidx.lifecycle:lifecycle-runtime-compose`）会根据 Android `Lifecycle` 状态（默认
+`Lifecycle.State.STARTED`）自动订阅和取消 flow 收集，从而避免应用或屏幕停止时的后台 CPU 占用、耗电、
+资源泄漏和不必要的 UI 更新。
 
-- **Performance Nuance \& When to Prefer `collectAsState()`**:
+- **性能细节与何时优先用 `collectAsState()`**：
 
-  - **Benchmark Overhead** : `collectAsStateWithLifecycle()` is \~3-4x slower to subscribe and dispatch compared to `collectAsState()` due to Android `Lifecycle` observer registration and lifecycle-aware state machine overhead.
-  - **In-Memory \& Scoped StateFlows** : For lightweight, in-memory `StateFlow`s (such as UI states emitted by a ViewModel already scoped with `SharingStarted.WhileSubscribed(5000)`), `collectAsState()` is often more performant and avoids this overhead.
-  - **When to Require `collectAsStateWithLifecycle()`** : Reserve `collectAsStateWithLifecycle()` for cold flows, database observation streams, sensors, location updates, or external polling streams that must halt emission when the screen is not visible.
-  - **Non-Android platforms** : In Compose Multiplatform (Desktop, Web, iOS) where the Android `Lifecycle` library is not present, use `collectAsState()`.
-  - **Headless / Unit Test environments** : In non-UI scopes or pure unit tests where no `LifecycleOwner` is available.
-- **Bad (Continues collecting in background on Android, leaking resources and
-  CPU cycles)**:
+  - **基准测试开销**：由于 Android `Lifecycle` 观察者注册和生命周期感知状态机的开销，`collectAsStateWithLifecycle()` 的订阅和分发比 `collectAsState()` 慢约 3-4 倍。
+  - **内存内与已限定作用域的 StateFlow**：对于轻量的内存内 `StateFlow`（例如已经用 `SharingStarted.WhileSubscribed(5000)` 限定作用域的 ViewModel 发出的 UI 状态），`collectAsState()` 通常性能更好，能避开这部分开销。
+  - **何时必须用 `collectAsStateWithLifecycle()`**：把 `collectAsStateWithLifecycle()` 留给冷 flow、数据库观察流、传感器、位置更新，以及屏幕不可见时必须停止发送的外部轮询流。
+  - **非 Android 平台**：在没有 Android `Lifecycle` 库的 Compose Multiplatform（Desktop、Web、iOS）中，使用 `collectAsState()`。
+  - **无界面／单元测试环境**：在非 UI 作用域或没有 `LifecycleOwner` 的纯单元测试中。
+- **坏做法（在 Android 上后台持续收集，泄漏资源和
+  CPU 周期）**：
 
 
   ```kotlin
@@ -234,7 +221,7 @@ resource leaks, and unnecessary UI updates when the app or screen is stopped.
 
   <br />
 
-- **Optimized (Lifecycle-aware: pauses collection when backgrounded)**:
+- **优化做法（生命周期感知：进入后台时暂停收集）**：
 
 
   ```kotlin
@@ -249,19 +236,17 @@ resource leaks, and unnecessary UI updates when the app or screen is stopped.
 
   <br />
 
-### 4. Hoist `BroadcastReceiver`s and listeners to prevent per-item registration
+### 4. 提升 `BroadcastReceiver` 和监听器，避免逐项注册
 
-Never register a `BroadcastReceiver` or system listener (such as
-`ACTION_TIMEZONE_CHANGED` or network connectivity changes) inside list item
-Composables. This registers a separate receiver for every visible item on the
-main thread, causing severe scrolling latency, memory leaks, and frame drops.
+绝不要在列表项 Composable 里注册 `BroadcastReceiver` 或系统监听器（例如
+`ACTION_TIMEZONE_CHANGED` 或网络连接变化）。这会在主线程上为每个可见项注册单独的 receiver，
+造成严重的滚动延迟、内存泄漏和掉帧。
 
-Register a single receiver in a parent or screen-level Composable using
-`DisposableEffect`, and propagate the state down using parameters or
-`CompositionLocalProvider`.
+在父级或屏幕级 Composable 里用
+`DisposableEffect` 注册一个 receiver，并通过参数或
+`CompositionLocalProvider` 把状态向下传递。
 
-- **Bad (Registers a separate BroadcastReceiver for every visible item in
-  LazyColumn)**:
+- **坏做法（在 LazyColumn 里为每个可见项注册单独的 BroadcastReceiver）**：
 
 
   ```kotlin
@@ -285,7 +270,7 @@ Register a single receiver in a parent or screen-level Composable using
 
   <br />
 
-- **Optimized (Single BroadcastReceiver hoisted to parent container)**:
+- **优化做法（单个 BroadcastReceiver 提升到父容器）**：
 
 
   ```kotlin
@@ -322,20 +307,17 @@ Register a single receiver in a parent or screen-level Composable using
 
   <br />
 
-### 5. Guard optional effects and match effect type to work
+### 5. 为可选副作用加保护，并让副作用类型匹配工作类型
 
-Never spawn `LaunchedEffect` or `DisposableEffect` unconditionally if optional
-callbacks or trigger handlers are `null`. Guard the effect with `if (callback !=
-null)` to avoid allocating unnecessary coroutine jobs and snapshot effect
-tracking structures. Furthermore, ensure the effect API matches the execution
-type:
+如果可选回调或触发处理器是 `null`，绝不要无条件地启动 `LaunchedEffect` 或 `DisposableEffect`。
+用 `if (callback != null)` 为副作用加保护，避免分配不必要的协程 job 和快照副作用
+跟踪结构。此外，要确保副作用 API 与执行类型匹配：
 
-- **Synchronous Callbacks (`() -> Unit`)** : Use `SideEffect` or keyed `SideEffect(onInit)` rather than launching a coroutine job.
-- **Suspending Callbacks (`suspend () -> Unit`)** : Use
-  `LaunchedEffect(onInit)` guarded by `if (onInit != null)`.
+- **同步回调（`() -> Unit`）**：使用 `SideEffect` 或带 key 的 `SideEffect(onInit)`，而不是启动协程 job。
+- **挂起回调（`suspend () -> Unit`）**：使用
+  `LaunchedEffect(onInit)`，并用 `if (onInit != null)` 加保护。
 
-- **Bad (Spawns empty coroutine and effect nodes when callback is null or
-  synchronous)**:
+- **坏做法（回调为 null 或同步时仍启动空协程和副作用节点）**：
 
 
   ```kotlin
@@ -347,7 +329,7 @@ type:
 
   <br />
 
-- **Optimized (Synchronous work uses SideEffect; guarded if optional)**:
+- **优化做法（同步工作用 SideEffect；可选时加保护）**：
 
 
   ```kotlin
@@ -360,13 +342,12 @@ type:
 
   <br />
 
-### 6. Prevent stale captures with `rememberUpdatedState`
+### 6. 用 `rememberUpdatedState` 防止捕获过期值
 
-If a long-running, periodic, or looping coroutine inside `LaunchedEffect`
-references a Composable parameter or callback, use `rememberUpdatedState` to
-ensure it always uses the latest value without restarting the effect:
+如果 `LaunchedEffect` 里长时间运行、周期性或循环的协程引用了 Composable 参数或回调，就用 `rememberUpdatedState`
+确保它始终使用最新值，而不重启副作用：
 
-- **Bad (Stale capture if onTick parameter changes during loop lifetime)**:
+- **坏做法（循环存活期间 onTick 参数变化时会捕获过期值）**：
 
 
   ```kotlin
@@ -383,8 +364,8 @@ ensure it always uses the latest value without restarting the effect:
 
   <br />
 
-- **Optimized (rememberUpdatedState provides latest callback without
-  cancelling timer loop)**:
+- **优化做法（rememberUpdatedState 提供最新回调，且不取消计时
+  循环）**：
 
 
   ```kotlin
@@ -402,14 +383,12 @@ ensure it always uses the latest value without restarting the effect:
 
   <br />
 
-### 7. Replace legacy timers with coroutine delays
+### 7. 用协程延时代替旧式计时器
 
-Avoid using legacy Android handlers like `Handler.postDelayed` or `TimerTask` in
-UI code. Use `LaunchedEffect` combined with `delay()` for clean, lifecycle-aware
-timing that is automatically cancelled when the Composable leaves the
-composition.
+避免在 UI 代码里使用 `Handler.postDelayed` 或 `TimerTask` 这类旧式 Android handler。改用
+`LaunchedEffect` 搭配 `delay()`，获得干净、生命周期感知的计时，Composable 离开组合时会自动取消。
 
-- **Bad (Legacy Handler risks memory leak and out-of-lifecycle execution)**:
+- **坏做法（旧式 Handler 有内存泄漏和脱离生命周期执行的风险）**：
 
 
   ```kotlin
@@ -423,7 +402,7 @@ composition.
 
   <br />
 
-- **Optimized (Clean, lifecycle-aware coroutine delay)**:
+- **优化做法（干净、生命周期感知的协程延时）**：
 
 
   ```kotlin
@@ -435,18 +414,16 @@ composition.
 
   <br />
 
-### 8. Combine related `LaunchedEffect`s (reduce number of effects)
+### 8. 合并相关的 `LaunchedEffect`（减少副作用数量）
 
-Every `LaunchedEffect` attached to a composable allocates slot table records,
-registers coroutine launcher machinery, and requires cancellation tracking
-during teardown.
+挂在 composable 上的每个 `LaunchedEffect` 都会分配 slot table 记录、
+注册协程启动机制，并在拆除时需要取消跟踪。
 
-When multiple asynchronous tasks share the same trigger key (such as `Unit` on
-initial screen load), combine them into a single `LaunchedEffect` block with
-nested `launch { ... }` calls instead of declaring multiple standalone
-`LaunchedEffect`s.
+当多个异步任务共用同一个触发 key（例如首次加载屏幕时的 `Unit`）时，把它们合并成一个
+`LaunchedEffect` 块，内部用嵌套的 `launch { ... }` 调用，而不是声明多个独立的
+`LaunchedEffect`。
 
-- **Bad (Multiple separate LaunchedEffects incur redundant effect overhead)**:
+- **坏做法（多个独立 LaunchedEffect 带来重复的副作用开销）**：
 
 
   ```kotlin
@@ -463,8 +440,8 @@ nested `launch { ... }` calls instead of declaring multiple standalone
 
   <br />
 
-- **Optimized (Single LaunchedEffect manages multiple concurrent
-  coroutines)**:
+- **优化做法（单个 LaunchedEffect 管理多个并发
+  协程）**：
 
 
   ```kotlin
@@ -483,49 +460,46 @@ nested `launch { ... }` calls instead of declaring multiple standalone
 
   <br />
 
-### 9. Effect execution ordering and teardown costs
+### 9. 副作用执行顺序与拆除开销
 
-Understanding the execution lifecycle and performance costs of Compose effects
-is critical when choosing between them:
+了解 Compose 副作用的执行生命周期和性能开销，在选择用哪个时至关重要：
 
-#### A. Execution order when composition changes are applied
+#### A. 组合变更被应用时的执行顺序
 
-When composition changes are applied (`RememberObserver.onRemembered`), Compose
-triggers effects in the following order:
+当组合变更被应用时（`RememberObserver.onRemembered`），Compose
+按以下顺序触发副作用：
 
-1. **`DisposableEffect`**: Executes synchronously first as composition changes are applied, in the order declared in the composable.
-2. **`SideEffect`** : Executes synchronously second, after `DisposableEffect`s have run, before layout and drawing occur.
-3. **`LaunchedEffect`** : Launches its coroutine on the composition's `CoroutineContext` when composition changes are applied. Because it is dispatched asynchronously on that coroutine dispatcher, it does not run synchronously during the apply pass, and it is **not** guaranteed to run after Layout and Draw.
+1. **`DisposableEffect`**：在组合变更被应用时最先同步执行，顺序与在 composable 中声明的一致。
+2. **`SideEffect`**：第二个同步执行，在 `DisposableEffect` 运行之后、布局和绘制发生之前。
+3. **`LaunchedEffect`**：在组合变更被应用时，在组合的 `CoroutineContext` 上启动协程。由于它是异步调度到该协程调度器上执行的，不会在应用过程中同步运行，也**不**保证在 Layout 和 Draw 之后运行。
 
-> **Warning:**
-> Do not assume `LaunchedEffect` waits until after Layout and Draw to execute.
-> If your code needs layout bounds or coordinates, observe them through layout
-> modifiers (`onPlaced`, `onSizeChanged`, or `onLayoutRectChanged`) rather than
-> relying on effect dispatch timing.
+> **警告：**
+> 不要假设 `LaunchedEffect` 会等到 Layout 和 Draw 之后才执行。
+> 如果你的代码需要布局边界或坐标，请通过布局
+> modifier（`onPlaced`、`onSizeChanged` 或 `onLayoutRectChanged`）观察它们，而不是
+> 依赖副作用调度时机。
 
-#### B. Effect allocation and teardown costs
+#### B. 副作用分配与拆除开销
 
-Effects have substantially different overheads:
+各种副作用的开销差异很大：
 
-- **`SideEffect`**: Cheapest effect; executes synchronously on every successful composition pass without lifecycle registration or coroutine allocation.
-- **`DisposableEffect`** : Moderate overhead; registers callbacks and runs `onDispose` synchronously upon key change or exit from composition.
-- **`LaunchedEffect`**: Highest overhead; requires allocating a coroutine launcher, launching a new coroutine job on the composition dispatcher, and canceling or tearing down the coroutine job when keys change or the composable exits.
+- **`SideEffect`**：最便宜的副作用；在每次成功的组合过程中同步执行，不做生命周期注册，也不分配协程。
+- **`DisposableEffect`**：开销中等；注册回调，并在 key 变化或离开组合时同步运行 `onDispose`。
+- **`LaunchedEffect`**：开销最高；需要分配协程启动器、在组合调度器上启动新的协程 job，并在 key 变化或 composable 退出时取消或拆除该协程 job。
 
-Because canceling a `LaunchedEffect` incurs coroutine job cancellation and
-teardown overhead, avoid cycling `LaunchedEffect` keys frequently during
-animations or fast scrolling. For synchronous keyed triggers without teardown,
-always prefer keyed `SideEffect(keys)` over `LaunchedEffect(keys)`.
+由于取消 `LaunchedEffect` 会带来协程 job 取消和
+拆除开销，要避免在动画或快速滚动期间频繁轮换 `LaunchedEffect` 的 key。对于无需拆除的同步带 key 触发，
+始终优先用带 key 的 `SideEffect(keys)`，而不是 `LaunchedEffect(keys)`。
 
-## 3. Side effects API selection guide
+## 3. 副作用 API 选择指南
 
-Choose the correct Side Effect API based on the execution context and lifecycle
-requirements:
+根据执行上下文和生命周期要求选择合适的副作用 API：
 
-| Use Case | Recommended API | Example |
+| 使用场景 | 推荐 API | 示例 |
 |---|---|---|
-| **Coroutine tied to Composable lifecycle** | `LaunchedEffect(keys)` | Triggering network calls or animations when an ID changes |
-| **Synchronous cleanup on exit** | `DisposableEffect(keys)` | Registering and unregistering lifecycle listeners or observers |
-| **Launch coroutine from UI callback** | `rememberCoroutineScope()` | Triggering a scroll animation on button click or swipe |
-| **Convert Compose State into Flow** | `snapshotFlow { state }` | Debouncing search queries derived from text field state |
-| **Synchronous keyed triggers** | `SideEffect` or `SideEffect(keys)` | Updating external imperatively managed views or non-Compose state |
-| **Viewport visibility or impression tracking** | `Modifier.onVisibilityChanged` | Sending analytics or : logging impressions when an item enters the viewport \| |
+| **与 Composable 生命周期绑定的协程** | `LaunchedEffect(keys)` | 在 ID 变化时触发网络调用或动画 |
+| **退出时的同步清理** | `DisposableEffect(keys)` | 注册和注销生命周期监听器或观察者 |
+| **从 UI 回调启动协程** | `rememberCoroutineScope()` | 在按钮点击或滑动时触发滚动动画 |
+| **把 Compose State 转换为 Flow** | `snapshotFlow { state }` | 对由文本输入框状态派生的搜索请求做防抖 |
+| **同步的带 key 触发** | `SideEffect` 或 `SideEffect(keys)` | 更新外部命令式管理的视图或非 Compose 状态 |
+| **视口可见性或曝光跟踪** | `Modifier.onVisibilityChanged` | 在列表项进入视口时发送分析数据或记录曝光 \| |

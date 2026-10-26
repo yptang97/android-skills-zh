@@ -1,23 +1,20 @@
-Camera operations are among the most power-intensive tasks on mobile devices.
-Without proactive management, the system throttle hardware, drop frames, or
-force-close the camera app.
+相机操作是移动设备上最耗电的任务之一。如果不主动管理，系统会限制硬件、丢帧，或者强制关闭相机应用。
 
-## The thermal management strategy
+## 热管理策略
 
-| Priority | Strategy | Implementation |
+| 优先级 | 策略 | 实现 |
 |---|---|---|
-| **1. Inform** | Use case hints | Provide `StreamUseCase` to allow the OS to optimize hardware. |
-| **2. Monitor** | Thermal state listener | Observe `PowerManager.addThermalStatusListener`. |
-| **3. Act** | Graceful degradation | Dynamically reduce FPS, resolution, or disable demanding effects such as HDR. |
+| **1. 告知** | 用例提示 | 提供 `StreamUseCase`，让系统优化硬件。 |
+| **2. 监控** | 热状态监听器 | 观察 `PowerManager.addThermalStatusListener`。 |
+| **3. 处置** | 优雅降级 | 动态降低 FPS、分辨率，或禁用 HDR 这类高负载效果。 |
 
 *** ** * ** ***
 
-## Follow the implementation guide
+## 遵循实现指南
 
-### Stream use case optimization
+### Stream use case 优化
 
-Android 13 (API level 33) introduced `StreamUseCase`. This is the **single most
-effective** way to tell the hardware how to balance quality versus power.
+Android 13（API 级别 33）引入 `StreamUseCase`。这是告诉硬件如何权衡画质与功耗的**最有效**方式。
 
 
 ```kotlin
@@ -34,17 +31,16 @@ val preview = Preview.Builder()
 
 <br />
 
-Review the following key use cases for stream optimization:
+以下是流优化中的几个关键用例：
 
-- `PREVIEW`: This option is the default and provides a balanced configuration.
-- `STILL_CAPTURE`: This option provides high-quality capture for short bursts.
-- `VIDEO_RECORD`: This option maintains sustained power and is optimized for encoding.
-- `VIDEO_CALL`: This option minimizes power consumption for long-duration sessions.
+- `PREVIEW`：该选项是默认值，提供均衡的配置。
+- `STILL_CAPTURE`：该选项为短时连拍提供高质量捕获。
+- `VIDEO_RECORD`：该选项保持持续功耗，并针对编码优化。
+- `VIDEO_CALL`：该选项为长时间会话最小化功耗。
 
-### Monitor thermal status
+### 监控热状态
 
-Don't wait for a crash. Monitor the `PowerManager` status and react before
-`THERMAL_STATUS_CRITICAL`.
+不要等到崩溃。监控 `PowerManager` 状态，在达到 `THERMAL_STATUS_CRITICAL` 之前就做出反应。
 
 
 ```kotlin
@@ -67,19 +63,19 @@ powerManager.addThermalStatusListener { status ->
 
 <br />
 
-### Graceful degradation tiers
+### 优雅降级层级
 
-| Tier | Action | User impact |
+| 层级 | 措施 | 用户影响 |
 |---|---|---|
-| **Mild** | Stop background analysis using ML Kit | Minimal |
-| **Moderate** | Cap frame rate to 30 FPS | Noticeable but smooth |
-| **Severe** | Drop resolution from 1080p to 720p | Significant visual change |
-| **Critical** | Shut down the session | App unusable in safe mode |
+| **轻微** | 停止使用 ML Kit 的后台分析 | 极小 |
+| **中等** | 把帧率限制到 30 FPS | 可察觉但流畅 |
+| **严重** | 把分辨率从 1080p 降到 720p | 画面明显变化 |
+| **危急** | 关闭会话 | 应用处于安全模式，不可用 |
 
 *** ** * ** ***
 
-## Thermal pitfalls
+## 热相关陷阱
 
-- **The "double work" bug**: Don't run two high-resolution streams---such as a preview and a video capture stream---at different aspect ratios unless necessary. This forces the image signal processor (ISP) to perform double the scaling work, which generates excessive heat.
-- **Surface overload** : Don't use multi-step `SurfaceProcessor` or `Media3Effect` chains during `THERMAL_STATUS_SEVERE`.
-- **Flash heat** : Flash or torch usage generates high thermal load. Proactively disable the flash if thermal status is `SEVERE`.
+- **「双重工作」缺陷**：除非确有必要，不要同时运行两个不同宽高比的高分辨率流——例如预览流和视频捕获流。这会迫使图像信号处理器（ISP）做双倍的缩放工作，产生过多热量。
+- **Surface 过载**：在 `THERMAL_STATUS_SEVERE` 期间，不要使用多级 `SurfaceProcessor` 或 `Media3Effect` 链。
+- **闪光灯发热**：使用闪光灯或手电筒会产生高热负载。如果热状态为 `SEVERE`，主动关闭闪光灯。

@@ -1,14 +1,13 @@
-## 1. Host-evaluated local state (`rememberMutableRemoteInt` and `valueChange`)
+## 1. 由宿主求值的本地状态（`rememberMutableRemoteInt` 与 `valueChange`）
 
-A Wear OS widget renders inside the system host process. Standard Jetpack
-Compose in-memory state (`mutableStateOf`, `mutableIntStateOf`) can't recompose
-when tapped on the watch surface.
+Wear OS 小组件渲染在系统宿主进程内。标准的 Jetpack
+Compose 内存状态（`mutableStateOf`、`mutableIntStateOf`）在手表界面上被点击时无法触发重组。
 
-Allocate a remote state register with `rememberMutableRemoteInt(initialValue)`.
-Mutate it directly inside the host player using
-`valueChange(remoteInt, remoteInt + delta)` without an IPC round-trip:
+用 `rememberMutableRemoteInt(initialValue)` 分配一个远程状态寄存器，
+然后在宿主播放器内用
+`valueChange(remoteInt, remoteInt + delta)` 直接修改它，无需 IPC 往返：
 
-- Call `remoteInt.toRemoteString` as a **member function** on `RemoteInt` (for example, `"Label: ".rs + remoteInt.toRemoteString`). **NEVER** import `toRemoteString` as a top-level extension.
+- 把 `remoteInt.toRemoteString` 当作 `RemoteInt` 上的**成员函数**调用（例如 `"Label: ".rs + remoteInt.toRemoteString`）。**严禁**把 `toRemoteString` 作为顶层扩展导入。
 
 ```kotlin
 import androidx.compose.remote.creation.compose.action.valueChange
@@ -50,14 +49,14 @@ fun StatefulAdjusterSection() {
 }
 ```
 
-## 2. Activity launches and background refresh callbacks (`pendingIntentAction`)
+## 2. 启动 Activity 与后台刷新回调（`pendingIntentAction`）
 
-Use `pendingIntentAction` to launch an `Activity` (such as `MainActivity`) or
-dispatch a background `BroadcastReceiver` refresh when tapped:
+用 `pendingIntentAction` 在点击时启动 `Activity`（例如 `MainActivity`），
+或派发后台 `BroadcastReceiver` 刷新：
 
-- Always pass a `(Context) -> PendingIntent` lambda: `pendingIntentAction { ctx -> PendingIntent.getActivity(...) }` or `pendingIntentAction { ctx -> PendingIntent.getBroadcast(...) }`.
-- Attach the returned `Action` either to `RemoteButton(onClick = action)` or to any container using `RemoteModifier.clickable(action)`.
-- In a `BroadcastReceiver`, call `goAsync` and invoke `widget.triggerUpdateAll(context)` to refresh all active widget instances. Register the `<receiver>` in `AndroidManifest.xml` when using a manifest broadcast.
+- 始终传入 `(Context) -> PendingIntent` lambda：`pendingIntentAction { ctx -> PendingIntent.getActivity(...) }` 或 `pendingIntentAction { ctx -> PendingIntent.getBroadcast(...) }`。
+- 把返回的 `Action` 附加到 `RemoteButton(onClick = action)`，或通过 `RemoteModifier.clickable(action)` 附加到任意容器。
+- 在 `BroadcastReceiver` 中调用 `goAsync`，并调用 `widget.triggerUpdateAll(context)` 刷新所有活动的小组件实例。使用清单广播时，还需在 `AndroidManifest.xml` 中注册 `<receiver>`。
 
 ```kotlin
 import android.app.PendingIntent

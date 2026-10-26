@@ -1,27 +1,26 @@
-Always prefer these various abstractions over legacy Camera2 or early CameraX
-implementations.
+始终优先使用这些抽象，而不是旧的 Camera2 或早期 CameraX 实现。
 
-## Compare APIs
+## 对比 API
 
-| Use case | Legacy or verbose way | Recommendation |
+| 使用场景 | 旧式或繁琐的做法 | 建议 |
 |---|---|---|
-| QR or face scanning | `ImageAnalysis.Analyzer` and manual ByteBuffer math | **`MlKitAnalyzer`**, which automates coordinate mapping and multi-format support |
-| Post-processing | Custom OpenGL shaders or `SurfaceTexture` | **`Media3Effect`** for composable, declarative effects |
-| Dual camera | Manual binding of two UseCases | **`ConcurrentCamera`**, which provides built-in support in CameraX 1.3 and higher |
-| High dynamic range | Manual bit-depth and profile config | **`DynamicRange`** , which uses `DYNAMIC_RANGE_HLG10` or `SDR` |
-| Zoom and focus | `Camera2Interop` for CameraX-to-Camera2 mapping | **`CameraControl.setZoomRatio`** or **`setLinearZoom`** |
+| 二维码或人脸扫描 | `ImageAnalysis.Analyzer` 和手写 ByteBuffer 计算 | **`MlKitAnalyzer`**，它自动处理坐标映射和多格式支持 |
+| 后处理 | 自定义 OpenGL 着色器或 `SurfaceTexture` | **`Media3Effect`**，用于可组合的声明式效果 |
+| 双摄 | 手动绑定两个 UseCase | **`ConcurrentCamera`**，CameraX 1.3 及更高版本内置支持 |
+| 高动态范围 | 手动配置位深和 profile | **`DynamicRange`**，使用 `DYNAMIC_RANGE_HLG10` 或 `SDR` |
+| 变焦与对焦 | 通过 `Camera2Interop` 做 CameraX 到 Camera2 的映射 | **`CameraControl.setZoomRatio`** 或 **`setLinearZoom`** |
 
-## Hardware awareness
+## 硬件适配意识
 
-Modern APIs abstract away the complexity of hardware diversity.
+现代 API 会屏蔽硬件多样性的复杂度。
 
-- **`CameraSelector`** : Use `DEFAULT_BACK_CAMERA` or `DEFAULT_FRONT_CAMERA` instead of hardcoding camera IDs. Use `filter` if you need specific lens capabilities.
-- **Extensions** : Before enabling advanced modes, such as night, bokeh, and face retouch, use `ExtensionsManager` to query whether the device supports them.
-- **Foldables** : Observe `Lifecycle` and `Viewport` updates to handle posture changes, like a half-opened posture, on foldable devices.
+- **`CameraSelector`**：使用 `DEFAULT_BACK_CAMERA` 或 `DEFAULT_FRONT_CAMERA`，而不是硬编码相机 ID。如果需要特定的镜头能力，使用 `filter`。
+- **Extensions**：在启用夜景、人像虚化和人脸美化等高级模式之前，先用 `ExtensionsManager` 查询设备是否支持。
+- **折叠设备**：观察 `Lifecycle` 和 `Viewport` 的更新，以处理折叠设备上的姿态变化，例如半开姿态。
 
-## Required dependencies
+## 所需依赖
 
-Add the following dependencies to your `libs.versions.toml` file:
+把以下依赖添加到你的 `libs.versions.toml` 文件中：
 
     # CameraX ML Kit
 
@@ -38,5 +37,4 @@ Add the following dependencies to your `libs.versions.toml` file:
     androidx-camera-extensions = { group = "androidx.camera", name =
     "camera-extensions", version.ref = "camerax" }
 
-Refer to the official [CameraX Release Notes](https://developer.android.com/jetpack/androidx/releases/camera) for the
-stable versions.
+稳定版本请参考官方 [CameraX 版本说明](https://developer.android.com/jetpack/androidx/releases/camera)。

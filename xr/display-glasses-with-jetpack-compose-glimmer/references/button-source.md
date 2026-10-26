@@ -1,5 +1,4 @@
-When creating a Glimmer Button component, refer to the following source code in
-`Button.kt`:
+创建 Glimmer Button 组件时，参考 `Button.kt` 中的以下源代码：
 
 
 ```kotlin

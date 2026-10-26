@@ -1,5 +1,4 @@
-When creating a `Typography` instance with the Google Sans Flex configuration,
-refer to the following source code in `GoogleSansFlexTypography.kt`:
+用 Google Sans Flex 配置创建 `Typography` 实例时，参考 `GoogleSansFlexTypography.kt` 中的以下源代码：
 
 
 ```kotlin

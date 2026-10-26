@@ -1,10 +1,6 @@
 ---
 name: media3-cast-integration
-description: Implements Google Cast support in Android apps using Jetpack Media3.
-  Handles adding build dependencies, updating manifest, configuring OptionsProvider,
-  and managing CastPlayer or RemoteCastPlayer for playback in both Compose and View-based
-  UIs. Use when adding Cast functionality or migrating from legacy Cast SDK to Media3
-  Cast.
+description: 使用 Jetpack Media3 在 Android 应用中实现 Google Cast 支持。涵盖添加构建依赖、更新清单（manifest）、配置 OptionsProvider，以及在基于 Compose 和基于 View 的 UI 中管理用于播放的 CastPlayer 或 RemoteCastPlayer。在添加 Cast 功能或从旧式 Cast SDK 迁移到 Media3 Cast 时使用。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -20,88 +16,83 @@ metadata:
   - Jetpack Media3
 ---
 
-## Prerequisites
+## 前置条件
 
-- Jetpack Media3 version must be `>= 1.9.0`. Cast isn't available in lower versions.
+- Jetpack Media3 版本必须为 `>= 1.9.0`。更低版本不支持 Cast。
 
-## Glossary
+## 术语表
 
-- **`CastPlayer`** : Media3 `Player` that controls playback on both local and remote Cast devices.
-- **`RemoteCastPlayer`** : Media3 `Player` that communicates with a Cast receiver, only used for remote playback.
-- **Google Cast SDK**: Legacy casting SDK in maintenance mode, superseded by Jetpack Media3.
-- **`OptionsProvider`** : Interface providing configuration options to initialize GMS `CastContext`.
+- **`CastPlayer`** ：Media3 `Player`，同时控制本地和远端 Cast 设备上的播放。
+- **`RemoteCastPlayer`** ：与 Cast 接收端通信的 Media3 `Player`，仅用于远端播放。
+- **Google Cast SDK**：处于维护模式的旧式投屏 SDK，已被 Jetpack Media3 取代。
+- **`OptionsProvider`** ：为初始化 GMS `CastContext` 提供配置选项的接口。
 
-## Common guidelines
+## 通用指南
 
-- Legacy [Google Cast SDK](https://developers.google.com/cast) is in maintenance mode.
-- For new Cast setups:
-  - You must use [Jetpack Media3 Cast](references/android/media/media3/cast/index.md).
-  - You mustn't use legacy Cast SDK unless explicitly requested.
+- 旧式 [Google Cast SDK](https://developers.google.com/cast) 处于维护模式。
+- 对于新的 Cast 配置：
+  - 你必须使用 [Jetpack Media3 Cast](references/android/media/media3/cast/index.md)。
+  - 除非明确要求，否则不得使用旧式 Cast SDK。
 
-## Step 1: Set up dependencies
+## 步骤 1：配置依赖
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你**必须**确保以下内容：
 
-- In the app-level build file, declare the `media3-cast` dependency version
-  1.9.0 or higher.
+- 在应用级构建文件中声明 `media3-cast` 依赖，版本为 1.9.0 或更高。
 
       implementation("androidx.media3:media3-cast:1.11.1")
 
-- Ensure required Media3 dependencies are present:
+- 确保所需的 Media3 依赖存在：
 
   - `androidx.media3:media3-exoplayer`
   - `androidx.media3:media3-session`
   - `androidx.media3:media3-ui-compose`
-- If the application uses legacy Views, add `media3-ui`.
+- 如果应用使用旧式 View，添加 `media3-ui`。
 
-- Enforce the same versions across all Media3 dependencies.
+- 在所有 Media3 依赖中强制使用相同版本。
 
-- Use configurations in "Add build dependencies" section of [Getting started
-  with CastPlayer](references/android/media/media3/cast/create-castplayer.md) as the source of
-  truth.
+- 以 [CastPlayer 快速入门](references/android/media/media3/cast/create-castplayer.md)中「Add build dependencies」一节的配置为准。
 
-- **For apps without an existing Cast integration:**
+- **对于尚无 Cast 集成的应用：**
 
-  - Verify legacy Cast SDK (`libs.play.services.cast.framework`) is absent.
-- **If Migrating from Legacy Cast SDK:**
+  - 确认旧式 Cast SDK（`libs.play.services.cast.framework`）不存在。
+- **如果是从旧式 Cast SDK 迁移：**
 
-  - Add Media3 Cast dependencies first.
-  - Keep existing legacy dependencies untouched at this stage to prevent compilation errors.
+  - 先添加 Media3 Cast 依赖。
+  - 此阶段保持现有旧式依赖不动，以避免编译错误。
 
-## Step 2: Update the manifest
+## 步骤 2：更新清单
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你**必须**确保以下内容：
 
-- Inside the manifest's `<application>` tag, declare the Cast options provider.
-- Use `DefaultCastOptionsProvider` by default. See the "OptionsProvider" section in [Getting started with
-  CastPlayer](references/android/media/media3/cast/create-castplayer.md).
-- Declare a custom `OptionsProvider` only if explicitly requested. See [Customize CastOptions](references/android/media/media3/cast/customize-castoptions.md).
-- Ensure `INTERNET` permission is present. Don't add any unnecessary permissions.
-- **If Migrating from Legacy Cast SDK:**
-  - Don't delete existing custom options provider files or manifest entries.
+- 在清单的 `<application>` 标签内声明 Cast options provider。
+- 默认使用 `DefaultCastOptionsProvider`。参见 [CastPlayer 快速入门](references/android/media/media3/cast/create-castplayer.md)中的「OptionsProvider」一节。
+- 仅在明确要求时声明自定义 `OptionsProvider`。参见[自定义 CastOptions](references/android/media/media3/cast/customize-castoptions.md)。
+- 确保存在 `INTERNET` 权限。不要添加任何不必要的权限。
+- **如果是从旧式 Cast SDK 迁移：**
+  - 不要删除现有的自定义 options provider 文件或清单条目。
 
-## Step 3: Implement the player and service
+## 步骤 3：实现播放器与 service
 
-### Architecture baseline
+### 架构基线
 
-Before integrating Media3 Cast, an existing app follows one of two setups:
+在集成 Media3 Cast 之前，现有应用通常采用以下两种配置之一：
 
-- **Local-only playback:** Uses Media3 `ExoPlayer` only to support local playback.
-- **Legacy Cast setup:** Uses `ExoPlayer` for local playback, alongside a `Player` wrapper over the legacy `RemoteMediaClient` for remote playback. The UI interfaces with a `MediaSession` interacting with a `ForwardingPlayer`, which finally routes controls to either local or remote playback.
+- **仅本地播放：** 只使用 Media3 `ExoPlayer` 支持本地播放。
+- **旧式 Cast 配置：** 本地播放使用 `ExoPlayer`，远端播放则在旧式 `RemoteMediaClient` 之上套一层 `Player` 包装。UI 与 `MediaSession` 交互，`MediaSession` 与 `ForwardingPlayer` 交互，后者最终把控制路由到本地或远端播放。
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你**必须**确保以下内容：
 
-- Inside the application's `MediaSessionService` (or `MediaLibraryService`) `onCreate()` method, initialize `ExoPlayer` and `CastPlayer`.
-- Use `CastPlayer` by default unless `RemoteCastPlayer` is explicitly requested. See the "Build a CastPlayer" section in [Getting started with
-  CastPlayer](references/android/media/media3/cast/create-castplayer.md).
-- For `CastPlayer`, pass the instance directly to `MediaSession.Builder`.
-- Replace all legacy forwarding player wrappers.
-- Don't delete legacy class files yet to prevent compilation errors during migration.
+- 在应用的 `MediaSessionService`（或 `MediaLibraryService`）的 `onCreate()` 方法中初始化 `ExoPlayer` 和 `CastPlayer`。
+- 默认使用 `CastPlayer`，除非明确要求 `RemoteCastPlayer`。参见 [CastPlayer 快速入门](references/android/media/media3/cast/create-castplayer.md)中的「Build a CastPlayer」一节。
+- 对于 `CastPlayer`，把实例直接传给 `MediaSession.Builder`。
+- 替换所有旧式的转发播放器包装。
+- 暂时不要删除旧式类文件，以免迁移期间出现编译错误。
 
-### Advanced: `RemoteCastPlayer`
+### 进阶：`RemoteCastPlayer`
 
-- Use `RemoteCastPlayer` only if explicitly requested by user.
-- Initialize `MediaSession` with `localPlayer` and set a `SessionAvailabilityListener` on `RemoteCastPlayer` to transfer playback state on Cast session availability changes:
+- 仅在用户明确要求时使用 `RemoteCastPlayer`。
+- 用 `localPlayer` 初始化 `MediaSession`，并在 `RemoteCastPlayer` 上设置 `SessionAvailabilityListener`，以便在 Cast 会话可用性变化时转移播放状态：
 
     class PlaybackService : MediaSessionService() {
       private var mediaSession: MediaSession? = null
@@ -146,20 +137,20 @@ To complete this step, you **MUST** ensure the following:
       }
     }
 
-## Step 4: Set up the UI
+## 步骤 4：配置 UI
 
-### Compose-based UI
+### 基于 Compose 的 UI
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你**必须**确保以下内容：
 
-- See the "Add a MediaRouteButton Composable to the Player" section in [Getting started with CastPlayer](references/android/media/media3/cast/create-castplayer.md) for Compose integration guidelines.
-- Use the [`MediaRouteButton` composable](https://developer.android.com/reference/kotlin/androidx/media3/cast/MediaRouteButton.composable) from `androidx.media3.cast` package.
-- Don't use `AndroidView` in the Compose UI hierarchy.
-- Place `MediaRouteButton` in an area next to playback controls. Don't hide it behind system UI.
-- Don't use `PlayerSurface` for custom player UI. Use the Material3 [`Player`
-  composable](https://developer.android.com/reference/kotlin/androidx/media3/ui/compose/material3/Player.composable).
-- Force recomposition on playback location shifts to ensure UI sync. Use key
-  constraints on `DeviceInfo` changes:
+- 参见 [CastPlayer 快速入门](references/android/media/media3/cast/create-castplayer.md)中的「Add a MediaRouteButton Composable to the Player」一节，了解 Compose 集成指南。
+- 使用 `androidx.media3.cast` 包中的 [`MediaRouteButton` composable](https://developer.android.com/reference/kotlin/androidx/media3/cast/MediaRouteButton.composable)。
+- 不要在 Compose UI 层级中使用 `AndroidView`。
+- 把 `MediaRouteButton` 放在播放控件旁边的区域。不要把它藏在系统 UI 之后。
+- 不要为自定义播放器 UI 使用 `PlayerSurface`。使用 Material3 的 [`Player`
+  composable](https://developer.android.com/reference/kotlin/androidx/media3/ui/compose/material3/Player.composable)。
+- 在播放位置切换时强制重组，以确保 UI 同步。对 `DeviceInfo` 变化使用 key
+  约束：
 
       @OptIn(UnstableApi::class)
       @Composable
@@ -191,17 +182,15 @@ To complete this step, you **MUST** ensure the following:
          return deviceInfo
       }
 
-### View-based UI
+### 基于 View 的 UI
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你**必须**确保以下内容：
 
-- For View-based UI setups, see the "Add UI elements" section in [Getting
-  started with CastPlayer](references/android/media/media3/cast/create-castplayer.md).
-- Casting Activities must extend `AppCompatActivity` or `FragmentActivity` and use a `Theme.AppCompat` descendant.
-- Ensure the `AppCompat` theme has a visible `ActionBar` if adding `MediaRouteButton` to the options menu.
-- Replace all instances and imports of `CastButtonFactory` with `MediaRouteButtonFactory`.
-- Rebind `PlayerView.player` references upon `onDeviceInfoChanged` events to
-  prevent black screens or UI freezes:
+- 对于基于 View 的 UI 配置，参见 [CastPlayer 快速入门](references/android/media/media3/cast/create-castplayer.md)中的「Add UI elements」一节。
+- 投屏 Activity 必须继承 `AppCompatActivity` 或 `FragmentActivity`，并使用 `Theme.AppCompat` 的派生主题。
+- 如果要把 `MediaRouteButton` 加到 options 菜单，确保 `AppCompat` 主题有可见的 `ActionBar`。
+- 把 `CastButtonFactory` 的所有实例和 import 替换为 `MediaRouteButtonFactory`。
+- 在 `onDeviceInfoChanged` 事件发生时重新绑定 `PlayerView.player` 引用，以防黑屏或 UI 冻结：
 
       private val playerListener: Player.Listener =
         object : Player.Listener {
@@ -213,21 +202,21 @@ To complete this step, you **MUST** ensure the following:
           }
         }
 
-- **Migration to Compose:**
+- **迁移到 Compose：**
 
-  - Don't use `AndroidView` to wrap the legacy `PlayerView`.
-  - Implement Material3 [`Player` composable](https://developer.android.com/reference/kotlin/androidx/media3/ui/compose/material3/Player.composable) and [`MediaRouteButton` composable](https://developer.android.com/reference/kotlin/androidx/media3/cast/MediaRouteButton.composable) as per [Getting started with CastPlayer](references/android/media/media3/cast/create-castplayer.md).
-  - Remove legacy XML layout declarations, menu files, and View component references.
+  - 不要用 `AndroidView` 包装旧式 `PlayerView`。
+  - 按 [CastPlayer 快速入门](references/android/media/media3/cast/create-castplayer.md)实现 Material3 的 [`Player` composable](https://developer.android.com/reference/kotlin/androidx/media3/ui/compose/material3/Player.composable)和 [`MediaRouteButton` composable](https://developer.android.com/reference/kotlin/androidx/media3/cast/MediaRouteButton.composable)。
+  - 移除旧式 XML 布局声明、菜单文件和 View 组件引用。
 
-## Step 5: Clean up legacy Cast SDK code
+## 步骤 5：清理旧式 Cast SDK 代码
 
 > [!WARNING]
-> **Warning:** Don't perform cleanup directly. Remove legacy files and dependencies only when explicitly requested by the user.
+> **Warning:** 不要直接执行清理。只有在用户明确要求时才移除旧式文件和依赖。
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你**必须**确保以下内容：
 
-- Remove legacy GMS Cast SDK (`libs.play.services.cast.framework`) and MediaRouter (`libs.androidx.mediarouter`) dependencies.
-- Delete custom `OptionsProvider` classes and manifest entries if `DefaultCastOptionsProvider` is adopted.
-- Remove legacy `MediaTransferReceiver` manifest declarations if present.
-- Remove all references to legacy Cast SDK components such as legacy helper wrappers, forwarding players, and `RemoteMediaClient` interfaces.
-- Delete legacy View XML layouts, menu files, and references to `PlayerView` if the migration to Compose is complete.
+- 移除旧式 GMS Cast SDK（`libs.play.services.cast.framework`）和 MediaRouter（`libs.androidx.mediarouter`）依赖。
+- 如果采用 `DefaultCastOptionsProvider`，删除自定义 `OptionsProvider` 类和清单条目。
+- 如果存在旧式 `MediaTransferReceiver` 的清单声明，移除它。
+- 移除对旧式 Cast SDK 组件的所有引用，例如旧式辅助包装、转发播放器和 `RemoteMediaClient` 接口。
+- 如果迁移到 Compose 已完成，删除旧式 View XML 布局、菜单文件和 `PlayerView` 的引用。

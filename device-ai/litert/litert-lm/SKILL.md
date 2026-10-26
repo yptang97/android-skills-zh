@@ -1,14 +1,12 @@
 ---
 name: litert-lm
-description: Builds an Android app that runs an open text LLM on the device, on the
-  CPU or the GPU, with the LiteRT-LM Kotlin API (com.google.ai.edge.litertlm:litertlm-android).
-  Use this skill when creating a chat, summarization, or extraction feature with a
-  .litertlm model from Hugging Face litert-community (Gemma, Qwen, Llama, Phi), including
-  the Gradle dependency, the GPU manifest entries, getting the model file onto the
-  device, Engine initialization off the main thread, a streamed multi-turn Conversation
-  with sendMessageAsync, and the AndroidViewModel and Compose screen. Don't use for
-  running .tflite vision, audio, or embedding models with the CompiledModel API, for
-  image or audio input, tool calling, or NPU backends, or for converting models.
+description: 构建一个在设备端（CPU 或 GPU 上）运行开源文本 LLM 的 Android 应用，使用
+  LiteRT-LM Kotlin API（com.google.ai.edge.litertlm:litertlm-android）。当你要用 Hugging Face
+  litert-community 中的 .litertlm 模型（Gemma、Qwen、Llama、Phi）实现聊天、摘要或信息提取功能
+  时使用这个 skill，涵盖 Gradle 依赖、GPU 清单条目、把模型文件放到设备上、在主线程之外初始化
+  Engine、用 sendMessageAsync 进行流式多轮 Conversation，以及 AndroidViewModel 和 Compose
+  屏幕。不要用于以 CompiledModel API 运行 .tflite 视觉、音频或嵌入模型，也不用于图像或音频
+  输入、工具调用、NPU 后端，或转换模型。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -22,39 +20,36 @@ metadata:
   - GPU
 ---
 
-This skill provides step-by-step guidance for building an Android app that runs
-an open text LLM through the LiteRT-LM Kotlin API
-(`com.google.ai.edge.litertlm`) on the CPU or the GPU. The model is one
-`.litertlm` file. Images, audio, tool calling, and NPU backends aren't covered.
-For vision and audio models with `.tflite` files, suggest the `litert-runtime`
-skill.
+这个 skill 提供分步指导，用于构建通过 LiteRT-LM Kotlin API
+（`com.google.ai.edge.litertlm`）在 CPU 或 GPU 上运行开源文本 LLM 的 Android 应用。模型就是一个
+`.litertlm` 文件。不涵盖图像、音频、工具调用和 NPU 后端。
+对于使用 `.tflite` 文件的视觉和音频模型，建议改用 `litert-runtime`
+skill。
 
-When a LiteRT-LM class or method that this skill uses doesn't compile, you must
-read the [LiteRT-LM Android guide](https://ai.google.dev/edge/litert-lm/android) and the [LiteRT-LM README](https://github.com/google-ai-edge/LiteRT-LM/blob/main/README.md) before
-changing the code.
+当这个 skill 使用的 LiteRT-LM 类或方法无法编译时，你必须先阅读 [LiteRT-LM Android 指南](https://ai.google.dev/edge/litert-lm/android) 和 [LiteRT-LM README](https://github.com/google-ai-edge/LiteRT-LM/blob/main/README.md)，再
+修改代码。
 
-## Prerequisites
+## 前置条件
 
-- A Kotlin Android project (the Android Studio Empty Activity template is enough). The `litertlm-android` 0.18.0 AAR declares `minSdk` 24.
-- The dependency in the app-level `build.gradle.kts` file from Google Maven: `implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")`. Google Maven lists the later releases.
-- For the GPU backend, two `uses-native-library` entries inside `<application>` in `AndroidManifest.xml`. Add the `INTERNET` permission if the app downloads the model.
-- The model file lives on the device's file system (hundreds of MB to a few GB), never in `assets/` or in the APK.
+- 一个 Kotlin Android 项目（Android Studio 的 Empty Activity 模板就够用）。`litertlm-android` 0.18.0 的 AAR 声明 `minSdk` 为 24。
+- 应用级 `build.gradle.kts` 文件中来自 Google Maven 的依赖：`implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")`。Google Maven 上列出了后续版本。
+- 使用 GPU 后端时，需要在 `AndroidManifest.xml` 的 `<application>` 内添加两个 `uses-native-library` 条目。如果应用要下载模型，还要添加 `INTERNET` 权限。
+- 模型文件存放在设备的文件系统中（从数百 MB 到数 GB），绝不要放在 `assets/` 或 APK 中。
 
-## Critical mandates
+## 关键要求
 
-- **Dependency first** : Before writing code that imports `com.google.ai.edge.litertlm`, add the `litertlm-android` dependency from Step 1 if the project lacks it. Verify with `./gradlew assembleDebug`.
-- **Background initialization** : `Engine(config).initialize()` loads the weights and blocks for seconds. Call it on a background thread, never on the main thread.
-- **Single owner** : One single-thread executor owns the `Engine` and the `Conversation`. Creation, streaming, cancellation, and closing run on it.
-- **Close once** : `Engine` and `Conversation` are `AutoCloseable`. A second `close` on either throws `IllegalStateException`. So does `close` on an engine whose `initialize` threw. Store the engine only after `initialize` returns.
-- **Model outside the APK** : Pass an absolute path to `EngineConfig`. Never bundle a `.litertlm` file in `assets/`.
+- **依赖优先**：在编写导入 `com.google.ai.edge.litertlm` 的代码之前，如果项目缺少 `litertlm-android` 依赖，先按步骤 1 加上。用 `./gradlew assembleDebug` 验证。
+- **后台初始化**：`Engine(config).initialize()` 会加载权重并阻塞数秒。要在后台线程调用，绝不要在主线程调用。
+- **单一所有者**：由一个单线程 executor 持有 `Engine` 和 `Conversation`。创建、流式传输、取消和关闭都在它上面执行。
+- **只关闭一次**：`Engine` 和 `Conversation` 都是 `AutoCloseable`。对其中任一个再次调用 `close` 都会抛出 `IllegalStateException`。对 `initialize` 抛出过异常的 engine 调用 `close` 同样如此。只有在 `initialize` 返回之后才保存 engine。
+- **模型不放进 APK**：向 `EngineConfig` 传绝对路径。绝不要把 `.litertlm` 文件打包进 `assets/`。
 
-## Detailed steps
+## 详细步骤
 
-### Step 1: Configure Gradle and the manifest
+### 步骤 1：配置 Gradle 与清单
 
-Search the project for `libs.versions.toml`, `app/build.gradle.kts`, and
-`AndroidManifest.xml` before editing build files. Configure `minSdk` and add the
-LiteRT-LM dependency in `app/build.gradle.kts`:
+修改构建文件之前，先在项目中查找 `libs.versions.toml`、`app/build.gradle.kts` 和
+`AndroidManifest.xml`。在 `app/build.gradle.kts` 中配置 `minSdk` 并添加 LiteRT-LM 依赖：
 
 <br />
 
@@ -68,13 +63,12 @@ LiteRT-LM dependency in `app/build.gradle.kts`:
         implementation("com.google.ai.edge.litertlm:litertlm-android:0.18.0")
     }
 
-If the project uses Hilt, check the Dagger version first. `litertlm-android`
-0.18.0 carries Kotlin 2.4 metadata, which Hilt 2.59.2 can't read. The build
-then fails in `hiltJavaCompileDebug` with `Provided Metadata instance has
-version 2.4.0, while maximum supported version is 2.3.0`. Pick one fix:
+如果项目使用 Hilt，先检查 Dagger 版本。`litertlm-android`
+0.18.0 带有 Kotlin 2.4 元数据，Hilt 2.59.2 无法读取。构建会在 `hiltJavaCompileDebug` 阶段失败，报
+`Provided Metadata instance has version 2.4.0, while maximum supported version is 2.3.0`。从以下两种修复中选择一种：
 
-- **Path A** : Upgrade the Hilt version (`com.google.dagger`) to 2.60.1 or later. Ask the user before editing `gradle/libs.versions.toml`.
-- **Path B** : Keep the Hilt version and add a later version of the metadata reader to the annotation processor path in `app/build.gradle.kts`:
+- **路径 A**：把 Hilt 版本（`com.google.dagger`）升级到 2.60.1 或更高。修改 `gradle/libs.versions.toml` 之前先询问用户。
+- **路径 B**：保留当前 Hilt 版本，在 `app/build.gradle.kts` 的注解处理器路径中加入更高版本的元数据读取器：
 
 <br />
 
@@ -82,9 +76,8 @@ version 2.4.0, while maximum supported version is 2.3.0`. Pick one fix:
         ksp("org.jetbrains.kotlin:kotlin-metadata-jvm:2.4.21")
     }
 
-For the GPU backend, add both lines inside `<application>` in
-`AndroidManifest.xml`. Add the `INTERNET` permission outside `<application>`
-when the app downloads the model:
+使用 GPU 后端时，在 `AndroidManifest.xml` 的 `<application>` 内加入这两行。当应用要下载模型时，在
+`<application>` 之外添加 `INTERNET` 权限：
 
 <br />
 
@@ -99,62 +92,51 @@ when the app downloads the model:
             android:required="false"/>
     </application>
 
-### Step 2: Pick a model from litert-community
+### 步骤 2：从 litert-community 中选择模型
 
-Choose a `.litertlm` file from [litert-community](https://huggingface.co/litert-community) on Hugging Face. Start with
-`litert-community/gemma-4-E2B-it-litert-lm` (the file `gemma-4-E2B-it.litertlm`,
-2.6 GB). For a 0.6 GB model, start with `litert-community/Qwen3-0.6B` (the file
-`Qwen3-0.6B.litertlm`). Both files run on the CPU and the GPU. A SoC suffix such
-as `_Google_Tensor_G5` or `.mediatek.mt6993` marks an NPU build, which this
-skill doesn't cover. The model card names the tested backends and the size.
+在 Hugging Face 上从 [litert-community](https://huggingface.co/litert-community) 选择一个 `.litertlm` 文件。可以先从
+`litert-community/gemma-4-E2B-it-litert-lm` 开始（文件为 `gemma-4-E2B-it.litertlm`，
+2.6 GB）。如果需要 0.6 GB 的模型，可以从 `litert-community/Qwen3-0.6B` 开始（文件为
+`Qwen3-0.6B.litertlm`）。这两个文件都能在 CPU 和 GPU 上运行。像
+`_Google_Tensor_G5` 或 `.mediatek.mt6993` 这样的 SoC 后缀表示 NPU 构建，本
+skill 不涵盖。模型卡片会说明测试过的后端和大小。
 
-You must read [get a model](references/get-a-model.md) before you choose a model file other than these
-two, before you write the in-app download code, and when no `.litertlm` file
-exists for the model.
+在选择这两个之外的其他模型文件之前、在编写应用内下载代码之前，以及某个模型没有对应的 `.litertlm` 文件时，你必须先阅读 [获取模型](references/get-a-model.md)。
 
-### Step 3: Put the model file on the device
+### 步骤 3：把模型文件放到设备上
 
-Pick one path:
+选择一条路径：
 
-- **Path A (local testing with `adb`)** : Run the following commands only when
-  all three are true: `adb devices` lists a device, the debug build of the app
-  is installed on it, and the user supplied the local `.litertlm` path. If any
-  of them is false, don't run the commands. Report them to the user as a
-  post-implementation step instead. Replace `<path>` with the user's local path
-  and `<package>` with the app's application ID:
+- **路径 A（用 `adb` 做本地测试）**：只有以下三个条件都成立时才运行下面的命令：`adb devices` 列出了设备、该设备上已安装应用的 debug 构建、用户提供了本地 `.litertlm` 路径。任一条件不成立就不要运行这些命令，而是把它们作为实现后由用户执行的步骤报告给用户。把 `<path>` 替换为用户本地路径，把 `<package>` 替换为应用的 application ID：
 
   1. `adb push <path> /data/local/tmp/model.litertlm`
   2. `adb shell run-as <package> cp /data/local/tmp/model.litertlm files/`
-- **Path B (in-app download)** : Write the download code in the app. Use the
-  app's HTTP client to write into `filesDir`, or `DownloadManager` to write
-  into `getExternalFilesDir(null)`. `DownloadManager` can't write to internal
-  storage. Show the download progress and check the file size against the model
-  card before loading. Never download a model file in the agent's own session.
+- **路径 B（应用内下载）**：在应用中编写下载代码。使用应用的 HTTP 客户端写入 `filesDir`，或用 `DownloadManager` 写入
+  `getExternalFilesDir(null)`。`DownloadManager` 无法写入内部
+  存储。加载之前显示下载进度，并对照模型卡片检查文件大小。绝不要在 agent 自己的会话中下载模型文件。
 
-- **Path C ([Play for On-Device AI](references/android/google/play/on-device-ai.md))** : Write the code that resolves the
-  path of a fast-follow or on-demand AI pack with the AI Delivery library
-  (`com.google.android.play:ai-delivery`):
-  `AiPackManagerFactory.getInstance(context).getPackLocation(name)?.assetsPath()`.
-  The call returns `null` until the pack has finished downloading, so show a
-  download state in that case. Creating the AI pack module and uploading the app
-  to Play Console are post-implementation steps for the user.
+- **路径 C（[Play for On-Device AI](references/android/google/play/on-device-ai.md)）**：使用 AI Delivery 库
+  （`com.google.android.play:ai-delivery`）编写解析 fast-follow 或按需 AI 包
+  路径的代码：
+  `AiPackManagerFactory.getInstance(context).getPackLocation(name)?.assetsPath()`。
+  在包下载完成之前该调用返回 `null`，这种情况下要显示下载状态。创建 AI pack 模块并把应用
+  上传到 Play Console 是由用户执行的实现后步骤。
 
-On every path, pass the absolute path of the file to the engine.
+无论用哪条路径，都要把文件的绝对路径传给 engine。
 
-### Step 4: Initialize the engine off the main thread
+### 步骤 4：在主线程之外初始化 engine
 
-Create the engine with `EngineConfig(modelPath = ..., backend = ...,
-cacheDir = ...)` and call `initialize` on a background thread:
+用 `EngineConfig(modelPath = ..., backend = ...,
+cacheDir = ...)` 创建 engine，并在后台线程调用 `initialize`：
 
-- `Backend.CPU()` is the default of `EngineConfig` and needs nothing from the device.
-- `Backend.GPU()` needs the two manifest lines from Step 1. Without them, the engine initializes, and the first reply ends in the error `Can not find
-  OpenCL library on this device`.
-- `cacheDir` speeds up the second load.
+- `Backend.CPU()` 是 `EngineConfig` 的默认值，不需要设备提供任何东西。
+- `Backend.GPU()` 需要步骤 1 中的两行清单配置。缺少它们时，engine 仍会初始化，但第一条回复会以错误 `Can not find
+  OpenCL library on this device` 结束。
+- `cacheDir` 可以加快第二次加载。
 
-### Step 5: Implement the conversation ViewModel
+### 步骤 5：实现对话 ViewModel
 
-Drive the engine and the conversation from a single-thread executor inside an
-`AndroidViewModel`, stream the reply, and expose immutable state to the UI:
+在 `AndroidViewModel` 中通过单线程 executor 驱动 engine 和 conversation，以流式输出回复，并向 UI 暴露不可变状态：
 
 <br />
 
@@ -266,27 +248,27 @@ Drive the engine and the conversation from a single-thread executor inside an
         }
     }
 
-`sendMessageAsync(text)` returns a `Flow<Message>` of chunks, and `toString`
-gives a chunk's text. `sendMessage(text)` blocks and returns the whole reply.
-The conversation keeps its history, so the next `send` continues the chat.
-`busy` keeps the button disabled until the flow completes.
+`sendMessageAsync(text)` 返回由分块组成的 `Flow<Message>`，每个分块的文本由 `toString`
+给出。`sendMessage(text)` 会阻塞并返回完整回复。
+conversation 会保留历史记录，所以下一次 `send` 会继续这次聊天。
+`busy` 会让按钮在 flow 完成之前保持禁用。
 
-To set the sampling, pass `SamplerConfig(topK = 10, topP = 0.95,
-temperature = 0.8)` in `ConversationConfig`. All three parameters are required,
-and `topP` and `temperature` are `Double`.
+要设置采样，在 `ConversationConfig` 中传入 `SamplerConfig(topK = 10, topP = 0.95,
+temperature = 0.8)`。三个参数都是必需的，
+其中 `topP` 和 `temperature` 是 `Double`。
 
-`load` with the model path that is already loaded does nothing, whatever
-backend it asks for. A second call after a rotation keeps the loaded model,
-also after the app has fallen back to another backend. `send` runs only when
-the state is `ready` and not `busy`, the same test as the button. A tap that
-lands while `release` stops a reply does nothing. A tap queued behind a
-`load` reaches the model that `load` loaded when no reply was streaming.
+用已经加载的模型路径调用 `load` 不会做任何事，无论它要求哪个
+后端。旋转屏幕后的第二次调用会保留已加载的模型，
+即使应用已经回退到另一个后端也是如此。`send` 只在
+状态为 `ready` 且不是 `busy` 时运行，与按钮的判断相同。在
+`release` 停止回复期间落下的点击不会做任何事。排在某个
+`load` 之后的点击，会在没有回复正在流式输出时到达该 `load` 所加载的模型。
 
-### Step 6: Wire the Compose screen
+### 步骤 6：接好 Compose 屏幕
 
-`viewModel` and `collectAsStateWithLifecycle` come from
-`androidx.lifecycle:lifecycle-viewmodel-compose` and
-`androidx.lifecycle:lifecycle-runtime-compose` (2.10.0):
+`viewModel` 和 `collectAsStateWithLifecycle` 来自
+`androidx.lifecycle:lifecycle-viewmodel-compose` 和
+`androidx.lifecycle:lifecycle-runtime-compose`（2.10.0）：
 
 <br />
 
@@ -328,45 +310,45 @@ lands while `release` stops a reply does nothing. A tap queued behind a
         }
     }
 
-### Step 7: Manage the engine lifecycle
+### 步骤 7：管理 engine 生命周期
 
-- Keep the engine in the `ViewModel` for as long as its screen lives. When several screens share the engine, keep it in an application-scoped holder.
-- The `ViewModel` keeps its own thread and scope. `viewModelScope` is cancelled before `onCleared` runs, so a close launched there wouldn't run. `onCleared` cancels `scope` once the close is done.
-- `release` turns `ready` off and calls `cancelProcess` until the streaming reply's flow has ended. The flow ends at the latest when the reply ends on its own. `release` then closes the conversation and the engine, each once.
-- `onCleared` and a `load` that replaces the model both call `release` under the `Mutex`, one at a time, because `release` suspends while a reply stops.
-- To start a fresh chat, close the conversation and create a new one with `createConversation`. Keep the engine loaded.
+- 只要屏幕还在，就把 engine 保存在 `ViewModel` 中。多个屏幕共享同一个 engine 时，把它放在应用作用域的持有者中。
+- `ViewModel` 使用自己的线程和作用域。`viewModelScope` 在 `onCleared` 运行之前就被取消，所以在那里启动的关闭操作不会执行。`onCleared` 会在关闭完成后取消 `scope`。
+- `release` 会把 `ready` 置为关闭，并持续调用 `cancelProcess` 直到流式回复的 flow 结束。该 flow 最迟在回复自然结束时结束。之后 `release` 关闭 conversation 和 engine，各一次。
+- `onCleared` 和替换模型的 `load` 都会在 `Mutex` 下调用 `release`，一次一个，因为 `release` 在回复停止期间会挂起。
+- 要开始新的聊天，关闭 conversation 并用 `createConversation` 创建一个新的。保持 engine 处于已加载状态。
 
-## Post-implementation steps for the user
+## 实现后由用户执行的步骤
 
-Report the steps that apply to the user after the code compiles:
+代码编译通过后，向用户报告适用的步骤：
 
-- When Path A in Step 3 didn't run, copy the model to the device with the two `adb` commands from Path A.
-- When the app uses Path C in Step 3, create the AI pack module that holds the `.litertlm` file and upload the app to Play Console.
-- When no `.litertlm` file exists for the model, convert the model on a workstation. This skill doesn't convert models.
-- When the user asks for a complete reference app, point them to [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery/blob/main/README.md).
+- 如果步骤 3 中的路径 A 没有运行，用路径 A 里的两条 `adb` 命令把模型复制到设备。
+- 如果应用使用步骤 3 中的路径 C，创建存放 `.litertlm` 文件的 AI pack 模块，并把应用上传到 Play Console。
+- 如果该模型没有对应的 `.litertlm` 文件，在工作站上转换模型。这个 skill 不负责转换模型。
+- 当用户需要完整的参考应用时，指向 [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery/blob/main/README.md)。
 
-## Troubleshooting
+## 故障排查
 
-| Symptom | Cause | Fix |
+| 现象 | 原因 | 修复 |
 |---|---|---|
-| First reply is slow. | `initialize` ran on first use. | Load at app start and set `cacheDir`. |
-| First GPU reply ends in `Can not find OpenCL library on this device`. | The manifest lacks the `uses-native-library` entries. | Add both entries from Step 1 inside `<application>`. |
-| `close` throws `IllegalStateException`. | The engine or conversation was closed twice, or `initialize` threw. | Store the engine only after `initialize` returns, and set each field to `null` after `close`. |
-| Build fails with `[Hilt] Provided Metadata instance has version 2.4.0`. | Hilt 2.59.2 can't read the Kotlin 2.4 metadata in `litertlm-android` 0.18.0. | Follow Path A or Path B in Step 1. |
+| 第一条回复很慢。 | `initialize` 在首次使用时才运行。 | 在应用启动时加载并设置 `cacheDir`。 |
+| 第一条 GPU 回复以 `Can not find OpenCL library on this device` 结束。 | 清单中缺少 `uses-native-library` 条目。 | 把步骤 1 中的两个条目加到 `<application>` 内。 |
+| `close` 抛出 `IllegalStateException`。 | engine 或 conversation 被关闭了两次，或者 `initialize` 抛出过异常。 | 只在 `initialize` 返回之后保存 engine，并在 `close` 之后把每个字段置为 `null`。 |
+| 构建失败并报 `[Hilt] Provided Metadata instance has version 2.4.0`。 | Hilt 2.59.2 无法读取 `litertlm-android` 0.18.0 中的 Kotlin 2.4 元数据。 | 按步骤 1 中的路径 A 或路径 B 处理。 |
 
-## Checklist
+## 检查清单
 
-- \[ \] Is `minSdk` set to `24` or higher and is `com.google.ai.edge.litertlm:litertlm-android:0.18.0` added in `app/build.gradle.kts`?
-- \[ \] For the GPU backend, does `AndroidManifest.xml` declare `libvndksupport.so` and `libOpenCL.so` with `android:required="false"` inside `<application>`?
-- \[ \] Is the `.litertlm` file loaded from an absolute path on the device's file system, never from `assets/`?
-- \[ \] Do `initialize`, `sendMessageAsync`, `cancelProcess`, and `close` all run on the same single-thread background executor?
-- \[ \] Is the conversation closed before the engine, each exactly once?
-- \[ \] Does the project compile with `./gradlew assembleDebug`?
+- \[ \] `minSdk` 是否设为 `24` 或更高，并且 `com.google.ai.edge.litertlm:litertlm-android:0.18.0` 是否已加到 `app/build.gradle.kts` 中？
+- \[ \] 使用 GPU 后端时，`AndroidManifest.xml` 是否在 `<application>` 内声明了 `libvndksupport.so` 和 `libOpenCL.so`，并带有 `android:required="false"`？
+- \[ \] `.litertlm` 文件是否从设备文件系统的绝对路径加载，而不是从 `assets/` 加载？
+- \[ \] `initialize`、`sendMessageAsync`、`cancelProcess` 和 `close` 是否都运行在同一个单线程后台 executor 上？
+- \[ \] conversation 是否在 engine 之前关闭，且各自只关闭一次？
+- \[ \] 项目能否用 `./gradlew assembleDebug` 编译通过？
 
-## Antipatterns
+## 反模式
 
-- **Never** call `Engine.initialize` on the Android main thread.
-- **Never** place a `.litertlm` file in `assets/` or ship it inside the APK.
-- **Never** call `close` on an engine whose `initialize` threw.
-- **Never** close the engine while a reply is streaming; call `cancelProcess` until the flow ends first.
-- **Never** close `Engine` or `Conversation` from `viewModelScope` in `onCleared`; that scope is already cancelled.
+- **绝不**在 Android 主线程调用 `Engine.initialize`。
+- **绝不**把 `.litertlm` 文件放在 `assets/` 中或打包进 APK。
+- **绝不**对 `initialize` 抛出过异常的 engine 调用 `close`。
+- **绝不**在回复正在流式输出时关闭 engine；先调用 `cancelProcess` 直到 flow 结束。
+- **绝不**在 `onCleared` 中从 `viewModelScope` 关闭 `Engine` 或 `Conversation`；该作用域已被取消。

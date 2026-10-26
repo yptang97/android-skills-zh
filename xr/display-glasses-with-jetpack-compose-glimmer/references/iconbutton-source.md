@@ -1,5 +1,4 @@
-When creating a Glimmer Icon component, refer to the following source code in
-`IconButton.kt` for icon buttons:
+在创建 Glimmer 的图标组件时，图标按钮可参考 `IconButton.kt` 中的以下源码：
 
 
 ```kotlin

@@ -1,12 +1,10 @@
 ---
 name: display-glasses-with-jetpack-compose-glimmer
-description: Provides guidelines for developing projected Android XR apps for display
-  glasses using the Jetpack Compose Glimmer UI toolkit. Covers Glimmer design principles,
-  workflows, and interaction models for the glasses form factor. Use this skill to
-  build an Android XR Augmented Experience app with Jetpack Compose Glimmer. Don't
-  use for audio-only AI glasses without a display, non-glasses Android XR headsets
-  (spatial panels or 3D volumes with Jetpack Compose for XR), or phone and tablet
-  Material 3 UIs.
+description: 提供使用 Jetpack Compose Glimmer UI 工具包为显示眼镜开发投影式 Android XR
+  应用的指南。涵盖眼镜形态下的 Glimmer 设计原则、工作流与交互模型。当你需要用 Jetpack Compose
+  Glimmer 构建 Android XR 增强体验应用时，使用这个 skill。不适用于无显示屏的纯音频 AI
+  眼镜、非眼镜形态的 Android XR 头显（用 Jetpack Compose for XR 实现的空间面板或 3D 体积），
+  以及手机和平板的 Material 3 UI。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -20,46 +18,46 @@ metadata:
   - Android XR - Augmented Experiences
 ---
 
-## Glossary
+## 术语表
 
-| Term | Definition |
+| 术语 | 定义 |
 |---|---|
-| **Intelligent eyewear** | Hands-free eyewear with speakers, camera, and microphone (audio-only or display glasses). |
-| **Display glasses** | Eyewear with a private in-lens display for glanceable visuals that pair with audio. |
-| **Jetpack Compose Glimmer** | Compose UI toolkit providing components, theming, and focus behavior for display glasses. |
-| **Projected activity** | An `Activity` running on a phone host whose UI and input are projected to connected eyewear. |
-| **Projected device** | An XR eyewear device connected to an Android host phone that projects app content to it. |
-| **GlimmerTheme** | Root styling provider for `GlimmerColors`, `GlimmerTypography`, and `GlimmerShapes`. |
-| **Additive display** | Display where black (`#000000`) renders as 100% transparent by adding light to the scene. |
-| **Augmented experiences** | Lightweight, additive Android XR experiences that help users while they're on the go. |
-| **Visual angle** | Perceived size in XR; minimum readable text is 0.6 degrees (about 18sp at 1 m). |
+| **智能眼镜** | 带扬声器、摄像头与麦克风的免手持眼镜（纯音频或带显示屏的眼镜）。 |
+| **显示眼镜** | 带私有镜片内显示屏的眼镜，可与音频配合提供一眼可读的视觉信息。 |
+| **Jetpack Compose Glimmer** | 为显示眼镜提供组件、主题与焦点行为的 Compose UI 工具包。 |
+| **投影式 Activity** | 运行在手机宿主上的 `Activity`，其 UI 与输入被投影到已连接的眼镜。 |
+| **投影设备** | 连接到 Android 宿主手机的 XR 眼镜设备，应用内容会投影到该设备。 |
+| **GlimmerTheme** | 为 `GlimmerColors`、`GlimmerTypography` 与 `GlimmerShapes` 提供样式的根 provider。 |
+| **叠加式显示屏** | 通过向场景叠加光线、使黑色（`#000000`）呈现为 100% 透明的显示屏。 |
+| **增强体验** | 轻量、叠加式的 Android XR 体验，帮助用户在移动场景中获得辅助。 |
+| **视角** | XR 中的感知尺寸；可读文本的最小值为 0.6 度（1 米处约 18sp）。 |
 
-## Prerequisites
+## 前置条件
 
-- Target `compileSdk` 37 or higher (`compileSdk = 37` or `compileSdk { version
-  = release(37) }`). Update `compileSdk` to 37 if lower.
-- When adding dependencies, follow the instructions in [Create your first
-  activity for intelligent eyewear](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/first-activity):
-  - `androidx.xr.glimmer:glimmer` (minimum `1.0.0-alpha21`, or catalog alias `libs.androidx.glimmer`)
-  - `androidx.xr.glimmer:glimmer-google-fonts` (minimum `1.0.0-alpha21`, or catalog alias `libs.androidx.glimmer.google.fonts`)
-  - `androidx.xr.projected:projected` (minimum `1.0.0-alpha13`, or catalog alias `libs.androidx.xr.projected` or `libs.androidx.projected`)
-  - Check `gradle/libs.versions.toml` first; if catalog entries exist, use them in `app/build.gradle.kts` and verify their versions meet the minimums. Never guess `1.0.0-alpha01` for `glimmer-google-fonts`.
+- 目标 `compileSdk` 为 37 或更高（`compileSdk = 37` 或 `compileSdk { version
+  = release(37) }`）。如果更低，把 `compileSdk` 更新到 37。
+- 添加依赖时，遵循 [为智能眼镜创建第一个
+  Activity](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/first-activity)：
+  - `androidx.xr.glimmer:glimmer`（最低 `1.0.0-alpha21`，或 catalog 别名 `libs.androidx.glimmer`）
+  - `androidx.xr.glimmer:glimmer-google-fonts`（最低 `1.0.0-alpha21`，或 catalog 别名 `libs.androidx.glimmer.google.fonts`）
+  - `androidx.xr.projected:projected`（最低 `1.0.0-alpha13`，或 catalog 别名 `libs.androidx.xr.projected`、`libs.androidx.projected`）
+  - 先检查 `gradle/libs.versions.toml`；如果已有 catalog 条目，就在 `app/build.gradle.kts` 中使用它们，并确认其版本满足最低要求。不要为 `glimmer-google-fonts` 猜测 `1.0.0-alpha01`。
 
-## Core constraints and limitations
+## 核心约束与限制
 
-- **Don't** : Use `MaterialTheme` or Material 3 components (`androidx.compose.material3.*`) inside Projected Activities or Glimmer UI.
-- **Do** : Use `GlimmerTheme` and Glimmer components (`androidx.xr.glimmer.*`).
-- **Do** : Always pass `createGoogleSansFlexTypography()` from `androidx.xr.glimmer.googlefonts` as `typography` in `GlimmerTheme`.
-- Specific hardware device models or unique capabilities aren't detailed.
-- **Elevation** : Material 3 shadow or elevation modifiers aren't supported. Use `ShadowScope` or `Depth` tokens from Jetpack Compose Glimmer.
-- **Typography limits**: Minimum readable text size is 18sp (0.6°). Avoid "Thin" or "Hairline" weights, which shimmer on additive lenses.
+- **不要**：在投影式 Activity 或 Glimmer UI 内使用 `MaterialTheme` 或 Material 3 组件（`androidx.compose.material3.*`）。
+- **要**：使用 `GlimmerTheme` 与 Glimmer 组件（`androidx.xr.glimmer.*`）。
+- **要**：始终把 `androidx.xr.glimmer.googlefonts` 的 `createGoogleSansFlexTypography()` 作为 `typography` 传给 `GlimmerTheme`。
+- 不逐一说明具体的硬件设备型号或特有功能。
+- **Elevation**：不支持 Material 3 的阴影或 elevation 修饰符。请使用 Jetpack Compose Glimmer 的 `ShadowScope` 或 `Depth` 令牌。
+- **排版限制**：可读文本最小字号为 18sp（0.6°）。避免使用 "Thin" 或 "Hairline" 字重，它们在叠加式镜片上会闪烁。
 
-## 1. Set up dependencies
+## 1. 配置依赖
 
-- **Set up projected activity** : When creating a projected activity, follow
-  [Create your first activity for intelligent eyewear](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/first-activity) and
-  [projectedcontext-source.md](references/projectedcontext-source.md). Set `android:requiredDisplayCategory` to
-  `android.hardware.display.category.XR_PROJECTED` in `AndroidManifest.xml`:
+- **配置投影式 Activity**：创建投影式 Activity 时，遵循
+  [为智能眼镜创建第一个 Activity](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/first-activity) 与
+  [projectedcontext-source.md](references/projectedcontext-source.md)。在 `AndroidManifest.xml` 中把 `android:requiredDisplayCategory` 设为
+  `android.hardware.display.category.XR_PROJECTED`：
 
 
   ```xml
@@ -76,15 +74,14 @@ metadata:
 
   <br />
 
-- **Mobile app integration** : In the host phone app, add a button with
-  `Text("Launch on Glasses")`. Observe
-  `ProjectedContext.isProjectedDeviceConnected(context, coroutineContext)`
-  using
-  `collectAsStateWithLifecycle(initialValue = false)` to set the button's
-  `enabled` state so it's disabled when glasses are disconnected. When
-  clicked, launch `GlassesMainActivity` on the glasses display using
-  `ProjectedContext.createProjectedActivityOptions(context).toBundle()` as
-  shown in the following snippet:
+- **手机应用集成**：在宿主手机应用里添加一个按钮，显示
+  `Text("Launch on Glasses")`。用
+  `collectAsStateWithLifecycle(initialValue = false)`
+  观察
+  `ProjectedContext.isProjectedDeviceConnected(context, coroutineContext)`，以设置按钮的
+  `enabled` 状态，使眼镜断开连接时按钮不可用。点击时，用
+  `ProjectedContext.createProjectedActivityOptions(context).toBundle()` 在眼镜显示屏上启动 `GlassesMainActivity`，
+  如以下代码片段所示：
 
 
   ```kotlin
@@ -95,21 +92,18 @@ metadata:
 
   <br />
 
-- **UI library and font** : When declaring the Glimmer, Google Fonts, and
-  Projected artifacts in `app/build.gradle.kts`, follow [Declaring Jetpack
-  Compose Glimmer Dependencies](https://developer.android.com/jetpack/androidx/releases/xr-glimmer), and follow
-  [glimmersansflextypography-source.md](references/glimmersansflextypography-source.md) when configuring Google Sans Flex
-  using `createGoogleSansFlexTypography`.
+- **UI 库与字体**：在 `app/build.gradle.kts` 中声明 Glimmer、Google Fonts 与
+  Projected 构件时，遵循 [声明 Jetpack
+  Compose Glimmer 依赖](https://developer.android.com/jetpack/androidx/releases/xr-glimmer)，并在用 `createGoogleSansFlexTypography` 配置 Google Sans Flex 时，
+  遵循 [glimmersansflextypography-source.md](references/glimmersansflextypography-source.md)。
 
-- **Theming, initial focus, and black background** : On additive displays, pure
-  black (`Color.Black` or `GlimmerTheme.colors.background`) renders as 100%
-  transparent. In `onCreate` (annotated with
-  `@OptIn(ExperimentalComposeUiApi::class)`), set
+- **主题、初始焦点与黑色背景**：在叠加式显示屏上，纯黑（`Color.Black` 或 `GlimmerTheme.colors.background`）会呈现为 100%
+  透明。在 `onCreate` 中（标注
+  `@OptIn(ExperimentalComposeUiApi::class)`），设置
   `ComposeUiFlags.isInitialFocusOnFocusableAvailable = true`
-  (`androidx.compose.ui.ComposeUiFlags`), wrap content in
-  `GlimmerTheme(typography = createGoogleSansFlexTypography())`, and apply
-  `Modifier.background(Color.Black)` (or `GlimmerTheme.colors.background`) to
-  the root container:
+  （`androidx.compose.ui.ComposeUiFlags`），用
+  `GlimmerTheme(typography = createGoogleSansFlexTypography())` 包裹内容，并对
+  根容器应用 `Modifier.background(Color.Black)`（或 `GlimmerTheme.colors.background`）：
 
 
   ```kotlin
@@ -164,70 +158,68 @@ metadata:
 
   <br />
 
-- **Hardware capabilities, permissions, and access** : When checking hardware
-  capabilities, requesting permissions, or accessing glasses hardware, follow
-  [Check device capabilities at runtime](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/check-capabilities), [Request hardware
-  permissions](references/android/develop/xr/jetpack-xr-sdk/request-hardware-permissions.md), and [Use a projected context to access hardware](references/android/develop/xr/jetpack-xr-sdk/access-hardware-projected-context.md).
+- **硬件能力、权限与访问**：检查硬件能力、请求权限或访问眼镜硬件时，遵循
+  [在运行时检查设备能力](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/check-capabilities)、[请求硬件
+  权限](references/android/develop/xr/jetpack-xr-sdk/request-hardware-permissions.md)，以及 [用投影上下文访问硬件](references/android/develop/xr/jetpack-xr-sdk/access-hardware-projected-context.md)。
 
-## 2. Minimize and translate the UI
+## 2. 精简并转换 UI
 
-- Build UI with Jetpack Compose Glimmer components and use depth for priority.
-- Design from the bottom up and always bottom-align UI (`Alignment.BottomCenter`).
-- **One thing at a time** : Show one primary piece of information at a time (for example, using `VerticalStack`) and avoid multiple simultaneous cards.
-- **Color contrast** : When choosing colors, follow [material-hct-source.md](references/material-hct-source.md) to maintain at least a 70% tone difference between foreground and background in HCT.
+- 用 Jetpack Compose Glimmer 组件构建 UI，并用深度表达优先级。
+- 自下而上设计，并始终把 UI 底部对齐（`Alignment.BottomCenter`）。
+- **一次一件事**：同一时刻只展示一条主要信息（例如使用 `VerticalStack`），避免同时出现多张卡片。
+- **颜色对比度**：选择颜色时，遵循 [material-hct-source.md](references/material-hct-source.md)，在 HCT 中保持前景与背景至少 70% 的色调差。
 
-## 3. Map input controls
+## 3. 映射输入控件
 
-- Map tap and swipe interactions to the glasses touchpad. Inputs are one-dimensional; avoid nesting scrolling controls.
-- Use System Back to dismiss temporary states or detailed views.
-- When implementing focus navigation and hardware input handling, follow [Focus in Jetpack Compose Glimmer](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/focus.md) and [Hardware Controls for display
-  glasses](references/android/design/ui/ai-glasses/guides/interaction/inputs.md). Focus movement is continuous for scrollable containers and discrete for elements like button rows.
+- 把点按与滑动交互映射到眼镜触控板。输入是一维的，避免嵌套滚动控件。
+- 用系统返回关闭临时状态或详情视图。
+- 实现焦点导航与硬件输入处理时，遵循 [Jetpack Compose Glimmer 中的焦点](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/focus.md) 与 [显示
+  眼镜的硬件控件](references/android/design/ui/ai-glasses/guides/interaction/inputs.md)。可滚动容器的焦点移动是连续的，按钮行这类元素则是离散的。
 
-## 4. Build with Jetpack Compose Glimmer
+## 4. 用 Jetpack Compose Glimmer 构建
 
-### Implementing Glimmer styles
+### 实现 Glimmer 样式
 
-When accessing theme tokens using `GlimmerTheme`, follow
-[glimmertheme-source.md](references/glimmertheme-source.md).
+使用 `GlimmerTheme` 访问主题令牌时，遵循
+[glimmertheme-source.md](references/glimmertheme-source.md)。
 
-| Category | Token | Value / Role |
+| 类别 | 令牌 | 取值 / 作用 |
 |---|---|---|
-| **Color** | primary / secondary | `#9BBFFF` / `#4C88E9` (Focal colors) |
-| **Color** | positive / negative | `#7AD48F` (Confirmation) / `#F57082` (Alert) |
-| **Color** | background | `#000000` (Pure black, renders 100% transparent) |
-| **Color** | surface | `#262626` (Use `SurfaceDefaults.border` for borders) |
-| **Shape** | Standard / Small | `RoundedCornerShape(36.dp)` / `RoundedCornerShape(12.dp)` |
+| **颜色** | primary / secondary | `#9BBFFF` / `#4C88E9`（焦点色） |
+| **颜色** | positive / negative | `#7AD48F`（确认）/ `#F57082`（警告） |
+| **颜色** | background | `#000000`（纯黑，呈现为 100% 透明） |
+| **颜色** | surface | `#262626`（边框使用 `SurfaceDefaults.border`） |
+| **形状** | Standard / Small | `RoundedCornerShape(36.dp)` / `RoundedCornerShape(12.dp)` |
 
-#### Typography scale (Google Sans Flex) and depth levels
+#### 排版比例（Google Sans Flex）与深度层级
 
-Use Google Sans Flex with variable axes `ROND` = `100f`, `wdth` = `100f`, `opsz`
-= `9f`, and `wght` by role:
+使用 Google Sans Flex，可变轴为 `ROND` = `100f`、`wdth` = `100f`、`opsz`
+= `9f`，`wght` 按角色设置：
 
-| Style | Size / Line-Height | Weight |
+| 样式 | 字号 / 行高 | 字重 |
 |---|---|---|
-| **Title Large / Medium / Small** | 30/36.sp, 24/32.sp, 20/28.sp | 725 |
-| **Body Large / Medium / Small** | 30/36.sp, 24/32.sp, 20/28.sp | 520 |
+| **Title Large / Medium / Small** | 30/36.sp，24/32.sp，20/28.sp | 725 |
+| **Body Large / Medium / Small** | 30/36.sp，24/32.sp，20/28.sp | 520 |
 | **Caption** | 18.sp / 28.sp | 650 |
 
-When simulating depth with `DepthEffect` and `DepthEffectLevels`, follow
-[deptheffect-source.md](references/deptheffect-source.md) and [deptheffectlevels-source.md](references/deptheffectlevels-source.md): use `level1`
-for resting cards and background UI, and `level2` for focused or pressed
-interactive UI.
+用 `DepthEffect` 与 `DepthEffectLevels` 模拟深度时，遵循
+[deptheffect-source.md](references/deptheffect-source.md) 与 [deptheffectlevels-source.md](references/deptheffectlevels-source.md)：静止卡片与背景 UI 用 `level1`，
+聚焦或按下的交互 UI 用 `level2`。
 
-### Implementing Jetpack Compose Glimmer components
+### 实现 Jetpack Compose Glimmer 组件
 
-#### Cards, ActionCards, ImageCards, and ButtonGroups
+#### Card、ActionCard、ImageCard 与 ButtonGroup
 
-Cards (`androidx.xr.glimmer.Card`) group related content into a single focal
-point. Never embed a `Card` within a `ListItem`. When implementing cards, follow
-the instructions in [Jetpack Compose Glimmer: Cards](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/cards.md), [card-source.md](references/card-source.md),
-and [card-samples-source.md](references/card-samples-source.md).
+Card（`androidx.xr.glimmer.Card`）把相关内容聚合成一个视觉
+焦点。不要在 `ListItem` 内嵌 `Card`。实现卡片时，遵循
+[Jetpack Compose Glimmer：Card](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/cards.md)、[card-source.md](references/card-source.md)
+与 [card-samples-source.md](references/card-samples-source.md) 中的说明。
 
-- **Clickable versus non-clickable card** : Pass `onClick = { ... }` if the entire `Card` acts as a trigger; omit `onClick` if informational. Control focus on non-clickable cards with `focusable: Boolean = true` (such as `Card(focusable = false)`).
-- **Single primary action (`ActionCard`)** : When a card has a single primary
-  button action anchored to its bottom edge, use
-  `androidx.xr.glimmer.ActionCard` instead of placing a `Button` inside
-  `Card`. Its `action` button takes focus directly:
+- **可点击与不可点击的卡片**：如果整张 `Card` 作为触发器，就传 `onClick = { ... }`；如果只是信息展示，就省略 `onClick`。用 `focusable: Boolean = true`（例如 `Card(focusable = false)`）控制不可点击卡片的焦点。
+- **单一主操作（`ActionCard`）**：当卡片只有一个锚定在底边的主
+  按钮操作时，改用
+  `androidx.xr.glimmer.ActionCard`，不要把 `Button` 放进
+  `Card` 内。它的 `action` 按钮会直接获得焦点：
 
 
   ```kotlin
@@ -244,13 +236,13 @@ and [card-samples-source.md](references/card-samples-source.md).
 
   <br />
 
-- **Multiple actions (`Card` and `ButtonGroup`)---avoiding focus contention** :
-  When pairing a card with multiple action buttons, use
-  `androidx.xr.glimmer.ButtonGroup` (with optional
-  `rememberButtonGroupState`). **Never nest `ButtonGroup` inside `Card { ...
-  }`.** Place a non-focusable `Card(focusable = false)` (without `onClick`)
-  **above** `ButtonGroup` as a sibling in a `Column` so the card and buttons
-  don't compete for focus:
+- **多个操作（`Card` 与 `ButtonGroup`）---避免焦点争用**：
+  当卡片需要搭配多个操作按钮时，使用
+  `androidx.xr.glimmer.ButtonGroup`（可选配
+  `rememberButtonGroupState`）。**绝不要把 `ButtonGroup` 嵌在 `Card { ...
+  }` 内。** 把不可聚焦的 `Card(focusable = false)`（不带 `onClick`）作为
+  `ButtonGroup` 的兄弟节点放在 **其上方**（同一 `Column` 中），这样卡片与按钮
+  不会争抢焦点：
 
 
   ```kotlin
@@ -265,19 +257,18 @@ and [card-samples-source.md](references/card-samples-source.md).
 
   <br />
 
-- **Image cards** : Use `ImageCard`, `LeadingImageCard`, or `TrailingImageCard`
-  to display prominent imagery alongside card text.
+- **图片卡片**：用 `ImageCard`、`LeadingImageCard` 或 `TrailingImageCard`
+  在卡片文字旁展示醒目的图片。
 
-#### Buttons and ToggleButtons
+#### Button 与 ToggleButton
 
-When implementing buttons or toggle buttons, follow the instructions in [Jetpack
-Compose Glimmer: Buttons](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/buttons.md), [button-source.md](references/button-source.md), and
-[button-samples-source.md](references/button-samples-source.md).
+实现按钮或开关按钮时，遵循 [Jetpack
+Compose Glimmer：Button](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/buttons.md)、[button-source.md](references/button-source.md) 与
+[button-samples-source.md](references/button-samples-source.md) 中的说明。
 
-- **Standard and icon buttons** : Use `Button` for text actions (with optional `leadingIcon`/`trailingIcon`) and `IconButton` for icon-only triggers (such as media next-track or previous-track buttons).
-- **Toggle buttons (`ToggleButton` and `IconToggleButton`)** : Use
-  `ToggleButton` or `IconToggleButton` for stateful on/off or play/pause
-  controls that morph based on `checked`:
+- **标准按钮与图标按钮**：文本操作使用 `Button`（可带 `leadingIcon`/`trailingIcon`），仅图标触发器使用 `IconButton`（例如媒体的下一曲或上一曲按钮）。
+- **开关按钮（`ToggleButton` 与 `IconToggleButton`）**：对需要根据 `checked` 变形的有状态开/关或播放/暂停
+  控件，使用 `ToggleButton` 或 `IconToggleButton`：
 
 
   ```kotlin
@@ -302,17 +293,17 @@ Compose Glimmer: Buttons](references/android/develop/xr/jetpack-xr-sdk/jetpack-c
 
   <br />
 
-#### Title chips
+#### 标题 chip
 
-`TitleChip` (`androidx.xr.glimmer.TitleChip`) is a non-interactive pill header
-(three words or fewer, single line). When implementing title chips, follow the
-instructions in [Jetpack Compose Glimmer: Title Chips](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/title-chips.md),
-[titlechip-source.md](references/titlechip-source.md), and [titlechip-samples-source.md](references/titlechip-samples-source.md).
+`TitleChip`（`androidx.xr.glimmer.TitleChip`）是不可交互的胶囊形标题
+（不超过三个词，单行）。实现标题 chip 时，遵循
+[Jetpack Compose Glimmer：Title Chip](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/title-chips.md)、
+[titlechip-source.md](references/titlechip-source.md) 与 [titlechip-samples-source.md](references/titlechip-samples-source.md) 中的说明。
 
-- **Spatial spacing** : When placing a standalone `TitleChip` above a `Card` or
-  `ActionCard`, center the `TitleChip` horizontally and separate it from the
-  card using `TitleChipDefaults.associatedContentSpacing` (using `Spacer` or
-  `Arrangement.spacedBy(TitleChipDefaults.associatedContentSpacing)`):
+- **空间间距**：把独立的 `TitleChip` 放在 `Card` 或
+  `ActionCard` 上方时，让 `TitleChip` 水平居中，并用
+  `TitleChipDefaults.associatedContentSpacing` 把它与卡片分隔（使用 `Spacer` 或
+  `Arrangement.spacedBy(TitleChipDefaults.associatedContentSpacing)`）：
 
 
   ```kotlin
@@ -336,31 +327,30 @@ instructions in [Jetpack Compose Glimmer: Title Chips](references/android/develo
 
   <br />
 
-#### Icons
+#### 图标
 
-When adding icons or icon buttons, follow the instructions in [Jetpack Compose
-Glimmer: Icons](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/icons.md), [icon-source.md](references/icon-source.md), [iconbutton-source.md](references/iconbutton-source.md), and
-[iconsizes-source.md](references/iconsizes-source.md).
+添加图标或图标按钮时，遵循 [Jetpack Compose
+Glimmer：图标](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/icons.md)、[icon-source.md](references/icon-source.md)、[iconbutton-source.md](references/iconbutton-source.md) 与
+[iconsizes-source.md](references/iconsizes-source.md) 中的说明。
 
-- **Sizing and interactivity** : Size icons with `GlimmerTheme.iconSizes` (`small`, `medium`, `large`). Use `IconButton` or `IconToggleButton` for triggers and `Icon` for status indicators.
-- **Contrast and library** : **Never** use pure black (`Color.Black`) for icon tints; black renders as transparent. Use [Material Symbols](https://fonts.google.com/icons?icon.style=Rounded) (600 weight, Rounded, Unfilled). If `androidx.compose.material:material-icons-*` isn't in `app/build.gradle.kts`, build vectors with `ImageVector.Builder` or `painterResource` instead of importing `androidx.compose.material.icons.*`.
+- **尺寸与交互性**：用 `GlimmerTheme.iconSizes`（`small`、`medium`、`large`）设置图标尺寸。触发器使用 `IconButton` 或 `IconToggleButton`，状态指示使用 `Icon`。
+- **对比度与图标库**：**绝不要**用纯黑（`Color.Black`）给图标着色；黑色会渲染成透明。使用 [Material Symbols](https://fonts.google.com/icons?icon.style=Rounded)（600 字重、Rounded、Unfilled）。如果 `app/build.gradle.kts` 中没有 `androidx.compose.material:material-icons-*`，就用 `ImageVector.Builder` 或 `painterResource` 构建矢量图，不要导入 `androidx.compose.material.icons.*`。
 
-#### Lists
+#### 列表
 
-Use `GlimmerLazyColumn` (`androidx.xr.glimmer.list.GlimmerLazyColumn`) for
-homogeneous scrollable items. When building scrollable lists and list items,
-follow the API definitions in [list-source.md](references/list-source.md), [listitem-source.md](references/listitem-source.md),
-and [liststate-source.md](references/liststate-source.md).
+同类的可滚动项使用 `GlimmerLazyColumn`（`androidx.xr.glimmer.list.GlimmerLazyColumn`）。
+构建可滚动列表与列表项时，遵循 [list-source.md](references/list-source.md)、[listitem-source.md](references/listitem-source.md)
+与 [liststate-source.md](references/liststate-source.md) 中的 API 定义。
 
-- **Always use `GlimmerLazyColumn`** : Never use foundation `LazyColumn`. Import `GlimmerLazyColumn`, `rememberGlimmerLazyListState`, and `items` from `androidx.xr.glimmer.list` (`item` is a scope member, not imported). For programmatic scrolling to the first item, hoist `val listState =
-  rememberGlimmerLazyListState()` and call `listState.scrollToItem(0)` or `listState.animateScrollToItem(0)`.
-- **Integrated title, spacing, and rows** : Pass headers using `title = {
-  TitleChip { Text("...") } }` directly on `GlimmerLazyColumn` (not outside
-  it), set `verticalArrangement = Arrangement.spacedBy(20.dp)`, and render
-  rows with `androidx.xr.glimmer.ListItem(onClick = { ... }, supportingLabel =
-  { Text(...) }) { Text(...) }` (pass the primary label as the trailing
-  `content` lambda, not `headlineContent`, and never nest a `Card` inside
-  `ListItem`):
+- **始终使用 `GlimmerLazyColumn`**：绝不要用 foundation 的 `LazyColumn`。从 `androidx.xr.glimmer.list` 导入 `GlimmerLazyColumn`、`rememberGlimmerLazyListState` 与 `items`（`item` 是作用域成员，无需导入）。要用代码滚动到第一项，先上提 `val listState =
+  rememberGlimmerLazyListState()`，再调用 `listState.scrollToItem(0)` 或 `listState.animateScrollToItem(0)`。
+- **内建标题、间距与行**：用 `title = {
+  TitleChip { Text("...") } }` 直接在 `GlimmerLazyColumn` 上传入标题（不要放在
+  外面），设置 `verticalArrangement = Arrangement.spacedBy(20.dp)`，并用
+  `androidx.xr.glimmer.ListItem(onClick = { ... }, supportingLabel =
+  { Text(...) }) { Text(...) }` 渲染行
+  （把主标签作为末尾的 `content` lambda 传入，而不是 `headlineContent`，且绝不要在
+  `ListItem` 内嵌 `Card`）：
 
 
   ```kotlin
@@ -376,19 +366,18 @@ and [liststate-source.md](references/liststate-source.md).
 
   <br />
 
-#### Stacks
+#### 堆叠
 
-Use `VerticalStack` (`androidx.xr.glimmer.stack.VerticalStack`) to display
-heterogeneous cards one at a time (such as calendar, transit, and weather
-cards). **Never** use a `TitleChip` with `VerticalStack`. When implementing a
-`VerticalStack`, follow the API definitions in [stack-source.md](references/stack-source.md),
-[stackstate-source.md](references/stackstate-source.md), and [stackitemscope-source.md](references/stackitemscope-source.md).
+用 `VerticalStack`（`androidx.xr.glimmer.stack.VerticalStack`）一次显示一张不同类型的
+卡片（例如日历、通勤与天气
+卡片）。**绝不要**把 `TitleChip` 与 `VerticalStack` 一起使用。实现
+`VerticalStack` 时，遵循 [stack-source.md](references/stack-source.md)、
+[stackstate-source.md](references/stackstate-source.md) 与 [stackitemscope-source.md](references/stackitemscope-source.md) 中的 API 定义。
 
-- **Bottom alignment, height (+66.dp), and `itemDecoration`** : Align
-  `VerticalStack` to `Alignment.BottomCenter`, set its height to **`66.dp`
-  taller than the tallest card** (`maxCardHeight + 66.dp`), and apply
-  `Modifier.itemDecoration(CardDefaults.shape)` to the `Card` inside every
-  `item { ... }` block so background cards are clipped and masked:
+- **底部对齐、高度（+66.dp）与 `itemDecoration`**：把
+  `VerticalStack` 对齐到 `Alignment.BottomCenter`，把高度设为**比最高的卡片高 `66.dp`**
+  （`maxCardHeight + 66.dp`），并对每个
+  `item { ... }` 块内的 `Card` 应用 `Modifier.itemDecoration(CardDefaults.shape)`，使背景卡片被裁剪并遮罩：
 
 
   ```kotlin
@@ -410,17 +399,16 @@ cards). **Never** use a `TitleChip` with `VerticalStack`. When implementing a
 
   <br />
 
-#### Horizontal pagers and animated text
+#### 横向分页器与动画文本
 
-Use `GlimmerHorizontalPager`
-(`androidx.xr.glimmer.pager.GlimmerHorizontalPager`) with
-`rememberGlimmerPagerState(pageCount = { ... })` for horizontal card
-walkthroughs (never foundation `HorizontalPager`).
+横向卡片浏览使用 `GlimmerHorizontalPager`
+（`androidx.xr.glimmer.pager.GlimmerHorizontalPager`）搭配
+`rememberGlimmerPagerState(pageCount = { ... })`（绝不要用 foundation 的 `HorizontalPager`）。
 
-- **Smooth text motion** : Inside pager pages, configure Glimmer [`Text`](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/text.md)
-  (`androidx.xr.glimmer.Text`, never `androidx.compose.material3.Text`) with
-  `textMotion = TextMotion.Animated` (using `.copy(textMotion =
-  TextMotion.Animated)`) for smooth rendering during snap transitions:
+- **平滑文本运动**：在分页页面内，为 Glimmer 的 [`Text`](references/android/develop/xr/jetpack-xr-sdk/jetpack-compose-glimmer/text.md)
+  （`androidx.xr.glimmer.Text`，绝不要用 `androidx.compose.material3.Text`）配置
+  `textMotion = TextMotion.Animated`（使用 `.copy(textMotion =
+  TextMotion.Animated)`），让吸附切换时的渲染更平滑：
 
 
   ```kotlin
@@ -446,15 +434,15 @@ walkthroughs (never foundation `HorizontalPager`).
 
 #### Surface
 
-`Modifier.surface` (`androidx.xr.glimmer.surface`) builds custom interactive
-components (such as status badges without `Card` or `Button`). When creating
-custom surfaces, follow the API definitions in [surface-source.md](references/surface-source.md).
+`Modifier.surface`（`androidx.xr.glimmer.surface`）用于构建自定义交互
+组件（例如不用 `Card` 或 `Button` 的状态徽标）。创建
+自定义 surface 时，遵循 [surface-source.md](references/surface-source.md) 中的 API 定义。
 
-- **Shared `MutableInteractionSource` and order** : Create a single `remember {
-  MutableInteractionSource() }` and pass it to both
-  `Modifier.surface(interactionSource = interactionSource, ...)` and
-  `.clickable(interactionSource = interactionSource, ...)` (or `.focusable`),
-  chaining `.surface(...)` **before** `.clickable(...)`:
+- **共用 `MutableInteractionSource` 与链式顺序**：创建一个 `remember {
+  MutableInteractionSource() }`，同时传给
+  `Modifier.surface(interactionSource = interactionSource, ...)` 与
+  `.clickable(interactionSource = interactionSource, ...)`（或 `.focusable`），
+  并把 `.surface(...)` 链在 `.clickable(...)` **之前**：
 
 
   ```kotlin
@@ -493,12 +481,12 @@ custom surfaces, follow the API definitions in [surface-source.md](references/su
 
   <br />
 
-#### Voice input indicator and indirect pointer gestures
+#### 语音输入指示器与间接指针手势
 
-- **`VoiceInputIndicator` and `ContainedVoiceInputIndicator`** : Pass a `level`
-  lambda returning a `Float` normalized to `0.0f..1.0f`. When driven by
-  `SpeechRecognizer` (`RecognitionListener.onRmsChanged(rmsdB: Float)`),
-  normalize and clamp `rmsdB` with `.coerceIn(0f, 1f)`:
+- **`VoiceInputIndicator` 与 `ContainedVoiceInputIndicator`**：传入一个 `level`
+  lambda，返回归一化到 `0.0f..1.0f` 的 `Float`。当由
+  `SpeechRecognizer`（`RecognitionListener.onRmsChanged(rmsdB: Float)`）驱动时，
+  用 `.coerceIn(0f, 1f)` 归一化并钳制 `rmsdB`：
 
 
   ```kotlin
@@ -559,12 +547,11 @@ custom surfaces, follow the API definitions in [surface-source.md](references/su
 
   <br />
 
-- **`Modifier.onIndirectPointerGesture`** : Handle low-level touchpad tap
-  (`onClick`), forward swipe (`onSwipeForward`), and backward swipe
-  (`onSwipeBackward`) gestures using
-  `androidx.xr.glimmer.onIndirectPointerGesture` on a container made
-  **focusable** (using `focusTarget`, `focusable`, or `surface(focusable =
-  true)`):
+- **`Modifier.onIndirectPointerGesture`**：在设为
+  **可聚焦**的容器上（使用 `focusTarget`、`focusable` 或 `surface(focusable =
+  true)`），用 `androidx.xr.glimmer.onIndirectPointerGesture` 处理底层触控板点按
+  （`onClick`）、前滑（`onSwipeForward`）与后滑
+  （`onSwipeBackward`）手势：
 
 
   ```kotlin
@@ -591,8 +578,8 @@ custom surfaces, follow the API definitions in [surface-source.md](references/su
 
   <br />
 
-## 5. Integrate with system UI
+## 5. 与系统 UI 集成
 
-- When handling notifications or starting a projected activity from a notification, follow the instructions in [Understand notification behavior
-  for intelligent eyewear](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/notifications/behavior) and [Start a glasses activity on display
-  glasses from a notification](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/notifications/start-activity).
+- 处理通知或从通知启动投影式 Activity 时，遵循 [了解智能眼镜的
+  通知行为](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/notifications/behavior) 与 [从通知在显示
+  眼镜上启动眼镜 Activity](https://developer.android.com/develop/xr/jetpack-xr-sdk/ai-glasses/notifications/start-activity) 中的说明。

@@ -1,4 +1,4 @@
-This file defines the schema for the SOCIAL vertical in the Engage SDK.
+本文件定义 Engage SDK 中 SOCIAL 垂直领域的 schema。
 
     {
       "client": "com.google.android.engage.social.service.AppEngageSocialClient",

@@ -1,24 +1,22 @@
-This guide covers implementing low-light features using **Night mode
-extensions** and **Low Light Boost (LLB)**.
+本指南介绍如何使用 **Night mode extensions** 和 **Low Light Boost（LLB）** 实现低光功能。
 
-## Choosing the right tool
+## 选择合适的工具
 
-| Feature | Used for | Implementation | UX impact |
+| 功能 | 用途 | 实现 | 用户体验影响 |
 |---|---|---|---|
-| **Night mode** | High-quality stills | `ExtensionsManager` | Possibly requires user to hold still for several seconds. |
-| **LLB, AE mode** | Real-time preview or video | `Camera2Interop`, CameraX utility | Hardware drops the frame rate to increase brightness. |
-| **LLB, Play services** | Real-time preview and video | `SurfaceProcessor` | Software-based brightening; maintains a higher frame rate. |
+| **Night mode** | 高质量静态照片 | `ExtensionsManager` | 可能需要用户保持静止数秒。 |
+| **LLB，AE 模式** | 实时预览或视频 | `Camera2Interop`、CameraX 工具 | 硬件会降低帧率来提升亮度。 |
+| **LLB，Play services** | 实时预览与视频 | `SurfaceProcessor` | 基于软件提亮；能保持较高帧率。 |
 
 *** ** * ** ***
 
-## Night mode extension
+## Night mode 扩展
 
-CameraX Extensions provide access to the device's built-in computational
-photography pipeline.
+CameraX Extensions 提供对设备内置计算摄影管线的访问。
 
-### Basic setup
+### 基本配置
 
-To set up the extension, initialize the extension manager:
+要配置该扩展，先初始化扩展管理器：
 
 
 ```kotlin
@@ -34,16 +32,16 @@ if (extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT))
 
 <br />
 
-### Comprehensive features
+### 完整功能
 
-- **Image postview** : Display a low-resolution image immediately while the multi-frame processing occurs.
+- **Image postview**：在多帧处理进行期间立即显示一张低分辨率图像。
 
   ```kotlin
   val imageCapture = ImageCapture.Builder()
       .setPostviewEnabled(true)
       .build()
   ```
-- **Extension strength** : Let users control the intensity of the night effect.
+- **Extension strength**：让用户控制夜景效果的强度。
 
   ```kotlin
   // Set the strength of the active extension (e.g. NIGHT mode intensity)
@@ -51,7 +49,7 @@ if (extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT))
   val extensionsControl = extensionsManager.getCameraExtensionsControl(camera.cameraControl)
   extensionsControl?.setExtensionStrength(strength)
   ```
-- **Capture progress** : Show a UI progress bar for long exposures.
+- **Capture progress**：为长曝光显示 UI 进度条。
 
   ```kotlin
   // Use the suspend extension function for takePicture to avoid callback boilerplate
@@ -65,39 +63,38 @@ if (extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT))
 
 *** ** * ** ***
 
-## Low-light boost
+## 低光增强
 
-LLB is designed for preview and video streams where you prefer high frame rates.
+LLB 面向偏爱高帧率的预览流与视频流。
 
-### AE mode
+### AE 模式
 
-The built-in CameraX way to prioritize brightness. It modifies the hardware's
-auto-exposure algorithm.
+CameraX 内置的优先提升亮度的方式。它会修改硬件的自动曝光算法。
 
-- **Activation** : Use `CameraControl.enableLowLightBoostAsync`.
-- **Implementation** :
+- **启用**：使用 `CameraControl.enableLowLightBoostAsync`。
+- **实现**：
 
   ```kotlin
   // Enable Low Light Boost (LLB) natively in CameraX 1.4+
   camera.cameraControl.enableLowLightBoostAsync(true)
   ```
-- **Monitoring** : Observe `CameraInfo.lowLightBoostState` to track when the hardware actively applies the enhancement.
+- **监控**：观察 `CameraInfo.lowLightBoostState`，跟踪硬件何时真正应用该增强。
 
 ### Google Play services LLB
 
-It's a multi-step implementation that uses a session-based `SurfaceProcessor`.
+这是一个多步实现，使用基于会话的 `SurfaceProcessor`。
 
-**Dependency** : `com.google.android.gms:play-services-camera-low-light-boost`
+**依赖**：`com.google.android.gms:play-services-camera-low-light-boost`
 
-To implement Google Play services LLB, follow these core steps:
+要实现 Google Play services LLB，按以下核心步骤操作：
 
-1. **Initialize client** : `val client = LowLightBoost.getClient`.
-2. **Implement `SurfaceProcessor`** :
-   - **Manage session** : Call `client.createSession`.
-   - **Forward required metadata** : Observe the camera's `TotalCaptureResult` stream and forward every result to the session: `session.processCaptureResult`.
-   - **Provide surface** : Get the input surface from the session, `session.getCameraSurface`, and provide it to the camera's `SurfaceRequest`.
-   - **Lifecycle** : Release the session, `session.release`, when the processor is closed or the `SurfaceRequest` completes.
-3. **Wire using `CameraEffect`** :
+1. **初始化客户端**：`val client = LowLightBoost.getClient`。
+2. **实现 `SurfaceProcessor`**：
+   - **管理会话**：调用 `client.createSession`。
+   - **转发所需元数据**：观察相机的 `TotalCaptureResult` 流，把每个结果转发给会话：`session.processCaptureResult`。
+   - **提供 Surface**：从会话取输入 Surface，`session.getCameraSurface`，并提供给相机的 `SurfaceRequest`。
+   - **生命周期**：在处理器关闭或 `SurfaceRequest` 完成时释放会话，`session.release`。
+3. **通过 `CameraEffect` 接入**：
 
    ```kotlin
    val effect = SimpleCameraEffect(
@@ -113,12 +110,12 @@ To implement Google Play services LLB, follow these core steps:
        .addEffect(effect)
        .build()
    ```
-4. **Scene detection** : Use `session.setSceneDetectorCallback` to receive `boostStrength` updates for real-time UI indicators.
+4. **场景检测**：使用 `session.setSceneDetectorCallback` 接收 `boostStrength` 更新，用于实时 UI 指示。
 
 *** ** * ** ***
 
-## Implementation notes
+## 实现说明
 
-- **Thread safety** : Always handle `ExtensionsManager` and `LowLightBoostClient` initialization asynchronously.
-- **FPS trade-offs**: AE mode LLB often drops the frame rate significantly to increase brightness.
-- **Compatibility** : Extensions, Night Mode, possibly conflict with `ConcurrentCamera`. Always verify support before binding.
+- **线程安全**：始终以异步方式处理 `ExtensionsManager` 和 `LowLightBoostClient` 的初始化。
+- **FPS 取舍**：AE 模式的 LLB 往往会大幅降低帧率来提升亮度。
+- **兼容性**：Extensions、Night Mode 可能与 `ConcurrentCamera` 冲突。绑定时务必先确认支持情况。

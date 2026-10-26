@@ -1,4 +1,4 @@
-This file defines the schema for the TV vertical in the Engage SDK.
+本文件定义 Engage SDK 中 TV 垂类的 schema。
 
     {
       "client": "com.google.android.engage.service.AppEngagePublishClient",

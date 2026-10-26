@@ -1,4 +1,4 @@
-Use the following calculation metrics for color contrast in `hct.ts`:
+在 `hct.ts` 中计算颜色对比度时，请使用以下计算指标：
 
 ```typescript
 /**

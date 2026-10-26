@@ -1,9 +1,6 @@
 ---
 name: android-intent-security
-description: Best practices for Android Intent security. Use this skill when auditing
-  component configurations in AndroidManifest.xml activities, services, receivers)
-  or source code handling incoming Intents (getIntent, getParcelableExtra) to prevent
-  Intent Redirection and unauthorized access.
+description: Android Intent 安全最佳实践。审计 AndroidManifest.xml 中的组件配置（activity、service、receiver），或审计处理传入 Intent 的源代码（getIntent、getParcelableExtra）以防范 Intent 重定向与未授权访问时，使用这个 skill。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -24,123 +21,120 @@ metadata:
   - Best Practices
 ---
 
-This skill provides guidelines and patterns to secure Android components
-(Activities, Services, Broadcast Receivers, Content Providers) and handle
-Intents safely, preventing privilege escalation and unauthorized access.
+这个 skill 提供保护 Android 组件（Activity、Service、BroadcastReceiver、ContentProvider）
+以及安全处理 Intent 的指南与模式，防止权限提升与未授权访问。
 
-## Glossary
+## 术语表
 
-- **Intent:** An asynchronous messaging object used to request an action from another app component.
-- **Exported component:** A component (`android:exported="true"`) that can be launched by other apps on the device.
-- **Sticky intent:** A broadcast intent that remains in the system cache after it's sent, allowing any app to retrieve its contents.
-- **Signature permission:** A permission whose protection level is set to `signature`, granted only to apps signed with the same developer key.
-- **onNewIntent:** An activity lifecycle callback invoked when an activity is launched with `FLAG_ACTIVITY_SINGLE_TOP` and is already running at the top of the history stack.
-- **PendingIntent:** A token granted to a foreign application (for example, system services) allowing it to execute a predefined Intent with the creator's permissions.
-- **Mutable PendingIntent:** A PendingIntent whose underlying Intent parameters can be modified by the receiving application.
-- **ContentProvider:** A component that encapsulates data and provides it to other applications via standard query/insert interfaces.
-- **IntentSanitizer:** A utility class in AndroidX Core used to build a safe, sanitized copy of an incoming Intent by filtering out unauthorized components, actions, or extras.
-- **Intent redirection (forwarding):** A vulnerability where an application receives an intent from an untrusted source and uses it to launch a private, non-exported component.
+- **Intent：** 一种异步消息对象，用于请求另一个应用组件执行某个操作。
+- **导出的组件：** 可以被设备上其他应用启动的组件（`android:exported="true"`）。
+- **粘性 Intent：** 一种广播 Intent，发送后会保留在系统缓存中，任何应用都可以读取其内容。
+- **签名级权限：** 保护级别设为 `signature` 的权限，只授予使用同一开发者密钥签名的应用。
+- **onNewIntent：** 当 Activity 以 `FLAG_ACTIVITY_SINGLE_TOP` 启动且已位于历史栈顶部运行时触发的 Activity 生命周期回调。
+- **PendingIntent：** 授予其他应用（例如系统服务）的一种令牌，使其能以创建者的权限执行预先定义的 Intent。
+- **可变的 PendingIntent：** 底层 Intent 参数可被接收方应用修改的 PendingIntent。
+- **ContentProvider：** 封装数据并通过标准 query/insert 接口提供给其他应用的组件。
+- **IntentSanitizer：** AndroidX Core 中的工具类，通过过滤未授权的组件、action 或 extra，构造传入 Intent 的安全净化副本。
+- **Intent 重定向（转发）：** 应用从不可信来源接收 Intent，并用它启动私有、非导出组件所导致的漏洞。
 
-## Prerequisites
+## 前置条件
 
-- The agent **MUST** be able to describe the function and security implications of `onCreate`, `onNewIntent`, and the `singleTop` launch mode.
-- The agent **MUST** be able to declare `<activity>`, `<service>`, `<receiver>`, and `<provider>` tags in `AndroidManifest.xml` and define their `android:exported` and `android:permission` attributes.
-- The agent **MUST** be able to implement signature verification checks using `PackageManager`.
+- agent **必须**能够说明 `onCreate`、`onNewIntent` 与 `singleTop` 启动模式的作用及其安全影响。
+- agent **必须**能够在 `AndroidManifest.xml` 中声明 `<activity>`、`<service>`、`<receiver>`、`<provider>` 标签，并定义它们的 `android:exported` 与 `android:permission` 属性。
+- agent **必须**能够使用 `PackageManager` 实现签名校验。
 
-## Limitations
+## 限制
 
-- This skill focuses on local inter-component and inter-app communication security on the Android platform.
-- This skill **doesn't** cover network security, web integration, or host-to-server security.
+- 这个 skill 聚焦于 Android 平台上本地组件间与应用间通信的安全。
+- 这个 skill **不**覆盖网络安全、Web 集成或主机到服务器的安全。
 
-## Setup and dependencies
+## 配置与依赖
 
-- **Android SDK:** Minimum API Level 23 (Android 6.0) is required for standard hardware-backed keystore operations and component validation.
-- **AndroidX Core Library:** `androidx.core:core:1.9.0` or higher is **mandatory** to leverage `IntentSanitizer`.
-- **Standard API access:** Standard Android `PackageManager` APIs are required for runtime component verification.
-
-*** ** * ** ***
-
-## Intent security logic and decisions
-
-### 1. Intent routing comparison
-
-Evaluate the security features of different intent delivery methods:
-
-| Intent Delivery Method | Scope | Recommended Use Case |
-|---|---|---|
-| Explicit Intent (Internal) | App Private | Launching internal activities/services |
-| Implicit Intent | System Wide | Launching system camera, dialer, or sharing |
-| Local Broadcasts (LocalBroadcastManager) (DEPRECATED) | App Private | Internal asynchronous event routing. **Deprecated**: Use in-app observers like Kotlin Flows/SharedFlow, LiveData, or reactive patterns instead. |
-| System Broadcasts | System Wide | Receiving system events (NFC, Bluetooth) |
-
-### 2. PendingIntent mutability flag options
-
-Evaluate the security implications of PendingIntent mutability flags:
-
-| Flag Name | Mutability | Recommended Use Case |
-|---|---|---|
-| `PendingIntent.FLAG_IMMUTABLE` | Immutable | Default for almost all PendingIntents, such as alarms and notifications |
-| `PendingIntent.FLAG_MUTABLE` | Mutable | Inline notifications replies, slice actions (requires explicit target intent) |
-
-### 3. Intent handling and redirection logic
-
-IF (the component receives a nested Intent as an extra) {
-IF (AndroidX Core 1.9.0+ and higher is available) {
-MUST construct an `IntentSanitizer` to explicitly allowlist components, actions, data, and extras.
-MUST call `sanitizeByThrowing()` or `sanitizeByFiltering()` before launching.
-} ELSE {
-MUST reject or strip URI permission grant flags (`FLAG_GRANT_READ_URI_PERMISSION`, `FLAG_GRANT_WRITE_URI_PERMISSION`, `FLAG_GRANT_PERSISTABLE_URI_PERMISSION`, `FLAG_GRANT_PREFIX_URI_PERMISSION`).
-MUST resolve the target component using `resolveActivity()` and verify that both its `packageName` and `className` match an explicitly allowlisted component.
-}
-NEVER launch the nested Intent directly without validation.
-} ELSE IF (the component handles broadcasts) {
-MUST rely on the system's Protected Broadcast mechanism for system events (which guarantees the sender is the system framework).
-MUST protect custom receivers with signature-level permissions or use `RECEIVER_NOT_EXPORTED` for dynamic receivers to restrict the sender.
-IF (using `ContextCompat.registerReceiver` with `RECEIVER_NOT_EXPORTED` AND `minSdk < 33`) {
-MUST verify `<permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature" />` and `<uses-permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />` are declared in `AndroidManifest.xml`.
-}
-}
-
-### 4. PendingIntent security logic
-
-IF (a PendingIntent is created for delivery to another application) {
-MUST use `PendingIntent.FLAG_IMMUTABLE` by default.
-IF (the PendingIntent must be mutable) {
-MUST set the explicit target component or package name on the base `Intent`.
-NEVER create an implicit, mutable `PendingIntent`.
-}
-}
-
-### 5. ContentProvider security logic
-
-IF (the ContentProvider is only for internal app use) {
-MUST set `android:exported="false"`.
-} ELSE {
-MUST protect it with `android:readPermission` and `android:writePermission`.
-MUST set `android:grantUriPermissions="false"` unless temporary URL access is strictly required.
-}
-
-### 6. Service caller verification logic
-
-IF (an exported service communicates with trusted sister/partner apps) {
-MUST expose a cross-process interface (such as an AIDL `Stub` or `Messenger`) rather than a local `Binder` subclass, which only works within the same process.
-MUST verify the caller on every IPC request---using `Binder.getCallingUid()` inside an AIDL `Stub` method (or `onTransact()`) or `Message.sendingUid` in a `Messenger` `Handler`---and verify that the calling package signature fingerprint matches your trusted certificate hash.
-}
+- **Android SDK：** 标准硬件支持的 keystore 操作与组件校验要求最低 API Level 23（Android 6.0）。
+- **AndroidX Core 库：** 要使用 `IntentSanitizer`，`androidx.core:core:1.9.0` 或更高版本是**必需的**。
+- **标准 API 访问：** 运行时组件校验需要标准的 Android `PackageManager` API。
 
 *** ** * ** ***
 
-## Code and configuration patterns
+## Intent 安全逻辑与决策
 
-### 1. Safe intent redirection (manual verification)
+### 1. Intent 路由对比
 
-Validate the target of a nested intent before launching it when modern
-sanitization libraries are unavailable.
+评估不同 Intent 传递方式的安全特性：
 
-- **Expected Inputs:**
-  - An incoming `Intent` containing a nested `Intent` extra named `EXTRA_NESTED_INTENT`.
-- **Expected Outputs:**
-  - Launches the target component if safe; throws `SecurityException` if validation fails.
+| Intent 传递方式 | 作用范围 | 推荐使用场景 |
+|---|---|---|
+| 显式 Intent（内部） | 应用私有 | 启动应用内部的 Activity/Service |
+| 隐式 Intent | 全系统 | 启动系统相机、拨号器或分享 |
+| 本地广播（LocalBroadcastManager）（已废弃） | 应用私有 | 内部异步事件分发。**已废弃**：请改用 Kotlin Flow/SharedFlow、LiveData 等应用内观察者或响应式模式。 |
+| 系统广播 | 全系统 | 接收系统事件（NFC、蓝牙） |
 
+### 2. PendingIntent 可变性标志选项
+
+评估 PendingIntent 可变性标志的安全影响：
+
+| 标志名称 | 可变性 | 推荐使用场景 |
+|---|---|---|
+| `PendingIntent.FLAG_IMMUTABLE` | 不可变 | 几乎所有 PendingIntent 的默认选择，例如闹钟与通知 |
+| `PendingIntent.FLAG_MUTABLE` | 可变 | 通知内联回复、slice action（需要显式目标 Intent） |
+
+### 3. Intent 处理与重定向逻辑
+
+IF（组件把嵌套 Intent 作为 extra 接收）{
+IF（可用的 AndroidX Core 为 1.9.0 或更高版本）{
+必须构造 `IntentSanitizer`，显式允许列出组件、action、data 与 extra。
+必须在启动前调用 `sanitizeByThrowing()` 或 `sanitizeByFiltering()`。
+} ELSE {
+必须拒绝或剥离 URI 权限授予标志（`FLAG_GRANT_READ_URI_PERMISSION`、`FLAG_GRANT_WRITE_URI_PERMISSION`、`FLAG_GRANT_PERSISTABLE_URI_PERMISSION`、`FLAG_GRANT_PREFIX_URI_PERMISSION`）。
+必须使用 `resolveActivity()` 解析目标组件，并校验其 `packageName` 与 `className` 都与显式允许清单中的组件匹配。
+}
+严禁在未做校验的情况下直接启动嵌套 Intent。
+} ELSE IF（组件处理广播）{
+必须依赖系统的受保护广播（Protected Broadcast）机制处理系统事件（该机制保证发送方是系统框架）。
+必须用签名级权限保护自定义接收器，或对动态接收器使用 `RECEIVER_NOT_EXPORTED` 限制发送方。
+IF（使用 `ContextCompat.registerReceiver` 并带有 `RECEIVER_NOT_EXPORTED` 且 `minSdk < 33`）{
+必须确认 `AndroidManifest.xml` 中已声明 `<permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature" />` 与 `<uses-permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />`。
+}
+}
+
+### 4. PendingIntent 安全逻辑
+
+IF（为传递给其他应用而创建 PendingIntent）{
+必须默认使用 `PendingIntent.FLAG_IMMUTABLE`。
+IF（该 PendingIntent 必须是可变的）{
+必须在基础 `Intent` 上设置显式的目标组件或包名。
+严禁创建隐式、可变的 `PendingIntent`。
+}
+}
+
+### 5. ContentProvider 安全逻辑
+
+IF（ContentProvider 仅供应用内部使用）{
+必须设置 `android:exported="false"`。
+} ELSE {
+必须用 `android:readPermission` 与 `android:writePermission` 保护它。
+必须设置 `android:grantUriPermissions="false"`，除非确实需要临时 URL 访问。
+}
+
+### 6. Service 调用方校验逻辑
+
+IF（导出的 Service 与可信的同族/合作方应用通信）{
+必须暴露跨进程接口（例如 AIDL `Stub` 或 `Messenger`），而不是仅在同一进程内可用的本地 `Binder` 子类。
+必须在每次 IPC 请求时校验调用方——在 AIDL `Stub` 方法（或 `onTransact()`）内使用 `Binder.getCallingUid()`，或在 `Messenger` 的 `Handler` 中使用 `Message.sendingUid`——并校验调用包的签名证书指纹与你信任的证书哈希匹配。
+}
+
+*** ** * ** ***
+
+## 代码与配置模式
+
+### 1. 安全的 Intent 重定向（手动校验）
+
+在无法使用现代净化库时，启动嵌套 Intent 前先校验其目标。
+
+- **预期输入：**
+  - 传入的 `Intent`，其中包含名为 `EXTRA_NESTED_INTENT` 的嵌套 `Intent` extra。
+- **预期输出：**
+  - 安全则启动目标组件；校验失败则抛出 `SecurityException`。
 
 ```kotlin
 fun safeIntentRedirectionManual() {
@@ -181,16 +175,14 @@ fun safeIntentRedirectionManual() {
 
 <br />
 
-### 2. Safe intent redirection using IntentSanitizer
+### 2. 用 IntentSanitizer 实现安全的 Intent 重定向
 
-Filter or reject dynamic intents using AndroidX `IntentSanitizer` (AndroidX Core
-1.9.0+).
+使用 AndroidX `IntentSanitizer`（AndroidX Core 1.9.0+）过滤或拒绝动态 Intent。
 
-- **Expected Inputs:**
-  - An untrusted incoming `Intent`.
-- **Expected Outputs:**
-  - `Intent`: A sanitized copy containing only allowlisted components, categories, and actions. Throws `SecurityException` on violations if using `sanitizeByThrowing()`.
-
+- **预期输入：**
+  - 不可信的传入 `Intent`。
+- **预期输出：**
+  - `Intent`：只包含已允许的组件、类别与 action 的净化副本。若使用 `sanitizeByThrowing()`，违规时抛出 `SecurityException`。
 
 ```kotlin
 fun safeIntentRedirectionSanitizer() {
@@ -227,14 +219,12 @@ fun safeIntentRedirectionSanitizer() {
 
 <br />
 
-### 3. Custom signature permission protection
+### 3. 自定义签名权限保护
 
-Declare a custom signature-level permission in the manifest to secure family app
-communication.
+在清单中声明自定义签名级权限，保护同族应用之间的通信。
 
-- **Expected Inputs:** Manifest configuration.
-- **Expected Outputs:** An activity that can only be launched by apps signed with the same developer certificate.
-
+- **预期输入：** 清单配置。
+- **预期输出：** 只能被使用同一开发者证书签名的应用启动的 Activity。
 
 ```xml
 <permission
@@ -243,7 +233,6 @@ communication.
 ```
 
 <br />
-
 
 ```xml
 <activity
@@ -259,16 +248,14 @@ communication.
 
 <br />
 
-### 4. Safe onNewIntent lifecycle verification (warm boot protection)
+### 4. 安全的 onNewIntent 生命周期校验（热启动保护）
 
-Ensure that activities reusing dynamic intents (for example, in background
-launch paths) apply the same strict security filters inside `onNewIntent`.
+确保复用动态 Intent 的 Activity（例如后台启动路径）在 `onNewIntent` 内应用同样严格的安全过滤。
 
-- **Expected Inputs:**
-  - `newIntent` (`Intent`): The newly delivered intent.
-- **Expected Outputs:**
-  - Executes processing logic only if the new intent passes security validation.
-
+- **预期输入：**
+  - `newIntent`（`Intent`）：新传入的 Intent。
+- **预期输出：**
+  - 仅当新 Intent 通过安全校验时才执行处理逻辑。
 
 ```kotlin
 override fun onNewIntent(newIntent: Intent) {
@@ -292,15 +279,14 @@ private fun validateIntent(intent: Intent): Boolean {
 
 <br />
 
-### 5. Secure PendingIntent creation
+### 5. 安全地创建 PendingIntent
 
-Enforce immutability unless mutability is explicitly required.
+除非明确要求可变性，否则强制使用不可变。
 
-- **Expected Inputs (Immutable):** An intent target.
-- **Expected Outputs (Immutable):** A `PendingIntent` that cannot be altered by the receiver.
-- **Expected Inputs (Mutable):** An intent with an explicit component set.
-- **Expected Outputs (Mutable):** A mutable `PendingIntent` locked to a specific receiver component to prevent hijacking.
-
+- **预期输入（不可变）：** 一个 Intent 目标。
+- **预期输出（不可变）：** 无法被接收方修改的 `PendingIntent`。
+- **预期输入（可变）：** 已设置显式组件的 Intent。
+- **预期输出（可变）：** 锁定到特定接收器组件的可变 `PendingIntent`，防止被劫持。
 
 ```kotlin
 fun createPendingIntents(context: Context) {
@@ -329,19 +315,17 @@ fun createPendingIntents(context: Context) {
 
 <br />
 
-### 6. Secure ContentProvider configuration and queries
+### 6. 安全的 ContentProvider 配置与查询
 
-Expose a ContentProvider securely and parameterize queries to prevent SQL
-injection.
+安全地暴露 ContentProvider，并将查询参数化以防止 SQL 注入。
 
-- **Expected Inputs:**
-  - `uri` (`Uri`): The query URI.
-  - `projection` (`String[]`): Columns to retrieve.
-  - `selection` (`String`): Query criteria.
-  - `selectionArgs` (`String[]`): Values mapping to selection placeholders (`?`).
-- **Expected Outputs:**
-  - `Cursor`: Filtered query results, strictly bound to projection maps.
-
+- **预期输入：**
+  - `uri`（`Uri`）：查询 URI。
+  - `projection`（`String[]`）：要检索的列。
+  - `selection`（`String`）：查询条件。
+  - `selectionArgs`（`String[]`）：映射到 selection 占位符（`?`）的值。
+- **预期输出：**
+  - `Cursor`：过滤后的查询结果，严格受 projection 映射约束。
 
 ```xml
 <provider
@@ -354,7 +338,6 @@ injection.
 ```
 
 <br />
-
 
 ```kotlin
 override fun query(
@@ -384,16 +367,14 @@ override fun query(
 
 <br />
 
-### 7. Service caller signature verification
+### 7. Service 调用方签名校验
 
-Verify the calling application's signing certificate on incoming cross-process
-IPC calls in an exported bound service.
+在导出的绑定服务中，对传入的跨进程 IPC 调用校验调用应用的签名证书。
 
-- **Expected Inputs:**
-  - An incoming cross-process Binder transaction (for example, an AIDL `Stub` method call or `onTransact()`).
-- **Expected Outputs:**
-  - Executes the requested service operation if the calling UID's signing certificate matches the trusted partner hash; throws `SecurityException` otherwise.
-
+- **预期输入：**
+  - 传入的跨进程 Binder 事务（例如 AIDL `Stub` 方法调用或 `onTransact()`）。
+- **预期输出：**
+  - 如果调用方 UID 的签名证书与可信合作方哈希匹配，则执行所请求的服务操作；否则抛出 `SecurityException`。
 
 ```kotlin
 class SecureBoundService : Service() {
@@ -448,11 +429,9 @@ class SecureBoundService : Service() {
 
 *** ** * ** ***
 
-## Error handling
+## 错误处理
 
-Handle component binding, database queries, and intent redirection failures
-securely to avoid exposing internal structures.
-
+安全地处理组件绑定、数据库查询与 Intent 重定向失败，避免泄露内部结构。
 
 ```kotlin
 fun safeErrorHandling(callingPackage: String?) {
@@ -486,65 +465,62 @@ fun safeErrorHandling(callingPackage: String?) {
 
 *** ** * ** ***
 
-## Reporting guidelines
+## 报告指南
 
-When this skill is executed to apply security hardening updates to a codebase,
-the agent **MUST** generate a structured "Best Practices and Security Alignment
-Update" report for the developer. The report **must** be written to the session
-artifact folder (or printed in the final response) and include:
+当执行这个 skill 对代码库应用安全加固更新时，agent **必须**为开发者生成结构化的「最佳实践与安全对齐更新」报告。报告**必须**写入会话的构件目录（或在最终回复中打印），并包含：
 
-1. **Security alignment area:** The category of improvement applied (for example, Safe Intent Redirection, Secure PendingIntent Configuration, ContentProvider Data Guarding).
-2. **Impact and priority:** The potential safety risk addressed by the update (for example, Component Hijacking Prevention, Private Data Isolation).
-3. **Scope of changes:** A list of all modified classes, XML files, and dependencies.
-4. **Implementation summary:** Concrete details of the solution (for example, "Updated nested intent parsing to use the `IntentSanitizer` API with a strict component allowlist").
-5. **Code diff:** Standard unified diffs showing the exact modifications.
+1. **安全对齐领域：** 所应用的改进类别（例如安全的 Intent 重定向、安全的 PendingIntent 配置、ContentProvider 数据防护）。
+2. **影响与优先级：** 本次更新所处理的潜在安全风险（例如组件劫持防护、私有数据隔离）。
+3. **变更范围：** 所有被修改的类、XML 文件与依赖的列表。
+4. **实现摘要：** 方案的具体细节（例如「把嵌套 Intent 解析改为使用 `IntentSanitizer` API，并采用严格的组件允许清单」）。
+5. **代码差异：** 展示确切修改内容的标准 unified diff。
 
-### Best practices and security alignment update template
+### 最佳实践与安全对齐更新模板
 
-Use the following markdown template when reporting changes to developers:
+向开发者报告变更时，使用以下 markdown 模板：
 
-    ### Best practices and security alignment update: [Security Alignment Area]
+    ### 最佳实践与安全对齐更新：[Security Alignment Area]
 
-    *   **Improvement Description:** [Brief description of the hardening update and why it's recommended]
-    *   **Priority Level:** [High / Medium / Low]
-    *   **Alignment Action:** [Summary of updates, for example, converted to FLAG_IMMUTABLE]
+    *   **改进说明：** [加固更新的简要说明以及推荐原因]
+    *   **优先级：** [High / Medium / Low]
+    *   **对齐操作：** [更新摘要，例如转换为 FLAG_IMMUTABLE]
 
-    #### Files modified
+    #### 修改的文件
     *   `[Relative path to File 1]`
     *   `[Relative path to File 2]`
 
-    #### Implementation diff
+    #### 实现差异
     ```diff
     // Insert Unified Diff here
 
-#### Testing and verification
+#### 测试与验证
 
-1. \[Step 1 to verify the component behaves correctly, for example, run component unit test\]
-2. \[Step 2 to verify regression safety\] \`\`\`
+1. \[验证组件行为正确的步骤 1，例如运行组件单元测试\]
+2. \[验证回归安全性的步骤 2\] \`\`\`
 
 *** ** * ** ***
 
-## Antipatterns
+## 反模式
 
-- **NEVER** launch a nested `Intent` received from an untrusted source without verifying that its resolved component (`packageName` and `className`) matches an explicit allowlist and rejecting or stripping URI permission grant flags.
-- **NEVER** use sticky broadcasts (`sendStickyBroadcast`).
-- **NEVER** assume an exported component is safe because it runs in a background thread or performs internal checks.
-- **NEVER** expose sensitive functionalities (like SSO authentication or payment processors) to components without signature-level permission restrictions.
-- **NEVER** process incoming intents in `onNewIntent` without applying the same security controls as `onCreate`.
-- **NEVER** create a mutable `PendingIntent` without setting an explicit target component in the base `Intent`.
-- **NEVER** use dynamic string concatenation to construct selection blocks inside a `ContentProvider` query.
-- **NEVER** use `Binder.getCallingUid` inside a `BroadcastReceiver.onReceive` to identify the sender of a broadcast, as it returns the receiver's own UID, not the sender's.
+- **严禁**在未校验解析出的组件（`packageName` 与 `className`）是否匹配显式允许清单、且未拒绝或剥离 URI 权限授予标志的情况下，启动来自不可信来源的嵌套 `Intent`。
+- **严禁**使用粘性广播（`sendStickyBroadcast`）。
+- **严禁**因为某个导出组件运行在后台线程或做了内部检查，就认为它是安全的。
+- **严禁**在没有签名级权限限制的情况下，向组件暴露敏感功能（例如 SSO 认证或支付处理）。
+- **严禁**在 `onNewIntent` 中处理传入 Intent 时，未应用与 `onCreate` 相同的安全控制。
+- **严禁**在基础 `Intent` 未设置显式目标组件的情况下，创建可变的 `PendingIntent`。
+- **严禁**在 `ContentProvider` 查询中使用动态字符串拼接构造 selection 子句。
+- **严禁**在 `BroadcastReceiver.onReceive` 中使用 `Binder.getCallingUid` 识别广播发送方，因为它返回接收器自身的 UID，而不是发送方的 UID。
 
-## Best Practices
+## 最佳实践
 
-- **MUST** explicitly set `android:exported="false"` for all components that don't need external communication.
-- **MUST** protect all exported components with custom permissions utilizing `android:protectionLevel="signature"` when communicating between family apps.
-- **MUST** validate all incoming intent extras and handle missing parameters gracefully to prevent crashes.
-- **MUST** rely on the system's **Protected Broadcast** mechanism for system events (for example, boot completed, package changes), as the system prevents untrusted apps from spoofing these actions.
-- **MUST** protect custom broadcasts with signature-level permissions or use `RECEIVER_NOT_EXPORTED` for dynamic receivers to restrict the sender identity (and when `minSdk < 33`, **MUST** verify that `<permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature" />` and `<uses-permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />` are present in `AndroidManifest.xml` when using `ContextCompat.registerReceiver`).
-- **MUST** call `setIntent(newIntent)` inside `onNewIntent()` before processing payloads to keep active references updated.
-- **MUST** use `PendingIntent.FLAG_IMMUTABLE` by default when constructing `PendingIntent` instances.
-- **MUST** protect exported `ContentProviders` with `readPermission` and `writePermission`.
-- **MUST** enforce parameterized selection structures in `ContentProvider` query/update methods.
-- **MUST** verify the calling application's signing certificate on incoming IPC transactions at runtime inside exported bound services using a cross-process interface (such as an AIDL `Stub` or `Messenger`).
-- **MUST** use `androidx.core.content.IntentSanitizer` to sanitize incoming dynamic intents before redirection, if AndroidX Core 1.9.0+ is imported in the project.
+- **必须**为所有不需要外部通信的组件显式设置 `android:exported="false"`。
+- **必须**在同族应用之间通信时，用带 `android:protectionLevel="signature"` 的自定义权限保护所有导出组件。
+- **必须**校验所有传入的 Intent extra，并妥善处理缺失参数以防止崩溃。
+- **必须**依赖系统的**受保护广播**机制处理系统事件（例如开机完成、包变更），因为系统会阻止不可信应用伪造这些 action。
+- **必须**用签名级权限保护自定义广播，或对动态接收器使用 `RECEIVER_NOT_EXPORTED` 限制发送方身份（并且当 `minSdk < 33`、使用 `ContextCompat.registerReceiver` 时，**必须**确认 `AndroidManifest.xml` 中存在 `<permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature" />` 与 `<uses-permission android:name="${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />`）。
+- **必须**在处理载荷前于 `onNewIntent()` 内调用 `setIntent(newIntent)`，以保持活动引用最新。
+- **必须**在构造 `PendingIntent` 实例时默认使用 `PendingIntent.FLAG_IMMUTABLE`。
+- **必须**用 `readPermission` 与 `writePermission` 保护导出的 `ContentProviders`。
+- **必须**在 `ContentProvider` 的 query/update 方法中强制使用参数化的 selection 结构。
+- **必须**在导出的绑定服务中，通过跨进程接口（例如 AIDL `Stub` 或 `Messenger`）在运行时对传入的 IPC 事务校验调用应用的签名证书。
+- 如果项目引入了 AndroidX Core 1.9.0+，**必须**在重定向前用 `androidx.core.content.IntentSanitizer` 净化传入的动态 Intent。

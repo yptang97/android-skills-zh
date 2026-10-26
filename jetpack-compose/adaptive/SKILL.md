@@ -1,16 +1,6 @@
 ---
 name: adaptive
-description: Instructions to make or update an app's UI so that it adapts to different
-  Android devices including phones, tablets, foldables, laptops, desktop, TV, Auto,
-  and XR. It includes how to handle different window sizes, pointing devices (such
-  as mouse) and text entry devices (such as keyboard) using the Compose MediaQuery
-  API, and how to preserve UI, navigation, scroll, and media playback state across
-  configuration changes (such as folding/unfolding a foldable, rotating a device,
-  or resizing a window). It also covers multi-pane layouts using Navigation3 Scenes,
-  adaptive UI components (such as buttons) with varying target sizes, and adaptive
-  layouts (including navigation areas - nav rails and nav bars) using the Compose
-  Grid and FlexBox APIs. It also covers desktop experiences with keyboard shortcuts,
-  tooltips and custom cursors.
+description: 制作或更新应用的 UI，使其适配手机、平板电脑、可折叠设备、笔记本电脑、桌面设备、TV、Auto 和 XR 等不同 Android 设备的操作指引。涵盖如何使用 Compose MediaQuery API 处理不同的窗口尺寸、指向设备（例如鼠标）和文本输入设备（例如键盘），以及如何在配置变更（例如折叠或展开可折叠设备、旋转设备或调整窗口尺寸）时保留 UI、导航、滚动和媒体播放状态。还涵盖使用 Navigation3 Scene 实现的多窗格布局、具有不同目标尺寸的自适应 UI 组件（例如按钮），以及使用 Compose Grid 和 FlexBox API 实现的自适应布局（包括导航区域——导航栏（nav rail）和底部导航栏）。同时涵盖带键盘快捷键、工具提示和自定义光标的桌面体验。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -29,32 +19,28 @@ metadata:
   - configuration-changes
 ---
 
-## Prerequisites
+## 前置条件
 
-The app must:
+应用必须：
 
-- Use Compose for all screens. If it's still using Fragments or Views, suggest using the XML to Compose skill to migrate those screens.
-- Use Jetpack Navigation 3. If it doesn't, suggest the Navigation 3 skill to migrate the app.
+- 所有屏幕都使用 Compose。如果它仍在使用 Fragment 或 View，建议用 XML 转 Compose skill 迁移这些屏幕。
+- 使用 Jetpack Navigation 3。如果没有，建议用 Navigation 3 skill 迁移应用。
 
-## Workflow to make an app adaptive
+## 让应用自适应的流程
 
-To make an app adaptive, follow these steps or a subset of them adapting to the
-task.
+要让应用自适应，请遵循以下步骤，或按任务需要选取其中一部分。
 
-- Step 1: Verify current UI
-- Step 2: Make the navigation bar adaptive
-- Step 3: Add multi-pane layouts
-- Step 4: Make vertical lists adaptive by changing the number of columns
-- Step 5: Hide app bars when scrolling
-- Step 6: Preserve UI state across configuration changes
-- Step 7: Add desktop experiences
+- 步骤 1：验证当前 UI
+- 步骤 2：让导航栏自适应
+- 步骤 3：添加多窗格布局
+- 步骤 4：通过改变列数让纵向列表自适应
+- 步骤 5：滚动时隐藏应用栏
+- 步骤 6：在配置变更间保留 UI 状态
+- 步骤 7：添加桌面体验
 
-## Step 1. Verify current UI
+## 步骤 1. 验证当前 UI
 
-Ensure that screenshot tests exist to verify the current UI on different form
-factors. If they don't exist, add the [Compose Preview Screenshot Testing
-tool](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md). Use the following annotation to create previews for all the major form
-factors. For example:
+确保已有截图测试，用来验证当前 UI 在不同形态系数（form factor）下的表现。如果没有，添加 [Compose 预览截图测试工具](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md)。使用以下注解为所有主要形态系数创建预览。例如：
 
 
 ```kotlin
@@ -78,44 +64,36 @@ fun FeedScreenPreview() {
 
 <br />
 
-## Step 2. Make the navigation bar adaptive
+## 步骤 2. 让导航栏自适应
 
-Bottom navigation bars are optimized for touch input when the user is holding a
-phone in portrait mode. On larger screen hand-held devices, like tablets and
-unfolded foldables, the navigation area must be accessible from the edge of the
-screen (navigation rail).
+当用户竖屏握持手机时，底部导航栏针对触摸输入做了优化。在更大的手持设备上，例如平板电脑和已展开的可折叠设备，导航区域必须可以从屏幕边缘访问（导航栏（navigation rail））。
 
-If you need to provide more screen space for the content, hide the
-navigation area. Examples of this include:
+如果需要为内容提供更多屏幕空间，可以隐藏导航区域。示例包括：
 
-- Hiding the navigation bar when the user scrolls down and showing it again when the user scrolls up. The assumption is that when the user is scrolling down, they are consuming content but when scrolling up they are trying to navigate away from that content.
-- Hiding the navigation area when its content is distracting. For example, in camera previews or when displaying a full-screen photo.
+- 用户向下滚动时隐藏导航栏，向上滚动时再次显示。这里的假设是：用户向下滚动时在消费内容，而向上滚动时想离开这些内容。
+- 当导航区域的内容会造成干扰时隐藏它。例如相机预览或全屏显示照片时。
 
-When the detail screen is displayed full-screen on mobile, full-screen mode must
-be deactivated on larger screens.
+当详情屏幕在移动设备上全屏显示时，在更大屏幕上必须停用全屏模式。
 
-Steps to migrate:
+迁移步骤：
 
-- Locate the existing navigation bar.
-- Convert each item to a `NavigationSuiteItem`.
-- Identify whether the navigation bar's visibility changes. For example, if it is wrapped with an `AnimatedContent` or `AnimatedVisibility` composable. If so, follow the guidance in the "Control navigation area visibility".
-- Replace the container that held the navigation bar (often a `Scaffold`) with `NavigationSuiteScaffold` from the Material 3 adaptive layouts library.
-- Supply the navigation items using the `navigationItems` parameter of `NavigationSuiteScaffold`.
+- 定位现有的导航栏。
+- 把每一项转换为 `NavigationSuiteItem`。
+- 判断导航栏的可见性是否会变化。例如，它是否被包在 `AnimatedContent` 或 `AnimatedVisibility` composable 中。如果是，遵循「控制导航区域可见性」中的指引。
+- 把承载导航栏的容器（通常是 `Scaffold`）替换为 Material 3 自适应布局库中的 `NavigationSuiteScaffold`。
+- 使用 `NavigationSuiteScaffold` 的 `navigationItems` 参数提供导航项。
 
-### Step 2.1. Control navigation area visibility
+### 步骤 2.1. 控制导航区域可见性
 
-If the navigation bar's visibility changes - it is hidden under certain
-scenarios or on certain screens - this behavior must be maintained with the
-adaptive navigation area. This is done using `NavigationSuiteScaffold`'s `state`
-parameter.
+如果导航栏的可见性会变化——在特定场景或特定屏幕上被隐藏——这种行为必须在自适应导航区域中保持。这通过 `NavigationSuiteScaffold` 的 `state` 参数实现。
 
-Steps to migrate:
+迁移步骤：
 
-- Identify the scenarios under which the navigation bar is hidden. This is usually done with a boolean variable for the visibility. Use `isNavBarVisible` or `shouldShowNavBar` as the variable name.
-- Create an instance of `NavigationSuiteScaffoldState` using `rememberNavigationSuiteScaffoldState()` and pass it to `NavigationSuiteScaffold`.
-- When the navigation area visibility changes, use a `LaunchedEffect` to call `show` or `hide` on the `NavigationSuiteScaffoldState`.
+- 确认导航栏被隐藏的场景。通常用一个布尔变量表示可见性。变量名使用 `isNavBarVisible` 或 `shouldShowNavBar`。
+- 使用 `rememberNavigationSuiteScaffoldState()` 创建 `NavigationSuiteScaffoldState` 实例，并传给 `NavigationSuiteScaffold`。
+- 当导航区域可见性变化时，用 `LaunchedEffect` 调用 `NavigationSuiteScaffoldState` 的 `show` 或 `hide`。
 
-For example:
+例如：
 
 
 ```kotlin
@@ -141,106 +119,84 @@ LaunchedEffect(isNavBarVisible){
 
 <br />
 
-## Step 3. Add multi-pane layouts using Navigation 3 Scenes
+## 步骤 3. 使用 Navigation 3 Scene 添加多窗格布局
 
-Analyze the codebase looking for related screens - tapping on something in one
-screen opens another screen that shows information related to the first. There
-are two canonical screen relationships: list-detail and supporting pane.
+分析代码库，寻找相互关联的屏幕——在一个屏幕上点击某项会打开另一个屏幕，显示与前者相关的信息。有两种典型的屏幕关系：列表-详情（list-detail）和支撑窗格（supporting pane）。
 
-IMPORTANT: You must use the Navigation 3 `SceneStrategy` approach to implement
-multi-pane layouts. Do not use `ListDetailPaneScaffold` or
-`SupportingPaneScaffold`.
+重要：必须使用 Navigation 3 的 `SceneStrategy` 方式实现多窗格布局。不要使用 `ListDetailPaneScaffold` 或 `SupportingPaneScaffold`。
 
-### Step 3.1. List-detail
+### 步骤 3.1. 列表-详情
 
-#### Identify the list and detail screens
+#### 识别列表屏幕与详情屏幕
 
-List-detail layouts display a list of items (this is the list screen) and
-clicking on an item opens a new screen that shows more details about that item
-(the detail screen).
+列表-详情布局显示一个项目列表（即列表屏幕），点击某一项会打开显示该项目更多细节的新屏幕（即详情屏幕）。
 
-Typical usage includes productivity apps like email, notes, and messaging.
+典型用法包括邮件、笔记和消息等效率类应用。
 
-Unless requested explicitly, avoid this pattern when the detail content requires
-substantial screen space (e.g., images or media that benefits from a full-screen
-presentation).
+除非明确要求，否则当详情内容需要大量屏幕空间时（例如图像或媒体更适合全屏呈现），避免使用这种模式。
 
-#### Add a Material list-detail SceneStrategy
+#### 添加 Material 列表-详情 SceneStrategy
 
-- Add the `androidx.compose.material3.adaptive:adaptive-navigation3` library
-- Create an `androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy` using `rememberListDetailSceneStrategy`
-- Pass the `ListDetailSceneStrategy` to `NavDisplay` using its `sceneStrategies` parameter
+- 添加 `androidx.compose.material3.adaptive:adaptive-navigation3` 库
+- 使用 `rememberListDetailSceneStrategy` 创建 `androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy`
+- 通过 `NavDisplay` 的 `sceneStrategies` 参数把 `ListDetailSceneStrategy` 传给它
 
-#### Use metadata to identify the list and detail screens
+#### 使用 metadata 识别列表屏幕与详情屏幕
 
-- Add metadata using `entry(metadata = ...)` or `NavEntry(metadata = ...)` to the list entry using `ListDetailSceneStrategy.listPane(detailPlaceholder = {
-  <placeholder composable> })`.
-- Use the `detailPlaceholder` parameter to add a placeholder on the detail screen when no list items are selected.
-- Add metadata to the detail entry using `ListDetailSceneStrategy.detailPane()`.
+- 使用 `ListDetailSceneStrategy.listPane(detailPlaceholder = {
+  <placeholder composable> })`，通过 `entry(metadata = ...)` 或 `NavEntry(metadata = ...)` 为列表条目添加 metadata。
+- 使用 `detailPlaceholder` 参数在没有选中列表项时给详情屏幕添加占位符。
+- 使用 `ListDetailSceneStrategy.detailPane()` 为详情条目添加 metadata。
 
-#### Important considerations
+#### 重要考虑事项
 
-- When a detail screen displays its content full-screen on mobile (content fills the entire screen, bars or rails are hidden), full-screen mode must be deactivated if it's part of a list-detail layout.
-- Detail screens must not show a back arrow when on a list-detail layout.
+- 当详情屏幕在移动设备上全屏显示内容时（内容填满整个屏幕、应用栏或导航栏被隐藏），如果它属于列表-详情布局，必须停用全屏模式。
+- 在列表-详情布局中，详情屏幕不得显示返回箭头。
 
-For a reference implementation, check the [Nav3 **Material** List Detail
-recipe](references/android/guide/navigation/navigation-3/recipes/material-listdetail.md).
+参考实现见 [Nav3 **Material** 列表-详情配方](references/android/guide/navigation/navigation-3/recipes/material-listdetail.md)。
 
-### Step 3.2. Supporting pane
+### 步骤 3.2. 支撑窗格
 
-Identify supporting pane screens where a main screen displays a single item, and
-selecting it opens a "supporting screen" with more details. The supporting
-screen complements the main screen and is shown in a supporting pane.
+识别支撑窗格屏幕：主屏幕显示单个项目，选中它会打开一个带更多细节的「支撑屏幕」。支撑屏幕是对主屏幕的补充，显示在支撑窗格中。
 
-#### Add a Material supporting pane `SceneStrategy`
+#### 添加 Material 支撑窗格 `SceneStrategy`
 
-- If you haven't already, add the `androidx.compose.material3.adaptive:adaptive-navigation3` library
-- Create an `androidx.compose.material3.adaptive.navigation3.SupportingPaneSceneStrategy` using `rememberSupportingPaneSceneStrategy`
-- Pass the `SupportingPaneSceneStrategy` to `NavDisplay` using its `sceneStrategies` parameter
+- 如果还没有，添加 `androidx.compose.material3.adaptive:adaptive-navigation3` 库
+- 使用 `rememberSupportingPaneSceneStrategy` 创建 `androidx.compose.material3.adaptive.navigation3.SupportingPaneSceneStrategy`
+- 通过 `NavDisplay` 的 `sceneStrategies` 参数把 `SupportingPaneSceneStrategy` 传给它
 
-#### Use metadata to identify the main and supporting screens
+#### 使用 metadata 识别主屏幕与支撑屏幕
 
-- Add metadata using `entry(metadata = ...)` or `NavEntry(metadata = ...)` to the main entry using `SupportingPaneSceneStrategy.mainPane()`
-- Add metadata to the supporting entry using `SupportingPaneSceneStrategy.supportingPane()`
+- 使用 `SupportingPaneSceneStrategy.mainPane()`，通过 `entry(metadata = ...)` 或 `NavEntry(metadata = ...)` 为主条目添加 metadata
+- 使用 `SupportingPaneSceneStrategy.supportingPane()` 为支撑条目添加 metadata
 
-### Step 3.3. Run screenshot tests
+### 步骤 3.3. 运行截图测试
 
-If you have made changes, record new reference files. Ask the user to visually
-verify that the new layouts are correct.
+如果做了改动，记录新的参考文件。请用户目视确认新布局正确。
 
-## Step 4. Make vertical lists adaptive by changing the number of columns
+## 步骤 4. 通过改变列数让纵向列表自适应
 
-### Step 4.1. Make lazy lists adaptive
+### 步骤 4.1. 让 lazy 列表自适应
 
-Look for the following vertical list composables: `LazyColumn`,
-`LazyVerticalGrid`, `LazyVerticalStaggeredGrid`.
+查找以下纵向列表 composable：`LazyColumn`、`LazyVerticalGrid`、`LazyVerticalStaggeredGrid`。
 
-Steps to migrate:
+迁移步骤：
 
-- Choose a suitable minimum width in dp for the column. The item must be clearly visible to the user at this width.
-- For `LazyColumn`: change to a `LazyVerticalGrid` and follow the instruction later
-- For `LazyVerticalGrid`: change the `columns` parameter to use `GridCells.Adaptive(<width>.dp)`
-- For `LazyVerticalStaggeredGrid`: change the `columns` parameter to use `StaggeredGridCells.Adaptive(<width>.dp)`
+- 为列选择合适的 dp 最小宽度。在这个宽度下项目必须对用户清晰可见。
+- 对于 `LazyColumn`：改为 `LazyVerticalGrid`，然后按后面的指引操作
+- 对于 `LazyVerticalGrid`：把 `columns` 参数改为使用 `GridCells.Adaptive(<width>.dp)`
+- 对于 `LazyVerticalStaggeredGrid`：把 `columns` 参数改为使用 `StaggeredGridCells.Adaptive(<width>.dp)`
 
-### Step 4.2. Migrate non-lazy lists to Grid
+### 步骤 4.2. 把非 lazy 列表迁移到 Grid
 
-WARNING: Grid is an experimental API available from Compose 1.11.0-beta01.
-Confirm with the user that they are happy to use an experimental API in their
-codebase.
+警告：Grid 是从 Compose 1.11.0-beta01 起可用的实验性 API。与用户确认他们在代码库中使用实验性 API 没有问题。
 
-Look for any `Column` that contains multiple items of the same type and replace
-it with `Grid`. Do not replace it with `LazyVerticalGrid` or any other lazy
-layout. Do not place `Grid` inside the existing `Column`. Completely replace it.
+查找任何包含多个同类型项目的 `Column`，并用 `Grid` 替换它。不要用 `LazyVerticalGrid` 或其他 lazy 布局替换。不要把 `Grid` 放进现有的 `Column` 里。要完全替换它。
 
-`Grid` is configured by supplying a lambda (an extension function on
-`GridConfigurationScope`) to its `config` parameter. Inside the lambda,
-`constraints` provides the minimum and maximum dimensions of the grid container
-and can be used to change the number of rows and columns based on the available
-size. For example, the following code configures `Grid` such that when the
-available width is:
+`Grid` 通过向它的 `config` 参数传入一个 lambda（`GridConfigurationScope` 上的扩展函数）来配置。在 lambda 内部，`constraints` 提供网格容器的最小和最大尺寸，可用于根据可用尺寸改变行数和列数。例如，以下代码这样配置 `Grid`：当可用宽度为：
 
-- less than 800dp, a 2x4 grid is used
-- 800dp or more, a 4x2 grid is used
+- 小于 800dp 时，使用 2x4 网格
+- 800dp 或更大时，使用 4x2 网格
 
 
 ```kotlin
@@ -264,34 +220,27 @@ Grid(
 
 <br />
 
-`Grid` is an experimental API so add the `@OptIn(ExperimentalGridApi::class)`
-annotation to any function that uses it.
+`Grid` 是实验性 API，因此要给任何使用它的函数加上 `@OptIn(ExperimentalGridApi::class)` 注解。
 
-## Step 5: Hide App Bars when scrolling
+## 步骤 5：滚动时隐藏应用栏
 
-In an app with multiple top-level destinations, each screen must manage its own
-app bar state independently. There are two main scroll behaviors:
+在包含多个顶层目的地的应用中，每个屏幕必须独立管理自己的应用栏状态。主要有两种滚动行为：
 
-- `exitUntilCollapsedScrollBehavior`: Hides on scroll down, stays hidden while you scroll up until you reach the very top (0 offset).
-- `enterAlwaysScrollBehavior`: Hides on scroll down, shows immediately on scroll up.
+- `exitUntilCollapsedScrollBehavior`：向下滚动时隐藏，向上滚动时保持隐藏，直到到达最顶部（0 偏移）。
+- `enterAlwaysScrollBehavior`：向下滚动时隐藏，向上滚动时立即显示。
 
-## Step 6: Preserve UI state across configuration changes
+## 步骤 6：在配置变更间保留 UI 状态
 
-IMPORTANT: **Never** add `android:configChanges` or `android:screenOrientation`
-to `AndroidManifest.xml` to suppress Activity recreation or lock orientation.
-Opting out of recreation hides state-loss bugs instead of fixing them, breaks
-adaptive resource reloading, and prevents an app's process from restarting.
+重要：**绝不**为了抑制 Activity 重建或锁定方向而在 `AndroidManifest.xml` 中添加 `android:configChanges` 或 `android:screenOrientation`。退出重建只会隐藏状态丢失的 bug 而不是修复它们，会破坏自适应资源重新加载，并阻止应用进程重启。
 
-When fixing state loss across configuration changes, systematically audit
-**every** usage of `remember` across all screens, components, and state holders
-(in other words, do not only search for `remember { mutableStateOf(...) }`):
+修复配置变更导致的状态丢失时，要系统地审查**所有**屏幕、组件和状态持有者中 `remember` 的**每一处**用法（换言之，不要只搜索 `remember { mutableStateOf(...) }`）：
 
-### Step 6.1. Preserve primitive and custom UI state in Composables
+### 步骤 6.1. 在 Composable 中保留原始类型与自定义 UI 状态
 
-- Replace `remember { mutableStateOf(...) }` with `rememberSaveable { mutableStateOf(...) }` for user input and interactive UI state, such as `TextField` draft text, search queries, scroll position, and toggle states.
-- Key state on relevant identifiers when appropriate (e.g., `rememberSaveable(conversationId) { mutableStateOf("") }`).
-- For custom data classes or collections (for example, a `Set`) that are not natively `Bundle`-saveable:
-  - When delegating a `MutableState<T>` via `var state by rememberSaveable(...) { mutableStateOf(...) }`, pass your custom `Saver` using **`stateSaver`** (do **not** pass `saver = ...` when the block returns `MutableState<T>`):
+- 对于用户输入和交互式 UI 状态，例如 `TextField` 草稿文本、搜索查询、滚动位置和开关状态，把 `remember { mutableStateOf(...) }` 替换为 `rememberSaveable { mutableStateOf(...) }`。
+- 在合适时把状态按相关标识符做 key（例如 `rememberSaveable(conversationId) { mutableStateOf("") }`）。
+- 对于原生不支持 `Bundle` 保存的自定义 data class 或集合（例如 `Set`）：
+  - 当通过 `var state by rememberSaveable(...) { mutableStateOf(...) }` 委托 `MutableState<T>` 时，用 **`stateSaver`** 传入你的自定义 `Saver`（当 block 返回 `MutableState<T>` 时**不要**传 `saver = ...`）：
 
 
 ```kotlin
@@ -312,45 +261,35 @@ fun MyComposable() {
 
 <br />
 
-- Alternatively, annotate the class with `@Serializable` and use `rememberSerializable`.
+- 另一种做法是给类加上 `@Serializable` 注解，并使用 `rememberSerializable`。
 
-### Step 6.2. Preserve scroll state in lazy and scrollable layouts
+### 步骤 6.2. 在 lazy 与可滚动布局中保留滚动状态
 
-Plain `remember { LazyListState() }`, `remember { LazyGridState() }`, and
-`remember { ScrollState(...) }` do **not** save scroll position across
-configuration changes because they bypass the state class's `Saver`.
+朴素的 `remember { LazyListState() }`、`remember { LazyGridState() }` 和 `remember { ScrollState(...) }` **不会**在配置变更间保存滚动位置，因为它们绕过了状态类的 `Saver`。
 
-Inspect all scrollable containers (`LazyColumn`, `LazyRow`, `LazyVerticalGrid`,
-`LazyHorizontalGrid`, `LazyVerticalStaggeredGrid`, `Modifier.verticalScroll`,
-and `Modifier.horizontalScroll`) across all screens and reusable components, and
-replace plain `remember` instantiations with the built-in saveable factory
-functions:
+检查所有屏幕和可复用组件中的所有可滚动容器（`LazyColumn`、`LazyRow`、`LazyVerticalGrid`、`LazyHorizontalGrid`、`LazyVerticalStaggeredGrid`、`Modifier.verticalScroll` 和 `Modifier.horizontalScroll`），把朴素的 `remember` 实例化替换为内置的可保存工厂函数：
 
 - `remember { LazyListState() }` -\> `rememberLazyListState()`
 - `remember { LazyGridState() }` -\> `rememberLazyGridState()`
 - `remember { LazyStaggeredGridState() }` -\> `rememberLazyStaggeredGridState()`
 - `remember { ScrollState(initial = 0) }` -\> `rememberScrollState()`
 
-### Step 6.3. Preserve Navigation 3 state and multiple back stacks
+### 步骤 6.3. 保留 Navigation 3 状态与多个返回栈
 
-Check out the Navigation 3 guide to [Save and manage navigation state](references/android/guide/navigation/navigation-3/save-state.md)
-for details.
+详情见 Navigation 3 指南中的[保存和管理导航状态](references/android/guide/navigation/navigation-3/save-state.md)。
 
-### Step 6.4. Preserve media playback state (`ExoPlayer` / Media3)
+### 步骤 6.4. 保留媒体播放状态（`ExoPlayer` / Media3）
 
-When an MediaPlayer (such as `ExoPlayer`) is created inside a composable with `remember`, it is
-released on disposal and recreated from scratch on configuration change,
-resetting playback to `0:00` and auto-playing even if the user had paused the
-video.
+当 MediaPlayer（例如 `ExoPlayer`）在 composable 中用 `remember` 创建时，它会在被销毁时释放，并在配置变更时从头重建，导致播放位置重置为 `0:00`，即使用户已暂停视频也会自动播放。
 
-To preserve `ExoPlayer` playback state (`currentPosition` and `playWhenReady`):
+要保留 `ExoPlayer` 的播放状态（`currentPosition` 和 `playWhenReady`）：
 
-1. Store `savedPositionMs` (`mutableLongStateOf(0L)`) and `savedPlayWhenReady` (`mutableStateOf(true)`) using `rememberSaveable(videoResId)`.
-2. **Keep saved state updated during playback --- do not only save in `onDispose`** : update `savedPlayWhenReady` and `savedPositionMs` in a `Player.Listener` (`onPlayWhenReadyChanged`, `onPositionDiscontinuity`) **and** periodically inside a `LaunchedEffect(player)` loop while active.
-3. **Initialize the player with the restored state** : Set `playWhenReady = savedPlayWhenReady` and call `seekTo(savedPositionMs)` before `prepare()`.
-4. **Guard `LifecycleStartEffect` so it does not auto-play a paused video or overwrite `savedPlayWhenReady`** :
-   - In `LifecycleStartEffect(player)`, only call `player.play()` when `savedPlayWhenReady` is `true` (otherwise a paused video will start playing again after restoration).
-   - In `onStopOrDispose`, capture `val wasPlaying = player.playWhenReady` and `savedPositionMs = player.currentPosition` before calling `player.pause()`, then restore `savedPlayWhenReady = wasPlaying` so that `player.pause()` on stop/dispose does not overwrite `savedPlayWhenReady` to `false`:
+1. 使用 `rememberSaveable(videoResId)` 存储 `savedPositionMs`（`mutableLongStateOf(0L)`）和 `savedPlayWhenReady`（`mutableStateOf(true)`）。
+2. **在播放过程中保持已保存状态最新 --- 不要只在 `onDispose` 中保存**：在 `Player.Listener`（`onPlayWhenReadyChanged`、`onPositionDiscontinuity`）中**以及**活跃期间在 `LaunchedEffect(player)` 循环里定期更新 `savedPlayWhenReady` 和 `savedPositionMs`。
+3. **用恢复的状态初始化播放器**：在 `prepare()` 之前设置 `playWhenReady = savedPlayWhenReady` 并调用 `seekTo(savedPositionMs)`。
+4. **保护 `LifecycleStartEffect`，使其不会自动播放已暂停的视频或覆盖 `savedPlayWhenReady`**：
+   - 在 `LifecycleStartEffect(player)` 中，只有当 `savedPlayWhenReady` 为 `true` 时才调用 `player.play()`（否则已暂停的视频在恢复后会重新开始播放）。
+   - 在 `onStopOrDispose` 中，在调用 `player.pause()` 之前捕获 `val wasPlaying = player.playWhenReady` 和 `savedPositionMs = player.currentPosition`，然后恢复 `savedPlayWhenReady = wasPlaying`，这样停止/销毁时的 `player.pause()` 就不会把 `savedPlayWhenReady` 覆盖为 `false`：
 
 
 ```kotlin
@@ -417,57 +356,48 @@ private fun rememberExoPlayer(@RawRes videoResId: Int, fromUri: Unit.(Uri) -> Me
 
 <br />
 
-## Step 7: Add desktop experiences
+## 步骤 7：添加桌面体验
 
-### Step 7.1: Identify the required desktop feature
+### 步骤 7.1：确认所需的桌面功能
 
-Look at the user's prompt, requirements, or uploaded files to determine which
-desktop feature needs to be implemented.
+查看用户的提示词、需求或上传的文件，确定需要实现哪项桌面功能。
 
-### Step 7.2: Run feature-specific processing
+### 步骤 7.2：运行针对具体功能的处理
 
-Based on the feature identified, you must read the corresponding reference file
-and follow its instructions:
+根据识别出的功能，你必须阅读对应的参考文件并遵循其中的指引：
 
-- **Keyboard Shortcuts** -\> read [`references/keyboard_shortcuts.md`](references/keyboard_shortcuts.md)
-- **Tooltips** -\> read [`references/tooltips.md`](references/tooltips.md)
-- **Custom Cursors** -\> read [`references/custom_cursors.md`](references/custom_cursors.md)
+- **键盘快捷键** -\> 阅读 [`references/keyboard_shortcuts.md`](references/keyboard_shortcuts.md)
+- **工具提示** -\> 阅读 [`references/tooltips.md`](references/tooltips.md)
+- **自定义光标** -\> 阅读 [`references/custom_cursors.md`](references/custom_cursors.md)
 
-Each reference starts by searching the whole app for the targets of that
-feature. Write that list down first, implement all of it (not only the first
-screen you open), and re-check the list before you finish.
+每个参考文件都先在整个应用中搜索该功能的目标。先把这份清单写下来，全部实现（不只是你打开的第一个屏幕），并在结束前重新检查清单。
 
-## Final step: Build and test
+## 最后一步：构建与测试
 
-Build the app and run the local tests. If the project has screenshot tests, run
-them but DO NOT update the reference images. Prompt the user to do this after
-they have viewed the screenshot diffs.
+构建应用并运行本地测试。如果项目有截图测试，运行它们，但不要更新参考图像。请用户在查看截图差异之后再做这件事。
 
-## Additional documentation for experimental adaptive APIs
+## 实验性自适应 API 的补充文档
 
-The following APIs are available from Compose 1.11.0.
+以下 API 从 Compose 1.11.0 起可用。
 
 ### FlexBox
 
-Check the FlexBox documentation:
+查看 FlexBox 文档：
 
-- [Overview](references/android/develop/ui/compose/layouts/adaptive/flexbox/index.md)
-- [Get started - setup](references/android/develop/ui/compose/layouts/adaptive/flexbox/get-started.md)
-- [Set container behavior](references/android/develop/ui/compose/layouts/adaptive/flexbox/container-behavior.md)
-- [Set item behavior](references/android/develop/ui/compose/layouts/adaptive/flexbox/item-behavior.md)
+- [概述](references/android/develop/ui/compose/layouts/adaptive/flexbox/index.md)
+- [快速开始 - 配置](references/android/develop/ui/compose/layouts/adaptive/flexbox/get-started.md)
+- [设置容器行为](references/android/develop/ui/compose/layouts/adaptive/flexbox/container-behavior.md)
+- [设置项目行为](references/android/develop/ui/compose/layouts/adaptive/flexbox/item-behavior.md)
 
 ## MediaQuery
 
-Check the [MediaQuery documentation](references/android/develop/ui/compose/layouts/adaptive/mediaquery/index.md) when you need to query the device's
-screen size, pointer precision, keyboard type, whether it has cameras or
-microphones, and other device capabilities.
+当你需要查询设备的屏幕尺寸、指针精度、键盘类型、是否有摄像头或麦克风以及其他设备能力时，查看 [MediaQuery 文档](references/android/develop/ui/compose/layouts/adaptive/mediaquery/index.md)。
 
 ## Grid
 
-Check the Grid documentation when you need to display a fixed number of items in
-a grid layout:
+当你需要在网格布局中显示固定数量的项目时，查看 Grid 文档：
 
-- [Overview](references/android/develop/ui/compose/layouts/adaptive/grid/index.md)
-- [Get started - setup](references/android/develop/ui/compose/layouts/adaptive/grid/get-started.md)
-- [Set container properties](references/android/develop/ui/compose/layouts/adaptive/grid/container-properties.md)
-- [Set item properties](references/android/develop/ui/compose/layouts/adaptive/grid/item-properties.md)
+- [概述](references/android/develop/ui/compose/layouts/adaptive/grid/index.md)
+- [快速开始 - 配置](references/android/develop/ui/compose/layouts/adaptive/grid/get-started.md)
+- [设置容器属性](references/android/develop/ui/compose/layouts/adaptive/grid/container-properties.md)
+- [设置项目属性](references/android/develop/ui/compose/layouts/adaptive/grid/item-properties.md)

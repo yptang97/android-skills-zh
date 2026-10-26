@@ -1,39 +1,34 @@
-When migrating to built-in Kotlin, it is important to consider usage of `kapt`
-and the `org.jetbrains.kotlin.kapt` (also known as the `kotlin("kapt")`) plugin.
-The goal is to migrate as many `kapt` usages to `ksp` as possible.
+迁移到内置 Kotlin 时，需要重点考虑 `kapt` 以及 `org.jetbrains.kotlin.kapt`（也就是 `kotlin("kapt")`）插件的使用情况。
+目标是把尽可能多的 `kapt` 用法迁移到 `ksp`。
 
-Follow these steps when migrating `kapt`:
+迁移 `kapt` 时按以下步骤操作：
 
-## 1. Remove all references to the `org.jetbrains.kotlin.kapt` plugin
+## 1. 移除所有对 `org.jetbrains.kotlin.kapt` 插件的引用
 
-The `org.jetbrains.kotlin.kapt` (also known as `kotlin("kapt")`) plugin is
-incompatible with built-in Kotlin. Remove it when migrating to built-in Kotlin.
+`org.jetbrains.kotlin.kapt`（也就是 `kotlin("kapt")`）插件与内置 Kotlin
+不兼容。迁移到内置 Kotlin 时请移除它。
 
-## 2. Check each usage of `kapt`
+## 2. 检查每一处 `kapt` 用法
 
-Check each usage of `kapt` to see if it is compatible with `ksp`. To check if a
-dependency is compatible with `ksp`, inspect the dependency's jar. For it to be
-compatible with `ksp`, the jar must have a file,
-`services/com.google.devtools.ksp.processing.SymbolProcessorProvider`. If it
-does not, it is **incompatible** with `ksp`.
+检查每一处 `kapt` 用法，确认它是否兼容 `ksp`。要判断某个依赖是否兼容
+`ksp`，请查看该依赖的 jar。jar 中必须存在文件
+`services/com.google.devtools.ksp.processing.SymbolProcessorProvider` 才算兼容
+`ksp`。如果没有这个文件，则该依赖**不兼容** `ksp`。
 
-For example, the `androidx.room:room-compiler` library is compatible with KSP
-since version 2.3.0-beta02. We can verify this by finding the jar file in the
-Gradle caches directory, which is typically located at
-`~/.gradle/caches/modules-2/files-2.1/` on Linux and Mac. In this specific case,
-the `androidx.room:room-compiler` dependency is located at
-`~/.gradle/caches/modules-2/files-2.1/androidx.room/room-compiler/`.
+例如，`androidx.room:room-compiler` 库从 2.3.0-beta02 版本起兼容 KSP。
+我们可以在 Gradle 缓存目录中找到该 jar 文件来验证，在 Linux 和 Mac 上该目录通常位于
+`~/.gradle/caches/modules-2/files-2.1/`。在这个例子中，
+`androidx.room:room-compiler` 依赖位于
+`~/.gradle/caches/modules-2/files-2.1/androidx.room/room-compiler/`。
 
-More generally, you can find a dependency by looking in
-`~/.gradle/caches/modules-2/files-2.1/group-name/artifact-name/`.
+更一般地说，你可以在
+`~/.gradle/caches/modules-2/files-2.1/group-name/artifact-name/` 下找到某个依赖。
 
-## 3. Migrate to KSP where possible
+## 3. 尽可能迁移到 KSP
 
-For each usage of `kapt` that is compatible with `ksp`, use `ksp`. The prior
-step explains how to check compatibility.
+对于每一处兼容 `ksp` 的 `kapt` 用法，改用 `ksp`。上一步已经说明了如何检查兼容性。
 
-## 4. Apply legacy-kapt
+## 4. 应用 legacy-kapt
 
-If a Gradle module has `kapt` dependencies that cannot be migrated to `ksp`
-because they are incompatible (see step 2), then leave that dependency alone and
-apply the `com.android.legacy-kapt` plugin.
+如果某个 Gradle 模块中有 `kapt` 依赖因不兼容（见步骤 2）而无法迁移到 `ksp`，
+那就保留该依赖不动，改为应用 `com.android.legacy-kapt` 插件。

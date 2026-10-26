@@ -1,10 +1,8 @@
 ---
 name: projected-hardware
-description: Provides instructions and workflows for accessing and managing hardware
-  on Android XR projected devices, such as audio glasses and display glasses. Use
-  this skill when building experiences for intelligent eyewear in an Android app and
-  you need to access device hardware like the camera and microphone, handle glasses-specific
-  runtime permissions, or manage connection lifecycles using projected context.
+description: 提供在 Android XR 投影设备（例如音频眼镜和显示眼镜）上访问和管理硬件的说明与工作流。
+  当你在 Android 应用中为智能眼镜构建体验，并且需要访问相机、麦克风等设备硬件、处理眼镜专属的
+  运行时权限，或使用 projected context 管理连接生命周期时，使用这个 skill。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -22,22 +20,21 @@ metadata:
   - audio recording
 ---
 
-## Prerequisites
+## 前置条件
 
-- You must use a `compileSdk` of 36 or higher.
+- 必须使用 `compileSdk` 36 或更高版本。
 
-## Connection and lifecycle management
+## 连接与生命周期管理
 
-Intelligent eyewear hardware is only accessible while the glasses are connected
-to the host phone. Monitor connection state and manage resource lifecycles using
-`ProjectedContext`. You must read
-[Understand projected activities and projected contexts](references/android/develop/xr/jetpack-xr-sdk/glasses/support-different-types.md) to understand
-how to get a projected context and [how to manage its lifecycle](references/android/develop/xr/jetpack-xr-sdk/glasses/check-availability.md).
+只有在眼镜连接到主机手机时，才能访问智能眼镜硬件。使用
+`ProjectedContext` 监控连接状态并管理资源生命周期。你必须阅读
+[了解 projected activity 与 projected context](references/android/develop/xr/jetpack-xr-sdk/glasses/support-different-types.md)，以了解
+如何获取 projected context，以及[如何管理它的生命周期](references/android/develop/xr/jetpack-xr-sdk/glasses/check-availability.md)。
 
-## Request glasses hardware permissions
+## 请求眼镜硬件权限
 
-- **Hardware permissions and opt-in** : You must read [Request hardware permissions](references/android/develop/xr/jetpack-xr-sdk/request-hardware-permissions.md) to understand how to declare camera and microphone runtime permissions in the Android Manifest file, request runtime permissions in different scenarios, and handle permission results.
+- **硬件权限与选用**：你必须阅读 [请求硬件权限](references/android/develop/xr/jetpack-xr-sdk/request-hardware-permissions.md)，以了解如何在 Android 清单文件中声明相机和麦克风运行时权限、在不同场景下请求运行时权限，以及处理权限结果。
 
-## Glasses hardware access and capabilities
+## 眼镜硬件访问与能力
 
-- **Camera capture and CameraX** : You must read [Capture an image with the glasses' camera](references/android/develop/xr/jetpack-xr-sdk/access-hardware-projected-context.md) to understand the implementation patterns for capturing a photo with the glasses' camera using a `ProjectedContext`.
+- **相机拍摄与 CameraX**：你必须阅读 [用眼镜相机捕获图像](references/android/develop/xr/jetpack-xr-sdk/access-hardware-projected-context.md)，以了解使用 `ProjectedContext` 通过眼镜相机拍照的实现模式。

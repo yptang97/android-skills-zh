@@ -1,31 +1,29 @@
-This skill provides guidance on how to optimize prompts for use with the ML Kit
-Prompt API.
+本 skill 说明如何为 ML Kit Prompt API 优化提示词。
 
-## Guidelines \& Rules
+## 指南与规则
 
-The best practices for prompt design for Prompt API are at
-[Prompt Design](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prompt-design). Apply these core rules:
+Prompt API 的提示词设计最佳实践见
+[提示词设计](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prompt-design)。请应用这些核心规则：
 
-- Include examples for in-context learning with examples of the output. This is an example prompt that includes in-context learning because it has examples of the desired model output: Analyze the message and return whether the customer sentiment is positive, negative, or neutral. Example 1: Input - "This product doesn't work"; Output - "Negative" Example 2: Input - "I liked this product"; Output - "Positive"
-- Make prompts concise. Remove duplicate or repeated instructions. Do not include conversational filler such as: hello, please, do this, help me with, etc. For example, a verbose prompt such as: "Hello! I want you to act as an expert translator for me today. I am going to give you a short paragraph of text in English, and I would really like it if you could translate it into formal, high-level Business French. Please make sure that you do not include any intro like 'Here is your translation' or any closing remarks at all. Just output the translation itself." can be improved with this concise prompt: "Translate to formal Business French. Return ONLY the translation"
-- Use paired XML/HTML delimiters to denote dynamic inputs (for example `<email>[content]</email>`) to clearly isolate user data from prompt instructions. Mention that the delimiters represent placeholder text that should be replaced by code in the actual implementation.
-- Use the [Structured Output API](https://developer.android.com/agents/skills/device-ai/prompt-api/references/structured-output) if the output requires parsing responses into certain formats. Don't include the Structured Output API implementation in the prompt itself, but mention it after presenting the optimized prompt to the user so the user knows how to parse the model output. Prompts that use Structured Output API must return the `@Generable` typed object from the function signature instead of a string or JSON string.
-- Keep output short by adding output constraints such as word count, character count, or number of bullets or sentences. For example, add constraints such as "The summarization must be 10 words or fewer."
-- Use [system instructions](https://developer.android.com/agents/skills/device-ai/prompt-api/references/system-instructions) for short instructions that define how a model should behave, and use [prefix caching](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prefix-caching) for prompts that are over 200 words.
+- 包含用于 in-context learning 的示例，并给出输出的示例。下面这个提示词示例之所以算 in-context learning，是因为它给出了期望模型输出的示例：Analyze the message and return whether the customer sentiment is positive, negative, or neutral. Example 1: Input - "This product doesn't work"; Output - "Negative" Example 2: Input - "I liked this product"; Output - "Positive"
+- 让提示词保持简洁。删除重复或反复出现的指令。不要包含 hello、please、do this、help me with 这类对话式填充语。例如，冗长的提示词如："Hello! I want you to act as an expert translator for me today. I am going to give you a short paragraph of text in English, and I would really like it if you could translate it into formal, high-level Business French. Please make sure that you do not include any intro like 'Here is your translation' or any closing remarks at all. Just output the translation itself." 可以用下面这个简洁的提示词来改进："Translate to formal Business French. Return ONLY the translation"
+- 使用成对的 XML/HTML 定界符来标记动态输入（例如 `<email>[content]</email>`），把用户数据与提示词指令清晰地隔离开。说明这些定界符代表占位符文本，实际实现中应由代码替换。
+- 如果输出需要把响应解析成特定格式，使用 [Structured Output API](https://developer.android.com/agents/skills/device-ai/prompt-api/references/structured-output)。不要把 Structured Output API 的实现写进提示词本身，而是在向用户展示优化后的提示词之后再提及它，让用户知道如何解析模型输出。使用 Structured Output API 的提示词必须从函数签名返回 `@Generable` 类型的对象，而不是字符串或 JSON 字符串。
+- 通过添加输出约束让输出保持简短，例如词数、字符数、条目数或句子数。例如添加这样的约束："The summarization must be 10 words or fewer."
+- 对规定模型应如何行为的简短指令使用 [system instructions](https://developer.android.com/agents/skills/device-ai/prompt-api/references/system-instructions)，对超过 200 词的提示词使用 [prefix caching](https://developer.android.com/agents/skills/device-ai/prompt-api/references/prefix-caching)。
 
-## Examples
+## 示例
 
-Here are examples of prompts that the user might ask you to optimize, and the
-improved, optimized versions.
+以下是用户可能请你优化的提示词示例，以及改进后的优化版本。
 
-### Example 1
+### 示例 1
 
-Unoptimized prompt:
+未优化的提示词：
 
     Process this customer email and return the order ID, what was bought, the phone
     number, and what they want. Format it as JSON so my app can read it.
 
-Optimized prompt:
+优化后的提示词：
 
     ## Task
 
@@ -37,17 +35,14 @@ Optimized prompt:
     [email_content]
     </email>
 
-Explanation: Because the information that the user wants to extract using the
-prompt is well suited for the Structured Output API, the optimized prompt
-implicitly uses the Structured Output API and doesn't need to explicitly define
-the schema for the extracted data. In your response to the user that explains
-the optimizations made to the prompt, mention that the optimized prompt is
-designed for use with the Structured Output API. Also, mention that the
-"" delimiters signify placeholder text that should be replaced with code in the user's actual implementation.
+说明：因为用户想用这个提示词提取的信息非常适合用 Structured Output API 处理，优化后的提示词隐式使用了
+Structured Output API，不需要显式定义提取数据的 schema。在向用户解释为提示词所做优化的回复里，要提到
+优化后的提示词是为配合 Structured Output API 使用而设计的。同时说明 "" 定界符表示占位符文本，在实际实现中
+应替换为代码。
 
-### Example 2
+### 示例 2
 
-Unoptimized prompt:
+未优化的提示词：
 
     Given this itinerary for a trip: [Flight to Paris (CDG), Check-in: Hotel Le
     Meurice, Visit to the Louvre, Dinner at Le Jules Verne, Eiffel Tower Visit,
@@ -55,7 +50,7 @@ Unoptimized prompt:
     Tasting, Flight Out], generate the following: overall vibe, tips on how to
     prepare for this trip, and common short phrases to learn for the trip.
 
-Optimized prompt:
+优化后的提示词：
 
     ## Task
 

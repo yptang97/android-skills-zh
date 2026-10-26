@@ -1,18 +1,15 @@
-## 1. Phase deferral for animations (skip Composition to Draw and Layout)
+## 1. 为动画做相位延迟（跳过 Composition 到 Draw 和 Layout）
 
-When animating visual properties (such as alpha, scale, rotation, color, or
-translation), never read the animated state directly in the Composable body
-during the Composition phase. Reading state during composition causes the
-reading recompose scope (and any non-skippable children) to recompose on every
-animation tick (60 to 120 times per second).
+为视觉属性（例如 alpha、scale、rotation、color 或 translation）做动画时，绝不要在 Composition 阶段
+在 Composable 主体里直接读取动画状态。在组合期间读取状态会让读取所在的 recompose scope
+（以及任何不可跳过的子项）在每一次动画 tick 上重组（每秒 60 到 120 次）。
 
-Wrap animated state reads in lambdas so evaluation is deferred to the **Draw**
-or
-**Layout** phase.
+把对动画状态的读取包进 lambda，让求值推迟到 **Draw** 或
+**Layout** 阶段。
 
-### A. Alpha, rotation, and scale: defer to Draw with `graphicsLayer`
+### A. Alpha、旋转和缩放：用 `graphicsLayer` 推迟到 Draw
 
-- **Bad (Recomposes on every animation frame)**:
+- **坏做法（每一动画帧都重组）**：
 
 
   ```kotlin
@@ -23,7 +20,7 @@ or
 
   <br />
 
-- **Optimized (Bypasses Composition and Layout, evaluates in Draw phase)**:
+- **优化做法（绕过 Composition 和 Layout，在 Draw 阶段求值）**：
 
 
   ```kotlin
@@ -38,9 +35,9 @@ or
 
   <br />
 
-### B. Animated offsets: defer to Layout with `Modifier.offset`
+### B. 动画偏移：用 `Modifier.offset` 推迟到 Layout
 
-- **Bad (Recomposes on every pixel shift)**:
+- **坏做法（每移动一个像素就重组）**：
 
 
   ```kotlin
@@ -53,7 +50,7 @@ or
 
   <br />
 
-- **Optimized (Skips Composition, goes straight to Layout phase)**:
+- **优化做法（跳过 Composition，直接进入 Layout 阶段）**：
 
 
   ```kotlin
@@ -70,15 +67,14 @@ or
 
   <br />
 
-### C. Animated size: defer to Layout with `Modifier.layout` or `animateBounds`
+### C. 动画尺寸：用 `Modifier.layout` 或 `animateBounds` 推迟到 Layout
 
-Animating container dimensions using `animateDpAsState` and `Modifier.size(...)`
-directly in the Composable body triggers recomposition of the composable and its
-children on every animation tick.
+在 Composable 主体里直接用 `animateDpAsState` 和 `Modifier.size(...)` 为容器尺寸做动画，会让该
+composable 及其子项在每一次动画 tick 上重组。
 
-Use layout-phase constraint animation or Lookahead bounds animation instead:
+改用布局阶段的约束动画或 Lookahead 边界动画：
 
-- **Bad (Recomposes entire subtree on every animation frame)**:
+- **坏做法（每一动画帧都重组整个子树）**：
 
 
   ```kotlin
@@ -91,8 +87,8 @@ Use layout-phase constraint animation or Lookahead bounds animation instead:
 
   <br />
 
-- **Optimized (Phase Deferral with `Modifier.layout`)**: Animate constraints
-  in the layout pass without re-triggering composition:
+- **优化做法（用 `Modifier.layout` 做相位延迟）**：在布局过程中为约束做动画，
+  不重新触发组合：
 
 
   ```kotlin
@@ -117,8 +113,8 @@ Use layout-phase constraint animation or Lookahead bounds animation instead:
 
   <br />
 
-- **Optimized (Lookahead Scope with `animateBounds`)** : Inside a
-  `LookaheadScope`, animate size changes smoothly using `animateBounds`:
+- **优化做法（`animateBounds` 搭配 Lookahead Scope）**：在
+  `LookaheadScope` 里用 `animateBounds` 平滑地为尺寸变化做动画：
 
 
   ```kotlin
@@ -129,15 +125,14 @@ Use layout-phase constraint animation or Lookahead bounds animation instead:
 
   <br />
 
-### D. Custom composable parameters (lambda providers)
+### D. 自定义 composable 参数（lambda 提供者）
 
-When creating custom composables that animate properties internally, pass a
-lambda provider (`alphaProvider: () -> Float` or `offsetProvider: () ->
-IntOffset`) instead of the raw animated value. This allows the caller to avoid
-reading the state in Composition and allows the child to defer the read to
-`graphicsLayer` or `offset`.
+创建在内部为属性做动画的自定义 composable 时，要传 lambda 提供者
+（`alphaProvider: () -> Float` 或 `offsetProvider: () ->
+IntOffset`），而不是原始动画值。这样调用方就不必在 Composition 里读取状态，子项也能把读取推迟到
+`graphicsLayer` 或 `offset`。
 
-- **Bad (Caller must read state in Composition to pass Float)**:
+- **坏做法（调用方必须在 Composition 里读取状态才能传 Float）**：
 
 
   ```kotlin
@@ -149,8 +144,8 @@ reading the state in Composition and allows the child to defer the read to
 
   <br />
 
-- **Optimized (Caller passes lambda; read is deferred until child's Draw
-  phase)**:
+- **优化做法（调用方传 lambda；读取推迟到子项的 Draw
+  阶段）**：
 
 
   ```kotlin
@@ -162,31 +157,25 @@ reading the state in Composition and allows the child to defer the read to
 
   <br />
 
-## 2. Shared transitions and shared elements (`SharedTransitionScope`)
+## 2. 共享转场与共享元素（`SharedTransitionScope`）
 
-`SharedTransitionScope` enables coordinated bounds and element transitions
-across layouts and navigation destinations.
+`SharedTransitionScope` 让边界与元素转场能够跨布局和跨导航目的地协同进行。
 
-### 1. Defer `sharedBounds` and `sharedElement` in fast-scrolling lists
+### 1. 在快速滚动的列表里推迟 `sharedBounds` 和 `sharedElement`
 
-**Recommendation:** For long or fast-scrolling lists (`LazyColumn`, `LazyRow`,
-`LazyVerticalGrid`, `HorizontalPager`), consider attaching
-`Modifier.sharedBounds` or `Modifier.sharedElement` only when items enter the
-visible viewport using `Modifier.onVisibilityChanged`.
+**建议：** 对于很长或快速滚动的列表（`LazyColumn`、`LazyRow`、
+`LazyVerticalGrid`、`HorizontalPager`），考虑只在列表项通过
+`Modifier.onVisibilityChanged` 进入可见视口时才挂上
+`Modifier.sharedBounds` 或 `Modifier.sharedElement`。
 
-While spatial coordinate tracking is only enabled when a match is found,
-unconditionally attaching shared transition modifiers introduces modifier
-instantiation and state observation overhead for **pre-fetched items that may
-never end up on screen** during fast scroll flings. Deferring attachment until
-visible avoids this instantiation cost for offscreen items.
-> **Note:**
-> This recommendation applies to current versions of Compose. Upstream platform
-> performance optimizations to make `Modifier.sharedBounds` and
-> `Modifier.sharedElement` lighter-weight and avoid prefetch overhead are in
-> active development.
+虽然空间坐标跟踪只在找到匹配项时才启用，但无条件挂上共享转场 modifier 会给**快速拖拽滚动期间可能
+永远不会出现在屏幕上的预取项**带来 modifier 实例化和状态观察的开销。推迟到可见时再挂上，
+可以避免屏幕外项承担这部分实例化开销。
+> **注意：**
+> 这条建议适用于当前版本的 Compose。上游平台正在积极开发性能优化，让 `Modifier.sharedBounds` 和
+> `Modifier.sharedElement` 更轻量，并避免预取开销。
 
-- **Before (Instantiation runs on all pre-fetched items even if never
-  displayed)**:
+- **改前（实例化会在所有预取项上执行，即使从未显示）**：
 
 
   ```kotlin
@@ -211,8 +200,8 @@ visible avoids this instantiation cost for offscreen items.
 
   <br />
 
-- **Optimized (Shared transition modifier deferred until item enters
-  viewport)**:
+- **优化后（共享转场 modifier 推迟到列表项进入
+  视口）**：
 
 
   ```kotlin
@@ -250,13 +239,13 @@ visible avoids this instantiation cost for offscreen items.
 
   <br />
 
-## 3. Persistent `Animatable` in custom modifiers (`Modifier.Node`)
+## 3. 在自定义 modifier 里持久化 `Animatable`（`Modifier.Node`）
 
-When building custom animated modifiers, do not use `composed { ... }` with
-`remember { Animatable(...) }` and `LaunchedEffect`.
+构建自定义动画 modifier 时，不要用 `composed { ... }` 搭配
+`remember { Animatable(...) }` 和 `LaunchedEffect`。
 
-Store `Animatable` directly as a member property on the `Modifier.Node` and
-launch the animation in `onAttach()` using the node's built-in `coroutineScope`:
+把 `Animatable` 直接作为 `Modifier.Node` 的成员属性保存，并在 `onAttach()` 里用节点自带的
+`coroutineScope` 启动动画：
 
 
 ```kotlin

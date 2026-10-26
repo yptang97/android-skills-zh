@@ -1,57 +1,51 @@
-Optimizes AppFunction KDoc for AI agents and Model Context Protocol.
+为 AI agent 和 Model Context Protocol 优化 AppFunction KDoc。
 
-## Instructions
+## 指令
 
-### Workflow: Agent-centric documentation
+### 工作流：面向 agent 的文档
 
-1. **Identify the core outcome** : Start the description with a strong imperative verb, for example, "Search", "Create", or "Update". Focus on the *user benefit*, not the code implementation.
-2. **Workflow dependencies** : Explicitly state if another function must be called first using the standard phrase: **Required workflow: Call "Function
-   A" first to "Objective"**.
-3. **Parameter documentation** :
-   - For **functions** : Use specific `@param` tags. Isolate validation rules and default values here.
-   - For **serializables** : Use inline KDoc directly for each property declaration. KSP **won't** extract documentation from class-level tags.
-4. **Error surface mapping** : Rewrite `@throws` descriptions to provide useful recovery steps for the AI agent, for example "If "Error", suggest the user check their internet connection."
+1. **明确核心结果**：用有力的祈使动词开头，例如「Search」「Create」或「Update」。聚焦*用户收益*，而不是代码实现。
+2. **工作流依赖**：如果必须先调用另一个函数，用标准句式明确说明：**Required workflow: Call "Function A" first to "Objective"**。
+3. **参数文档**：
+   - 对于**函数**：使用具体的 `@param` 标签。把校验规则和默认值写在这里。
+   - 对于**可序列化类**：直接在每个属性声明处写内联 KDoc。KSP **不会**从类级标签中提取文档。
+4. **错误面映射**：重写 `@throws` 说明，为 AI agent 提供有用的恢复步骤，例如「如果出现 "Error"，建议用户检查网络连接。」
 
-### Workflow: Global app description for server instructions
+### 工作流：面向 server 指令的全局应用描述
 
-When writing the `appfn:description` for `app_metadata.xml`, follow these
-instructions:
+在为 `app_metadata.xml` 编写 `appfn:description` 时，遵循以下指令：
 
-1. **Capture cross-function relationships**: Explain dependencies or sequences between tools, for example, "Always call 'authenticate' before fetching data.".
-2. **Document operational patterns**: Guide the LLM on token-conserving usage, for example, "Use 'batch_update' over multiple 'update' calls."
-3. **Specify constraints**: Define clear boundaries, for example, "File operations limited to workspace" or "Rate limit: 10 requests per minute."
-4. **Anti-patterns** :
-   - Don't repeat individual function descriptions.
-   - Don't include marketing claims or subjective praise.
-   - Don't attempt to prompt model personality or conversation style.
+1. **记录跨函数关系**：说明工具之间的依赖或调用顺序，例如「拉取数据前始终先调用 'authenticate'。」
+2. **记录操作模式**：指导 LLM 采用节省令牌的用法，例如「用 'batch_update' 代替多次 'update' 调用。」
+3. **说明约束**：定义清晰的边界，例如「文件操作限定在工作区内」或「速率限制：每分钟 10 个请求。」
+4. **反模式**：
+   - 不要重复单个函数的说明。
+   - 不要加入营销话术或主观夸赞。
+   - 不要试图提示模型的性格或对话风格。
 
-## Critical constraints
+## 关键约束
 
-### Descriptive, not imperative
+### 描述性，而非祈使
 
-Describe what the function *does* , not what the LLM *must* do. Avoid phrases
-like "You must call this..." in favor of "This function provides...".
+描述函数*做*什么，而不是 LLM *必须*做什么。避免「你必须调用...」这类说法，改用「此函数提供...」。
 
-### No "fluff"
+### 不要「废话」
 
-Remove conversational padding like "This method is used to..." or "Helpful
-for...". Be concise and technical.
+删除「此方法用于...」或「有助于...」这类对话式填充。保持简洁、技术化。
 
-### Inline KDoc for serializables
+### 可序列化类使用内联 KDoc
 
-**Mandatory** : For `@AppFunctionSerializable` classes, documentation must be
-inline for each property. KSP ignores class-level `@param` or `@property` tags
-for these classes.
+**强制要求**：对于 `@AppFunctionSerializable` 类，每个属性的文档必须内联。对这类类，KSP 会忽略类级的 `@param` 或 `@property` 标签。
 
-## Examples
+## 示例
 
-### Example: MCP refactoring
+### 示例：MCP 重构
 
-**Original**:
+**原始**：
 
 `/** This function helps you find people. */`
 
-**Refined**:
+**改进后**：
 
      /**
        * Search for message recipients by name or email.
@@ -60,9 +54,9 @@ for these classes.
        * @return List of "Recipient" objects matching the query.
        */
 
-### Example: Global app description
+### 示例：全局应用描述
 
-**Refined**:
+**改进后**：
 
     This app provides functions for task management and team collaboration.
 

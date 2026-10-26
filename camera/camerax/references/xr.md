@@ -1,33 +1,30 @@
-Developing camera features for XR devices, headsets, and AR glasses requires a
-shift from 2D pixel-pushing to 3D spatial awareness.
+为 XR 设备、头显和 AR 眼镜开发相机功能，需要从 2D 像素处理转向 3D 空间感知。
 
-## Understand the XR development mindset
+## 理解 XR 开发思路
 
-| Concept | Mobile focus | **XR focus** |
+| 概念 | 移动端关注点 | **XR 关注点** |
 |---|---|---|
-| **Input** | Raw camera stream | **Spatial tracking (visual-inertial odometry (VIO) or simultaneous localization and mapping (SLAM))** |
-| **Output** | Screen viewfinder | **Stereo passthrough and occlusion** |
-| **Constraint** | Battery life | **Motion-to-photon latency (less than 20 ms)** |
+| **输入** | 原始相机流 | **空间跟踪（visual-inertial odometry (VIO) 或 simultaneous localization and mapping (SLAM)）** |
+| **输出** | 屏幕取景器 | **立体透视与遮挡** |
+| **约束** | 电池续航 | **运动到光子延迟（低于 20 ms）** |
 
 *** ** * ** ***
 
-## Follow the implementation guide
+## 遵循实现指南
 
-### API selection
+### API 选择
 
-On XR devices, standard `CameraX` implementations are often restricted or
-insufficient. Always use spatial software development kits (SDKs):
+在 XR 设备上，标准的 `CameraX` 实现往往受限或不够用。应始终使用空间计算的软件开发工具包（SDK）：
 
-- **ARCore**: Use ARCore for plane detection, depth sensing, and motion tracking.
-- **OpenXR**: Use OpenXR as the cross-platform standard for VR and AR rendering and input.
-- **OEM SDKs**: Use manufacturer-specific libraries for hardware-accelerated passthrough.
+- **ARCore**：用 ARCore 做平面检测、深度感知和运动跟踪。
+- **OpenXR**：用 OpenXR 作为 VR 与 AR 渲染和输入的跨平台标准。
+- **OEM SDK**：用厂商专属库实现硬件加速的透视。
 
-### Handle spatial passthrough
+### 处理空间透视
 
-Unlike a 2D viewport, XR passthrough is often system-managed.
+与 2D 视口不同，XR 透视通常由系统管理。
 
-**\[Key requirement\] Frame synchronization**: Synchronize your application's
-frame clock with the headset's head-mounted display (HMD) pose.
+**\[关键要求\] 帧同步**：把应用的帧时钟与头显的头戴式显示器（HMD）位姿同步。
 
 
 ```kotlin
@@ -38,18 +35,18 @@ val projectionMatrix = headPose.getProjectionMatrix(eyeIndex)
 
 <br />
 
-### Manage depth and occlusion
+### 管理深度与遮挡
 
-Digital content must respect real-world depth to ensure accurate occlusion.
+数字内容必须遵循真实世界的深度，才能保证遮挡准确。
 
-- **Depth map** : Access raw depth data using `ARCore` or `SurfaceProcessor` to create an occlusion mask.
-- **Hardware buffers** : Use `HardwareBuffer` to share camera frames directly with the GPU without CPU-side copies to minimize latency.
+- **深度图**：用 `ARCore` 或 `SurfaceProcessor` 访问原始深度数据，生成遮挡蒙版。
+- **硬件缓冲区**：用 `HardwareBuffer` 把相机帧直接共享给 GPU，避免 CPU 侧拷贝以降低延迟。
 
 *** ** * ** ***
 
-## XR pitfalls
+## XR 陷阱
 
-- **The nausea limit**: Any processing that delays the viewfinder by more than 20 ms causes user sickness. Don't perform image processing on the main thread.
-- **Privacy restrictions** : Some XR devices return a black frame if you attempt to record the "Passthrough" layer. Check `Session.isRecordingSupported`.
-- **Field of view (FOV)**: The camera FOV possibly doesn't match the display FOV. Use the SDK's projection matrixes instead of calculating aspect ratios manually.
-- **Front buffer rendering** : If the device supports it, use `FrontBufferRenderer` for real-time overlays to bypass standard double-buffering latency.
+- **眩晕上限**：任何让取景器延迟超过 20 ms 的处理都会让用户不适。不要在主线程上做图像处理。
+- **隐私限制**：某些 XR 设备在你尝试录制「Passthrough」图层时会返回黑帧。检查 `Session.isRecordingSupported`。
+- **视场角（FOV）**：相机的 FOV 可能和显示的 FOV 不匹配。使用 SDK 的投影矩阵，而不是手工计算宽高比。
+- **前台缓冲区渲染**：如果设备支持，用 `FrontBufferRenderer` 做实时叠加，绕过标准的双缓冲延迟。

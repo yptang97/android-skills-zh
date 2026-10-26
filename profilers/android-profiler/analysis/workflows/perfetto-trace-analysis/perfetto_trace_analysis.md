@@ -1,6 +1,5 @@
-Analyzes Perfetto traces to find the root cause of performance issues in
-user or system Android apps (for example, janks, app startup, memory, or
-latency stalls).
+分析 Perfetto trace，找出用户应用或系统 Android 应用性能问题的根本原因
+（例如卡顿、应用启动、内存或延迟阻塞）。
 keywords:
 - perfetto
 - trace
@@ -10,32 +9,32 @@ keywords:
 - stall
 - thread
 
-## - bottleneck
+## - 瓶颈
 
-Use this workflow to diagnose general Android performance issues: jank, app
-startup delays, latency spikes, or thread stalls.
+使用本工作流诊断常见的 Android 性能问题：卡顿、应用启动延迟、延迟尖峰或
+线程阻塞。
 
-Follow these steps in order:
+按顺序执行以下步骤：
 
-## Step 1: Identify Symptom and Target
+## 步骤 1：识别症状与目标
 
-Clarify the following with the user (ask questions, present options):
+与用户确认以下信息（提问、给出选项）：
 
-- *What is the symptom*: Do they want to investigate frame drops, jank, startup latency, ANR, app crash, system crash, or memory pressure?
-- *Who is the victim:* Where did they observe the symptom? For example, "a frame drop in `com.example.sample`".
-- *Baseline trace:* If multiple trace files are provided (A/B trace comparison), identify which is the baseline. You will pass both to the sub-agents in Step 3, which use the baseline trace to establish expected behavior.
+- *症状是什么*：他们想排查掉帧、卡顿、启动延迟、ANR、应用崩溃、系统崩溃，还是内存压力？
+- *受害者是谁：*他们在哪里观察到该症状？例如「`com.example.sample` 中出现掉帧」。
+- *基线 trace：*如果提供了多个 trace 文件（A/B trace 对比），确认哪一个是基线。你会在步骤 3 中把两者都传给子代理，它们会用基线 trace 来确定预期行为。
 
-> **Input Trace Required:** Confirm that the user has provided a trace file path
-> or URL (for example, `.pftrace`, `.perfetto-trace`, or a Perfetto UI link). If
-> none is provided, pause and ask the user to provide one before proceeding.
-> **Rules:**
+> **必须有输入 trace：**确认用户已提供 trace 文件路径
+> 或 URL（例如 `.pftrace`、`.perfetto-trace` 或 Perfetto UI 链接）。如果
+> 没有提供，暂停并向用户索取后再继续。
+> **规则：**
 >
-> - If the symptom is not known, pause and work with the user for clarification.
-> - If the symptom is known but the victim/timestamp is unknown, proceed to Step 2 (Triage) to discover candidates.
+> - 如果症状未知，暂停并与用户一起澄清。
+> - 如果症状已知但受害者/时间戳未知，进入步骤 2（分诊）以发现候选。
 
-## Step 2: System-Wide Triage
+## 步骤 2：系统级分诊
 
-Launch a sub-agent to run triage using the following prompt template:
+启动一个子代理，使用下面的提示词模板运行分诊：
 
     Trace Path: [path of the trace with the issue]
     Goal: Identify all candidate bottlenecks for [symptom] in
@@ -44,15 +43,14 @@ Launch a sub-agent to run triage using the following prompt template:
     `$SKILL_ROOT/analysis/workflows/perfetto-trace-analysis/references/triage.md`
     and follow its instructions.
 
-From the triage output:
+根据分诊输出：
 
-- If no candidates are found, ask the user for specific timestamps or symptoms.
-- If multiple candidates exist, present the top 3 most severe instances to the user and confirm which one(s) to investigate. The user may select one or more.
+- 如果没有找到候选，向用户索取具体的时间戳或症状。
+- 如果存在多个候选，把最严重的 3 个实例呈现给用户，并确认要排查哪一个（或多个）。用户可以选一个或多个。
 
-## Step 3: Investigate Candidates in Parallel
+## 步骤 3：并行排查各候选
 
-For every confirmed candidate, launch dedicated sub-agents in parallel with this
-prompt:
+对每个已确认的候选，用下面的提示词并行启动专门的子代理：
 
     Trace path: [path]
     Baseline Trace Path: [path, if provided, else "None"]
@@ -65,23 +63,18 @@ prompt:
     `$SKILL_ROOT/analysis/workflows/perfetto-trace-analysis/references/per_candidate_analysis.md`
     and follow it end-to-end.
 
-AWAIT completion of all agents before proceeding to Step 4.
+等所有代理完成后再进入步骤 4。
 
-## Step 4: Final Consolidation and Report
+## 步骤 4：最终汇总与报告
 
-Consolidate the sub-agent findings into a final report containing:
+把子代理的发现汇总成一份最终报告，包含：
 
-1. **Summary and Classification:** Classify root cause (hardware, software/code, scheduling policy, system exhaustion, external dependency).
-2. **Dependency Chain:** Full causal path from symptom to root cause with thread names, `UTID/UPID`s, blocking states, and timestamps.
-3. **Evidence Tags:** Tag every statement with `[SQL]` (backed by trace data), `[INFERRED]` (logical deduction), or `[GAP]` (untraced or missing data).
-4. **Platform Context:** Cite observed slice names, values and timestamps for explaining the platform behavior. **What's bad:** "SurfaceFlinger does X around vsync" **What's a good explanation:** "`SurfaceFlinger`'s composition slice at `ts=142.3ms` ran `4ms` after the vsync signal at `ts=138.1ms`, consistent with X".
-5. **Partial Suspects:** Secondary branches or unverified paths that were
-   investigated but did not reach a terminal root cause, ranked by evidence
-   strength. Report partial suspects even if a terminal root cause was found.
+1. **小结与分类：**归类根本原因（硬件、软件/代码、调度策略、系统资源耗尽、外部依赖）。
+2. **依赖链：**从症状到根本原因的完整因果路径，包含线程名、`UTID/UPID`、阻塞状态和时间戳。
+3. **证据标签：**为每个论断打标签：`[SQL]`（trace 数据支撑）、`[INFERRED]`（逻辑推断）或 `[GAP]`（未跟踪或数据缺失）。
+4. **平台上下文：**在解释平台行为时，引用观察到的切片名称、数值和时间戳。**不好的说法：**「SurfaceFlinger 在 vsync 附近做了 X」**好的解释：**「`SurfaceFlinger` 在 `ts=142.3ms` 的合成切片在 `ts=138.1ms` 的 vsync 信号之后 `4ms` 才运行，与 X 相符」。
+5. **部分嫌疑：**已经排查但未得到终态根本原因的次要分支或未验证路径，按证据强度排序。即使已找到终态根本原因，也要报告部分嫌疑。
 
-   > If evidence is evenly split between multiple potential causes, report each
-   > suspicion with its supporting data so that engineers can evaluate
-   > probabilities without false certainty. Do not arbitrarily pick a winner.
-6. **Recommended Next Steps:** Scan the frontmatter of workflows in
-   `$SKILL_ROOT/analysis/workflows/` and recommend specialized matching
-   workflows, if applicable, based on the findings.
+   > 如果证据在多个可能原因之间分布均匀，就把每个嫌疑连同其支撑数据一起报告，
+   > 让工程师能够评估概率，而不是得到虚假的确定性。不要武断地选定一个赢家。
+6. **建议的后续步骤：**扫描 `$SKILL_ROOT/analysis/workflows/` 下各工作流的 frontmatter，根据发现推荐匹配的专门工作流。

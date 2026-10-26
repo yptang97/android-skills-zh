@@ -1,4 +1,4 @@
-This file defines common data models and entities used across the Engage SDK.
+本文件定义 Engage SDK 中通用的数据模型与实体。
 
     {
       "entities": {

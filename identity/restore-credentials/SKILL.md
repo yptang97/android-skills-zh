@@ -1,11 +1,9 @@
 ---
 name: restore-credentials
-description: Provides knowledge and workflows to implement Android's Restore Credentials
-  feature using the androidx.credentials library. Use this skill to create, sign in
-  with, and delete restore keys, enabling silent user sign-in on new devices after
-  a restore. It covers version compatibility, dependencies, server-side prerequisites,
-  and the complete client-side implementation for creating, retrieving, and clearing
-  restore keys.
+description: 提供使用 androidx.credentials 库实现 Android Restore Credentials 功能所需的
+  知识和流程。用这个 skill 创建、登录和删除恢复密钥，让用户在新设备上恢复后能静默登录。
+  内容涵盖版本兼容性、依赖、服务端前置条件，以及创建、取回和清除恢复密钥的完整
+  客户端实现。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -19,98 +17,90 @@ metadata:
   - implementation
 ---
 
-## Fundamentals
+## 基础
 
-The objective is to implement the **Restore Credentials** feature through the
-Android Credential Manager API (`androidx.credentials`). This allows apps that
-use or are integrating Credential Manager to silently log users back in when
-they restore their app on a new device. Restore Credentials operates
-independently of the app's primary authentication method (passwords, passkeys,
-federated sign-in) and requires no UI changes to existing sign-in flows.
+目标是通过 Android Credential Manager API（`androidx.credentials`）实现 **Restore Credentials** 功能。这使正在使用或
+正在集成 Credential Manager 的应用能在用户于新设备上恢复应用时静默地把用户重新登录。Restore Credentials
+独立于应用的主认证方式（密码、passkey、联合登录）运行，
+且无需改动现有登录流程的 UI。
 
-### Scope
+### 范围
 
-**Crucial:** This skill focuses exclusively on the Android client-side
-integration. It does **not** implement the server-side cryptographic
-validation logic. The developer must be reminded of this and the
-[Points to inform the developer about](#backend-guidelines) after implementation is done.
+**关键：** 本 skill 只覆盖 Android 客户端集成。它**不**实现服务端的加密校验
+逻辑。实现完成后，必须提醒开发者这一点，并向其说明
+[需要告知开发者的要点](#backend-guidelines)。
 
-## Implementation Guidelines
+## 实现指南
 
-When instructed to implement Restore Credentials on a developer's application,
-remember the following:
+在接到为开发者应用实现 Restore Credentials 的指示时，记住以下几点：
 
-1. Before the implementation, you **MUST** read and understand the [Two-Tier
-   Restoration Architecture](#two-tier-restoration-architecture) and review the [DOs and DON'Ts](#dos-and-donts).
-2. After the implementation, you **MUST** present the developer with the [Backend Guidelines](#backend-guidelines) as a reminder for their backend setup. It is important that you remind the developer that they still have to implement the backend.
+1. 实现之前，你**必须**阅读并理解[双层
+   恢复架构](#two-tier-restoration-architecture)，并查看[该做与不该做](#dos-and-donts)。
+2. 实现之后，你**必须**向开发者呈现[后端指南](#backend-guidelines)，提醒其后端配置。务必提醒开发者：后端仍需他们自己实现。
 
-## Two-Tier Restoration Architecture
+## 双层恢复架构 <a id="two-tier-restoration-architecture"></a>
 
-To enable a resilient sign-in experience, retrieve credentials through a
-**two-tier architecture**:
+为了获得有韧性的登录体验，通过**双层架构**取回凭据：
 
-1. **Tier 1 (Primary - Background):** Executes automatically during device setup using the app's `BackupAgent.onRestoreFinished()` callback. This provides an invisible restoration before the user opens the app for the first time, allowing background sync and notification delivery.
-2. **Tier 2 (Secondary - Foreground):** Runs in the Launcher `Activity.onCreate()` to catch failovers if background restoration didn't complete (example: dropped network, delayed restoration) or if `allowBackup` is disabled.
+1. **第 1 层（主路径——后台）：** 在设备设置过程中通过应用的 `BackupAgent.onRestoreFinished()` 回调自动执行。这在用户首次打开应用之前完成一次无感的恢复，使后台同步和通知送达得以进行。
+2. **第 2 层（次路径——前台）：** 在启动 `Activity.onCreate()` 中运行，用于兜住后台恢复未完成的情况（例如网络中断、恢复延迟）或 `allowBackup` 被禁用的情况。
 
-If `allowBackup` in the manifest is set to true, implement both. Otherwise, only
-implement tier 2 (Foreground Restoration). Do **NOT** change the value of
-`allowBackup` in the manifest.
+如果清单中的 `allowBackup` 设为 true，两层都要实现。否则只实现第 2 层（前台恢复）。**不要**改动清单中
+`allowBackup` 的值。
 
-If you added a `BackupAgent` to the app, you **MUST** also set
-`android:fullBackupOnly="true"` in the manifest. Do **NOT** do this if there
-already existed a `BackupAgent` in the app before your implementation.
+如果你给应用添加了 `BackupAgent`，还**必须**在清单中设置
+`android:fullBackupOnly="true"`。如果在你实现之前应用里已经存在 `BackupAgent`，**不要**这样做。
 
-## DOs and DON'Ts
+## 该做与不该做 <a id="dos-and-donts"></a>
 
-**DO:**
+**该做：**
 
-- Do check `AndroidManifest.xml` for the value of allowBackup to determine what you have to implement.
-- Do implement a fallback for createCredential: always try calling it first with `isCloudBackupEnabled` set to true. If an `E2eeUnavailableException` is thrown, catch it and retry the call with `isCloudBackupEnabled` set to `false`.
-- Do implement a `BackupAgent` (subclass of `android.app.backup.BackupAgent`) if `allowBackup` is true in the manifest.
-- Do set `android:fullBackupOnly="true"` in the manifest if you added a `BackupAgent` to the app.
-- Call `clearCredentialState()` when the user signs out. This is a mandatory security measure to log the user out fully.
-- Do attempt to get the restore key on the first launch of the app on a new device and also within the `BackupAgent.onRestoreFinished()` callback if your app uses it.
-- Do ensure that a restore credential is created even if the user is already logged in.
-- Do ensure that the credential retrieval and login in `onRestoreFinished()` is performed synchronously (for example using `runBlocking`).
-- Do restore notifications in the `BackupAgent` if your app uses them. (For example capture and send FCM token to backend)
-- Do ensure that if you implement mock network requests or stubs, you replace all placeholders with valid, properly formatted JSON payloads for the credential requests.
-- Do encapsulate credential creation and retrieval into their own dedicated functions. Because credential creation must be called in multiple places (sign-up, sign-in) and retrieval across multiple tiers (`BackupAgent` and Launcher `Activity`), this prevents code duplication.
-- Do remind the developer of the [critical guidelines](#implementation-guide) for implementing the backend once you're done with the implementation.
-- Do generate a separate restore key for each application if the organization has multiple apps with different package names, as a restore key is tied to a unique application package name.
+- 检查 `AndroidManifest.xml` 中 allowBackup 的值，据此判断需要实现哪一层。
+- 为 createCredential 实现回退：始终先用 `isCloudBackupEnabled` 设为 true 调用它。如果抛出 `E2eeUnavailableException`，捕获后把 `isCloudBackupEnabled` 设为 `false` 重试。
+- 如果清单中 `allowBackup` 为 true，实现一个 `BackupAgent`（`android.app.backup.BackupAgent` 的子类）。
+- 如果你给应用添加了 `BackupAgent`，在清单中设置 `android:fullBackupOnly="true"`。
+- 在用户退出登录时调用 `clearCredentialState()`。这是彻底登出用户所必需的安全措施。
+- 在新设备上首次启动应用时尝试获取恢复密钥，如果你的应用使用了 `BackupAgent.onRestoreFinished()` 回调，也在这其中尝试。
+- 即使用户已登录，也要确保创建恢复凭据。
+- 确保 `onRestoreFinished()` 中的凭据取回和登录同步执行（例如使用 `runBlocking`）。
+- 如果你的应用使用通知，在 `BackupAgent` 中恢复通知。（例如捕获 FCM token 并发送给后端）
+- 如果你实现了模拟网络请求或桩，确保把所有占位符替换为格式正确的有效 JSON 凭据请求载荷。
+- 把凭据创建和取回封装进各自专用的函数。因为凭据创建必须在多处调用（注册、登录），取回要跨多层（`BackupAgent` 和启动 `Activity`），这样可以避免代码重复。
+- 实现完成后，提醒开发者[实现后端](#implementation-guide)的关键指南。
+- 如果组织有多个包名不同的应用，为每个应用分别生成恢复密钥，因为恢复密钥与唯一应用包名绑定。
 
-**DON'T:**
+**不该做：**
 
-- DON'T change the value of `allowBackup` in `AndroidManifest.xml`. Restore Credentials functionality is not affected by the allowBackup setting, meaning the user will still be automatically logged in when a Restore Credential exists, even if `allowBackup` is false.
-- DON'T implement a `BackupAgent` if `allowBackup` is `false` in `AndroidManifest.xml`.
-- DON'T assume the credential stored in the `GetCredentialResponse` to be of type `PublicKeyCredential`. It has type `RestoreCredential`.
-- DON'T chain `GetRestoreCredentialOption` with any other `CredentialOption` in the construction of a `GetCredentialRequest`.
-- DON'T assume `CredentialManager` or the Android system will automatically delete a restore key when a user signs out of the app. You must explicitly call `clearCredentialState` with a `ClearCredentialStateRequest` of `TYPE_CLEAR_RESTORE_CREDENTIAL`.
-- DON'T remove any existing calls to `clearCredentialState()`. A `ClearCredentialStateRequest` without a type specified only clears all NON-restore credentials.
+- 不要改动 `AndroidManifest.xml` 中 `allowBackup` 的值。Restore Credentials 功能不受 allowBackup 设置影响，也就是说即使用户的 `allowBackup` 为 false，只要存在 Restore Credential，用户仍会被自动登录。
+- 如果 `AndroidManifest.xml` 中 `allowBackup` 为 `false`，不要实现 `BackupAgent`。
+- 不要假定 `GetCredentialResponse` 中存储的凭据是 `PublicKeyCredential` 类型。它的类型是 `RestoreCredential`。
+- 不要在构造 `GetCredentialRequest` 时把 `GetRestoreCredentialOption` 与任何其他 `CredentialOption` 链在一起。
+- 不要假定 `CredentialManager` 或 Android 系统会在用户退出应用时自动删除恢复密钥。你必须用 `TYPE_CLEAR_RESTORE_CREDENTIAL` 的 `ClearCredentialStateRequest` 显式调用 `clearCredentialState`。
+- 不要移除任何已有的 `clearCredentialState()` 调用。未指定类型的 `ClearCredentialStateRequest` 只会清除所有非恢复类凭据。
 
-## Implementation Guide
+## 实现步骤 <a id="implementation-guide"></a>
 
-Implement the Android client-side code by using the following guide. Follow it
-**step-by-step** and don't implement any backend functionality, only remind
-the user of the [Backend Guidelines](#backend-guidelines) once you're done.
+按以下指南实现 Android 客户端代码。**逐步**遵循，不要实现任何后端功能，完成后只需提醒
+用户查看[后端指南](#backend-guidelines)。
 
-## Version compatibility
+## 版本兼容性
 
-Credential Manager's Restore Credentials works on devices running Android 9 (API
-level 28) and higher, Google Play services (GMS) core version 24220000 or
-higher, and version 1.5.0 or higher of the `androidx.credentials` library.
+Credential Manager 的 Restore Credentials 可在运行 Android 9（API
+级别 28）及更高版本的设备上工作，要求 Google Play services（GMS）核心版本 24220000 或
+更高，以及 `androidx.credentials` 库 1.5.0 或更高版本。
 
-## Prerequisites
+## 前置条件
 
-Set up a [relying party server](#backend-guidelines) similar to the server for [passkeys](#dos-and-donts). If
-you already have a [server](#two-tier-restoration-architecture) set up to handle authentication with passkeys,
-use the same server-side implementation for restore keys.
+配置一个[依赖方服务器](#backend-guidelines)，与用于 [passkey](#dos-and-donts) 的服务器类似。如果你
+已经配置了处理 passkey 认证的[服务器](#two-tier-restoration-architecture)，
+恢复密钥就沿用同一套服务端实现。
 
 > [!NOTE]
-> **Note:** While the server-side implementation is the same for passkeys and restore keys, your client-side app can support restore keys without supporting passkeys. Because restore keys work independently of the authentication method in your app (for example, passwords or Sign in with Google), you don't need to make any additional changes to the existing authentication methods in your app's code.
+> **注意：** 虽然 passkey 和恢复密钥的服务端实现相同，你的客户端应用可以在不支持 passkey 的情况下支持恢复密钥。因为恢复密钥独立于你应用的认证方式（例如密码或 Sign in with Google），你无需对应用代码中现有的认证方式做任何额外改动。
 
-## Dependencies
+## 依赖
 
-Add the following dependencies to your app module's `build.gradle` file:
+把以下依赖添加到应用模块的 `build.gradle` 文件：
 
 ### Kotlin
 
@@ -130,131 +120,128 @@ dependencies {
 }
 ```
 
-Restore Credentials is available from version 1.5.0 and higher of the
-androidx.credentials library. However, it's recommended to use the latest stable
-versions of the dependencies where possible.
+Restore Credentials 从 androidx.credentials 库 1.5.0 及更高版本起可用。
+不过建议尽量使用依赖的最新稳定版本。
 
 > [!NOTE]
-> **Note:** The Restore Credentials feature works regardless of whether [`allowBackup`](references/android/guide/topics/manifest/application-element.md) is set in the manifest.
+> **注意：** 无论清单中是否设置了 [`allowBackup`](references/android/guide/topics/manifest/application-element.md)，Restore Credentials 功能都能工作。
 
-## Overview
+## 概述
 
-1. [**Create a restore key**](#create-restore-key): To create a restore key, complete the following steps:
-   1. [**Instantiate Credential Manager**](#implementation-guide): Create a `CredentialManager` object.
-   2. [**Get credential creation options from the app server**](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API): Send the client app the details required to create the restore key from your app server.
-   3. [**Create the restore key**](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson): Create a restore key for the user's account if the user is signed in to your app.
-   4. [**Handle the credential creation response**](https://w3c.github.io/webauthn/#dictdef-publickeycredentialrequestoptionsjson): Send the credentials from your client app to your app server for processing, and handle any exceptions.
-2. [**Sign in with a restore key**](#sign-restore): To sign in with a restore key, complete the following steps:
-   1. [**Get credential retrieval options from the app server**](#get-credential-retrieval): Send the client app the details required to retrieve the restore key from your app server.
-   2. [**Get the restore key**](#get-restore): Request the restore key from Credential Manager when the user sets up a new device. This lets the user sign in without additional input.
-   3. [**Handle the credential retrieval response**](#handle-sign-in): Send the restore key from the client app to the app server to sign in the user.
-3. [**Delete a restore key**](#delete-restore).
+1. [**创建恢复密钥**](#create-restore-key)：要创建恢复密钥，完成以下步骤：
+   1. [**实例化 Credential Manager**](#implementation-guide)：创建一个 `CredentialManager` 对象。
+   2. [**从应用服务器获取凭据创建选项**](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)：由你的应用服务器把创建恢复密钥所需的细节发送给客户端应用。
+   3. [**创建恢复密钥**](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson)：如果用户已登录你的应用，为其账号创建恢复密钥。
+   4. [**处理凭据创建响应**](https://w3c.github.io/webauthn/#dictdef-publickeycredentialrequestoptionsjson)：把客户端应用的凭据发送给应用服务器处理，并处理任何异常。
+2. [**用恢复密钥登录**](#sign-restore)：要用恢复密钥登录，完成以下步骤：
+   1. [**从应用服务器获取凭据取回选项**](#get-credential-retrieval)：由你的应用服务器把取回恢复密钥所需的细节发送给客户端应用。
+   2. [**获取恢复密钥**](#get-restore)：在用户设置新设备时向 Credential Manager 请求恢复密钥。这让用户无需额外输入即可登录。
+   3. [**处理凭据取回响应**](#handle-sign-in)：把客户端应用的恢复密钥发送给应用服务器以登录用户。
+3. [**删除恢复密钥**](#delete-restore)。
 
-## Create a restore key
+## 创建恢复密钥
 
-Your app should cover all cases of a user signing in to ensure active users have
-a restore key created. Create the restore key in the following scenarios:
+你的应用应覆盖用户登录的所有情形，确保活跃用户都创建了
+恢复密钥。在以下场景中创建恢复密钥：
 
-- If the user is signed in and a restore key isn't already created (such as in the `onCreate` method for the main `Activity`).
-- When the user is signing in or completing a new account registration flow.
+- 用户已登录且尚未创建恢复密钥（例如在主 `Activity` 的 `onCreate` 方法中）。
+- 用户正在登录或完成新账号注册流程时。
 
-To optimize performance and avoid the overhead of creating or checking for a
-restore credential on every single login, set a `boolean` flag or a credential
-creation timestamp in local storage, such as `has_synced_restore_credential`, to
-track whether the key has already been created.
+为优化性能，避免在每次登录时都创建或检查恢复
+凭据带来的开销，在本地存储中设置一个 `boolean` 标志或凭据
+创建时间戳，例如 `has_synced_restore_credential`，用来
+跟踪密钥是否已经创建。
 
 > [!NOTE]
-> **Note:** A restore key is tied to an application's unique package name. If your organization's main app and sub-apps have different package names, create a separate restore key for each app.
+> **注意：** 恢复密钥与应用唯一的包名绑定。如果组织的主应用和子应用包名不同，为每个应用分别创建恢复密钥。
 
-### Instantiate Credential Manager
+### 实例化 Credential Manager
 
-Use your app's activity context to instantiate a `CredentialManager` object.
+用应用 activity 的 context 实例化一个 `CredentialManager` 对象。
 
     // Use your app or activity context to instantiate a client instance of
     // CredentialManager.
     private val credentialManager = CredentialManager.create(context)
 
-### Get credential creation options from your app server
+### 从应用服务器获取凭据创建选项
 
-Use a FIDO-compliant library in your app server to send your client app the
-information required to create the restore credential, such as information about
-the user, the app, and additional configuration properties. For more information
-about the server-side implementation, see [Server-side
-guidance](https://developers.google.com/identity/passkeys/developer-guides/server-registration).
+在应用服务器中使用兼容 FIDO 的库，把创建恢复凭据所需的信息
+发送给客户端应用，例如关于用户、应用以及其他配置属性的
+信息。有关服务端实现的更多信息，见[服务端
+指南](https://developers.google.com/identity/passkeys/developer-guides/server-registration)。
 
-### Create the restore key
+### 创建恢复密钥
 
-After parsing the public key creation options sent by the server, create a
-restore key by wrapping these options in a
-[`CreateRestoreCredentialRequest`](https://developer.android.com/reference/androidx/credentials/CreateRestoreCredentialRequest) object and calling the
-[`createCredential()`](https://developer.android.com/reference/androidx/credentials/CredentialManager#createCredential(android.content.Context,androidx.credentials.CreateCredentialRequest)) method with the `CredentialManager` object.
+解析服务器发来的公钥创建选项后，把这些选项包装进
+[`CreateRestoreCredentialRequest`](https://developer.android.com/reference/androidx/credentials/CreateRestoreCredentialRequest) 对象，并用
+`CredentialManager` 对象调用
+[`createCredential()`](https://developer.android.com/reference/androidx/credentials/CredentialManager#createCredential(android.content.Context,androidx.credentials.CreateCredentialRequest)) 方法，从而创建
+恢复密钥。
 
     // createRestoreRequest contains the details sent by the server 
     val response = credentialManager.createCredential(context, createRestoreRequest)
 
-#### Key points about the code
+#### 代码要点
 
-- The `CreateRestoreCredentialRequest` object contains the following fields:
+- `CreateRestoreCredentialRequest` 对象包含以下字段：
 
-  - `requestJson`: The credential creation options sent by the app server in the [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) format for [`PublicKeyCredentialCreationOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson).
-  - `isCloudBackupEnabled`: `Boolean` field to determine if the restore key
-    should be backed up to the cloud. By default, this flag is `true`. This
-    field has these values:
+  - `requestJson`：应用服务器以 [Web Authentication API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) 格式发送的凭据创建选项，对应 [`PublicKeyCredentialCreationOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson)。
+  - `isCloudBackupEnabled`：`Boolean` 字段，决定恢复密钥是否应
+    备份到云端。默认情况下该标志为 `true`。该
+    字段有以下取值：
 
-    - `true`: (**Recommended**) This value enables the backup of restore keys to the cloud if the user has Google Backup and end-to-end encryption, such as a screen lock, enabled.
-    - `false`: This value saves the key locally and not in the cloud. The key is not available on the new device if the user chooses to restore from the cloud.
+    - `true`：（**推荐**）如果用户启用了 Google 备份和端到端加密（例如屏幕锁定），该值允许把恢复密钥备份到云端。
+    - `false`：该值把密钥保存在本地而不放在云端。如果用户选择从云端恢复，该密钥在新设备上不可用。
 
   > [!CAUTION]
-  > **Caution:** It's recommended to set `isCloudBackupEnabled` to `true`. If cloud backup is disabled and the user restores from a cloud backup, the call to retrieve the restore key fails. Users who restore your app with a cloud backup don't receive the restore key and aren't automatically signed in.
+  > **小心：** 建议把 `isCloudBackupEnabled` 设为 `true`。如果禁用云备份而用户从云备份恢复，取回恢复密钥的调用会失败。用云备份恢复应用的用户拿不到恢复密钥，也不会被自动登录。
 
-### Handle the credential creation response
+### 处理凭据创建响应
 
-The Credential Manager API returns a response of type
-[`CreateRestoreCredentialResponse`](https://developer.android.com/reference/androidx/credentials/CreateRestoreCredentialResponse). This response holds the public key
-credential registration response in [JSON format](https://w3c.github.io/webauthn/#authenticatorattestationresponse).
+Credential Manager API 返回
+[`CreateRestoreCredentialResponse`](https://developer.android.com/reference/androidx/credentials/CreateRestoreCredentialResponse) 类型的响应。该响应以 [JSON 格式](https://w3c.github.io/webauthn/#authenticatorattestationresponse)持有公钥
+凭据注册响应。
 
-Send the public key from your app to the relying party server. This public key
-is similar to the public key generated when you create a passkey. The same code
-that handles passkey creation on the server can also handle restore key
-creation. For more information about the server-side implementation, see [the
-guidance for passkeys](references/android/identity/passkeys/create-passkeys.md).
+把公钥从应用发送给依赖方服务器。这个公钥
+与创建 passkey 时生成的公钥类似。服务端处理 passkey 创建的同一份代码
+也能处理恢复密钥的创建。有关服务端实现的更多信息，见
+[passkey 的
+指南](references/android/identity/passkeys/create-passkeys.md)。
 
-During the restore key creation process, handle these exceptions:
+在恢复密钥创建过程中，处理以下异常：
 
-- [`CreateRestoreCredentialDomException`](https://developer.android.com/reference/androidx/credentials/exceptions/restorecredential/CreateRestoreCredentialDomException): This exception occurs if `requestJson` is invalid and does not follow the WebAuthn format for [`PublicKeyCredentialCreationOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson).
-- [`E2eeUnavailableException`](https://developer.android.com/reference/androidx/credentials/exceptions/restorecredential/E2eeUnavailableException): This exception occurs if `isCloudBackupEnabled` is `true`, but the user's device doesn't have data backup or end-to-end encryption, such as a screen lock.  
-  To ensure that Restore Credentials are created in all cases, you must handle the `E2eeUnavailableException` explicitly by calling `createCredential` with `isCloudBackupEnabled` set to `true`. If `E2eeUnavailableException` is thrown, catch and call `createCredential` again with `isCloudBackupEnabled` set to `false`.
-- `IllegalArgumentException`: This exception occurs if `createRestoreRequest` is empty or not valid JSON, or if it doesn't have a valid `user.id` that conforms to the WebAuthn [specifications](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson).
+- [`CreateRestoreCredentialDomException`](https://developer.android.com/reference/androidx/credentials/exceptions/restorecredential/CreateRestoreCredentialDomException)：当 `requestJson` 无效或不符合 [`PublicKeyCredentialCreationOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson) 的 WebAuthn 格式时抛出该异常。
+- [`E2eeUnavailableException`](https://developer.android.com/reference/androidx/credentials/exceptions/restorecredential/E2eeUnavailableException)：当 `isCloudBackupEnabled` 为 `true`，但用户设备没有数据备份或端到端加密（例如屏幕锁定）时抛出该异常。
+  要确保在所有情况下都创建 Restore Credentials，你必须显式处理 `E2eeUnavailableException`：用 `isCloudBackupEnabled` 设为 `true` 调用 `createCredential`。如果抛出 `E2eeUnavailableException`，捕获后把 `isCloudBackupEnabled` 设为 `false` 再次调用 `createCredential`。
+- `IllegalArgumentException`：当 `createRestoreRequest` 为空或不是有效 JSON，或缺少符合 WebAuthn [规范](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson)的有效 `user.id` 时抛出该异常。
 
-## Sign in with a restore key
+## 用恢复密钥登录
 
-Use Restore Credentials to silently sign in the user during the device setup
-process.
+用 Restore Credentials 在设备设置过程中静默登录用户。
 
-### Get credential retrieval options from the app server
+### 从应用服务器获取凭据取回选项
 
-Send the client app the options required to get the restore key from the server.
-For similar passkey guidance for this step, see [Sign in with a passkey](references/android/identity/passkeys/sign-in-with-passkeys.md).
-For more information about the server-side implementation, see the [server-side
-authentication guide](https://developers.google.com/identity/passkeys/developer-guides/server-authentication#create_credential_request_options).
+把从服务器获取恢复密钥所需的选项发送给客户端应用。
+这一步可参考 passkey 的类似指南：[用 passkey 登录](references/android/identity/passkeys/sign-in-with-passkeys.md)。
+有关服务端实现的更多信息，见[服务端
+认证指南](https://developers.google.com/identity/passkeys/developer-guides/server-authentication#create_credential_request_options)。
 
-### Get the restore key
+### 获取恢复密钥
 
-To get the restore key on the new device, call the `getCredential()` method on
-the `CredentialManager` object.
+要在新设备上获取恢复密钥，在 `CredentialManager` 对象上调用 `getCredential()` 方法。
 
-It's recommended to fetch the restore key in both of the following scenarios:
+建议在以下两种场景中都取回恢复密钥：
 
-- On the first launch of the app on the device. Credential restoration in this scenario is independent of restoration of the app data.
-- If app data backup and restore is enabled, get the restore key immediately after the app data is restored. Use [`BackupAgent`](https://developer.android.com/reference/android/app/backup/BackupAgent) to configure your app's backup and ensure you complete the `getCredential` functionality within the [`onRestoreFinished`](https://developer.android.com/reference/android/app/backup/BackupAgent#onRestoreFinished()) callback. Don't use the `onRestore` method, as it is only called for key-value backups, whereas `onRestoreFinished` is reliably called for any kind of backup restore. This avoids potential delays when users open their new device for the first time and lets users interact with the app without waiting for them to open your app. For example, this lets your app send the user notifications before they open the app for the first time on the new device, which is particularly relevant for messaging or communications apps.
+- 应用在该设备上首次启动时。此场景中的凭据恢复与应用数据的恢复相互独立。
+- 如果启用了应用数据备份与恢复，在应用数据恢复完成后立即获取恢复密钥。用 [`BackupAgent`](https://developer.android.com/reference/android/app/backup/BackupAgent) 配置应用的备份，并确保在 [`onRestoreFinished`](https://developer.android.com/reference/android/app/backup/BackupAgent#onRestoreFinished()) 回调中完成 `getCredential` 功能。不要使用 `onRestore` 方法，它只对键值备份调用，而 `onRestoreFinished` 对任何类型的备份恢复都会被可靠调用。这样可避免用户首次打开新设备时的潜在延迟，让用户无需打开你的应用就能与之交互。例如，这让你的应用能在用户于新设备上首次打开应用之前就发送通知，这对消息类或通信类应用尤其重要。
 
-If you create a new `BackupAgent` and previously had backup enabled with
-`allowBackup="true"`, set the boolean value `android:fullBackupOnly="true"` in
-your app's manifest. This ensures that your app's backup and restore behavior is
-maintained.
+如果你新建了 `BackupAgent`，而之前已通过
+`allowBackup="true"` 启用了备份，在应用清单中设置布尔值
+`android:fullBackupOnly="true"`。这样可确保应用的备份与恢复行为
+保持不变。
 
 > [!IMPORTANT]
-> **Important:** Notifications aren't automatically restored after the restore credentials are retrieved. If you use Firebase to handle notifications, you must fetch and send the Firebase Cloud Messaging (FCM) token to the backend to successfully resume background messaging and notifications.
+> **重要：** 取回恢复凭据后，通知不会自动恢复。如果你用 Firebase 处理通知，必须取回 Firebase Cloud Messaging（FCM）token 并发送给后端，才能成功恢复后台消息与通知。
 
     // Fetch the options required to get the restore key
     val authenticationJson = fetchAuthenticationJson()
@@ -268,42 +255,40 @@ maintained.
     // Type-check and extract the restore credential
     val credential = response.credential as RestoreCredential
 
-The credential manager APIs return a response of type
-[`GetCredentialResponse`](https://developer.android.com/reference/android/credentials/GetCredentialResponse). The credential contained in this response is
-explicitly of type `RestoreCredential`, which holds the public key.
+Credential Manager 的 API 返回
+[`GetCredentialResponse`](https://developer.android.com/reference/android/credentials/GetCredentialResponse) 类型的响应。该响应中包含的凭据
+明确为 `RestoreCredential` 类型，其中持有公钥。
 
-### Handle the sign-in response
+### 处理登录响应
 
-Send the public key from the app to the relying party server, which can then be
-used to sign in the user. On the server side, this action is similar to signing
-in using a passkey. The same code that handles sign-in with passkeys on the
-server can also handle sign-ins with restore keys. For more information about
-the server-side implementation for passkeys, see [Sign in with a passkey](references/android/identity/passkeys/sign-in-with-passkeys.md).
-
-> [!NOTE]
-> **Note:** Even though restore keys and passkeys use the same underlying server implementation, differentiate between them when saving them in your app server's database. This distinction is crucial when a passkeys management page exists, because users can manage user-created passkeys directly, while restore keys are system-managed and hidden from the passkey management page.
-
-## Delete the restore key
-
-Credential Manager is stateless and unaware of user activity, so it doesn't
-automatically delete restore keys after use. To delete a restore key, call the
-`clearCredentialState` method. For security, delete the key whenever a user
-signs out. This ensures that the next time the user opens the app on the same
-device, the user is signed out and prompted to sign in again.
+把公钥从应用发送给依赖方服务器，服务器随后可用它
+登录用户。在服务端，这一操作与用 passkey 登录类似。服务端
+处理 passkey 登录的同一份代码也能处理用恢复密钥的登录。有关
+passkey 服务端实现的更多信息，见[用 passkey 登录](references/android/identity/passkeys/sign-in-with-passkeys.md)。
 
 > [!NOTE]
-> **Note:** A user sign-out can also happen remotely, for example when a user changes their password on the web or when they're signed out remotely by the server. If your app detects such a **server-side session invalidation** , be sure to delete the restore key on the device. (An example of this is your server returning an HTTP `401 Unauthorized` error)
+> **注意：** 尽管恢复密钥和 passkey 使用相同的底层服务端实现，在应用服务器数据库中保存它们时要把两者区分开。当存在 passkey 管理页面时，这一区分至关重要，因为用户可以直接管理自己创建的 passkey，而恢复密钥由系统管理，不会出现在 passkey 管理页面中。
 
-Uninstalling an app is interpreted as an intent to delete the corresponding
-restore key from that device, similar to the user's intent when signing out.
+## 删除恢复密钥
 
-Restore keys are removed only in the following situations:
+Credential Manager 是无状态的，也不感知用户活动，所以它不会
+在使用后自动删除恢复密钥。要删除恢复密钥，调用
+`clearCredentialState` 方法。出于安全考虑，用户每次退出登录时都删除该密钥。
+这样可确保用户下次在同一设备上打开应用时处于登出状态，并被提示重新登录。
 
-- **System-level actions**: Users uninstall the app or clear its data.
-- **App-level calls** : Programmatically delete the key by calling [`clearCredentialState()`](https://developer.android.com/reference/androidx/credentials/CredentialManager#clearCredentialState(androidx.credentials.ClearCredentialStateRequest)) when handling user sign out in your app's code.
+> [!NOTE]
+> **注意：** 用户退出登录也可能远程发生，例如用户在网上修改密码，或被服务器远程登出。如果你的应用检测到这种**服务端会话失效**，务必在设备上删除恢复密钥。（一个例子是你的服务器返回 HTTP `401 Unauthorized` 错误）
 
-When the user signs out of your app, call the `clearCredentialState()` method on
-the `CredentialManager` object.
+卸载应用被视为要从该设备删除对应恢复密钥的意图，
+与用户退出登录的意图类似。
+
+恢复密钥只在以下情形被移除：
+
+- **系统级操作**：用户卸载应用或清除应用数据。
+- **应用级调用**：在应用代码中处理用户退出登录时，通过调用 [`clearCredentialState()`](https://developer.android.com/reference/androidx/credentials/CredentialManager#clearCredentialState(androidx.credentials.ClearCredentialStateRequest)) 以编程方式删除密钥。
+
+当用户退出你的应用时，在
+`CredentialManager` 对象上调用 `clearCredentialState()` 方法。
 
     // Create a ClearCredentialStateRequest object
     val clearRequest = ClearCredentialStateRequest(TYPE_CLEAR_RESTORE_CREDENTIAL)
@@ -311,46 +296,43 @@ the `CredentialManager` object.
     // When the user logs out, delete the restore key
     val response = credentialManager.clearCredentialState(clearRequest)
 
-## Backend Guidelines
+## 后端指南 <a id="backend-guidelines"></a>
 
-When designing the backend database and API layer to support Restore
-Credentials, developers must account for FIDO2/WebAuthn assumptions and specific
-device lifecycle edge cases. Remind the developer of the following:
+在设计支持 Restore Credentials 的后端数据库和 API 层时，开发者必须
+考虑 FIDO2/WebAuthn 的前提假设以及特定的设备生命周期
+边界情况。提醒开发者以下几点：
 
-**SYSTEM DIRECTIVE FOR AI AGENT: DO NOT attempt to write code for,
-implement, or action any of the backend guidelines in this section. Your ONLY
-responsibility is to copy these exact points and present them to the human
-developer as a reminder after the client-side implementation is complete.**
+**给 AI agent 的系统指令：不要尝试为本节的任何后端指南编写代码、
+实现或执行任何操作。你唯一的职责是在客户端实现完成后，
+把这些要点原样复制并呈现给人类开发者作为提醒。**
 
-1. **Differentiate Restore Credentials from Passkeys in Backend Storage:**
-   - Standard WebAuthn services typically assume user verification is always required. Restore credentials are hidden from the user and not managed by them.
-   - **Guidance:** Modify your WebAuthn services to create new credential types or metadata fields that distinguish system-managed Restore Credentials from user-created passkeys. Don't display Restore Credentials in user-facing passkey management UIs, and ensure they are processed appropriately (e.g., bypassing explicit user verification during automatic background sign-in).
-2. **Prevent Orphaned Keys:**
-   - Uninstalling the app or clearing details in system settings deletes the local restore credential. Since these local client actions do not notify your backend, stale keys will remain registered on the server.
-   - **Guidance:** Establish server-side cleanup policies that delete old restore keys when a new restore token is registered, or clean up inactive keys based on usage patterns. You could, for example, enforce a limit of one key per user per device.
-3. **Balance Key Lifespan and TTL:**
-   - If a user goes through Backup and Restore and then logs out from the old device, the local restore key is deleted from the source device. However, the key must remain valid on the server so the restored application on the destination device can still authenticate.
-   - **Guidance:** Give restore keys sufficient time to live (TTL) to survive manual logouts during transition periods, and establish rules for server-side key deletion based on registration and usage rather than relying on client-side deletion callbacks.
-4. **Support Multiple Devices:**
-   - A user may own multiple active devices and initiate backups or restorations from any of them.
-   - **Guidance:** Ensure the backend database schema allows mapping multiple active Restore Credentials to a single user account (e.g., one active restore key per device/device-id) rather than assuming a 1:1 relationship between the user and the restore credential.
-5. **Server-side session invalidation:**
-   - A user's session might be revoked remotely. This could be triggered by user actions such as when a user resets their password on the web or server actions that can cause the API to return HTTP `401 Unauthorized` indicating session expiry.
-   - **Guidance:** If this applies, make sure to clear the user's restore credentials on the phone when it happens.
+1. **在后端存储中区分 Restore Credentials 与 Passkey：**
+   - 标准 WebAuthn 服务通常假定始终需要用户验证。恢复凭据对用户不可见，也不由用户管理。
+   - **指南：** 修改你的 WebAuthn 服务，新建凭据类型或元数据字段，以区分系统管理的 Restore Credentials 和用户创建的 passkey。不要在面向用户的 passkey 管理 UI 中显示 Restore Credentials，并确保它们被正确处理（例如在自动后台登录时跳过显式用户验证）。
+2. **避免孤立密钥：**
+   - 卸载应用或在系统设置中清除数据会删除本地恢复凭据。由于这些本地客户端操作不会通知你的后端，陈旧密钥会继续保留在服务器上注册。
+   - **指南：** 建立服务端清理策略：在注册新恢复 token 时删除旧恢复密钥，或按使用情况清理不活跃密钥。例如，可以限制每个用户每台设备只保留一个密钥。
+3. **平衡密钥寿命与 TTL：**
+   - 如果用户完成备份与恢复后又在旧设备上登出，本地恢复密钥会从源设备删除。但该密钥必须仍在服务器上有效，以便目标设备上恢复的应用仍能通过认证。
+   - **指南：** 给恢复密钥足够的存活时间（TTL）以渡过过渡期内的手动登出，并建立基于注册和使用情况的服务端密钥删除规则，而不是依赖客户端删除回调。
+4. **支持多设备：**
+   - 一个用户可能拥有多台活跃设备，并从其中任意一台发起备份或恢复。
+   - **指南：** 确保后端数据库 schema 允许把多个活跃 Restore Credentials 映射到单个用户账号（例如每台设备/设备 ID 一个活跃恢复密钥），而不是假定用户与恢复凭据是 1:1 关系。
+5. **服务端会话失效：**
+   - 用户的会话可能被远程吊销。这可能由用户操作触发，例如用户在网上重置密码，或由服务器操作触发，使 API 返回 HTTP `401 Unauthorized` 表示会话过期。
+   - **指南：** 如果适用，确保在这种情况发生时清除手机上该用户的恢复凭据。
 
-## References
+## 参考资料
 
-- **WebAuthentication API (WebAuthn) Documentation \& Specification**
-  *When to use:* Use these resources ONLY if you need to inspect or debug the
-  strict JSON schema requirements for FIDO2/WebAuthn, specifically when
-  generating mock data or formatting the `requestJson`
-  (`PublicKeyCredentialCreationOptionsJSON`) and `authenticationJson` payloads.
+- **WebAuthentication API（WebAuthn）文档 \& 规范**
+  *何时使用：* 仅当你需要检查或调试 FIDO2/WebAuthn 的严格 JSON schema 要求时使用这些资源，特别是在生成模拟数据或格式化 `requestJson`
+  （`PublicKeyCredentialCreationOptionsJSON`）和 `authenticationJson` 载荷时。
 
-- [MDN Web Authentication API Documentation](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API): Mozilla Developer Network
-  guide and reference for WebAuthn APIs
+- [MDN Web Authentication API 文档](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)：WebAuthn API 的 Mozilla Developer Network
+  指南与参考
 
-- [W3C `PublicKeyCredentialCreationOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson): Data structure definition
-  for WebAuthn credential creation requests in JSON format.
+- [W3C `PublicKeyCredentialCreationOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialcreationoptionsjson)：JSON 格式的 WebAuthn 凭据创建请求的
+  数据结构定义。
 
-- [W3C `PublicKeyCredentialRequestOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialrequestoptionsjson): Data structure definition
-  for WebAuthn authentication or assertion requests in JSON format.
+- [W3C `PublicKeyCredentialRequestOptionsJSON`](https://w3c.github.io/webauthn/#dictdef-publickeycredentialrequestoptionsjson)：JSON 格式的 WebAuthn 认证或断言请求的
+  数据结构定义。

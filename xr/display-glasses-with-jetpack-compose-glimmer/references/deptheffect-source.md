@@ -1,5 +1,4 @@
-When simulating depth on AI glasses using shadows, refer to the following source
-code in `DepthEffect.kt`:
+在 AI 眼镜上用阴影模拟深度时，参考 `DepthEffect.kt` 中的以下源代码：
 
 
 ```kotlin

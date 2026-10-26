@@ -1,10 +1,9 @@
 ---
 name: navigation-3
-description: Learn how to install and migrate to Jetpack Navigation 3, and how to
-  implement features and patterns such as deep links, multiple backstacks, scenes
-  (dialogs, bottom sheets, list-detail, two-pane, supporting pane), conditional navigation
-  (such as logged-in navigation versus anonymous), returning results from flows, integration
-  with Hilt, ViewModel, Kotlin, and view interoperability.
+description: 学习如何安装并迁移到 Jetpack Navigation 3，以及如何实现深链接、多返回栈、场景
+  （对话框、底部面板、列表-详情、双栏、辅助栏）、条件导航
+  （例如已登录导航与匿名导航）、从 flow 返回结果、与 Hilt、ViewModel、Kotlin 集成，以及 view 互操作
+  等特性与模式。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -35,85 +34,85 @@ metadata:
 
 *** ** * ** ***
 
-## Migration guide
+## 迁移指南
 
-- *[Navigation 2 to Navigation 3 migration guide](references/android/guide/navigation/navigation-3/migration-guide.md)*: Step-by-step guide to migrate an Android application from Navigation 2 to Navigation 3, covering dependency updates, route changes, state management, and UI component replacements.
+- *[Navigation 2 到 Navigation 3 迁移指南](references/android/guide/navigation/navigation-3/migration-guide.md)*：把 Android 应用从 Navigation 2 迁移到 Navigation 3 的分步指南，涵盖依赖更新、路由变更、状态管理和 UI 组件替换。
 
-### Requirements
+### 要求
 
-- *[Guide: Migrate to type-safe navigation in Compose](references/android/guide/navigation/type-safe-destinations.md)* : Step-by-step guide to migrating an Android application from string-based navigation to **Type-Safe Navigation** in Jetpack Compose using Jetpack Navigation 2.
+- *[指南：在 Compose 中迁移到类型安全导航](references/android/guide/navigation/type-safe-destinations.md)*：把 Android 应用从基于字符串的导航迁移到 Jetpack Compose 中**类型安全导航**（使用 Jetpack Navigation 2）的分步指南。
 
-## Developer documentation
+## 开发者文档
 
-- *[Navigation 3](references/android/guide/navigation/navigation-3/index.md)*. Search documentation for more information on basics, saving and managing navigation state, modularizing navigation code, creating custom layouts using Scenes, animating between destinations, or applying logic or wrappers to destinations.
+- *[Navigation 3](references/android/guide/navigation/navigation-3/index.md)*。在文档中搜索更多信息：基础用法、保存与管理导航状态、模块化导航代码、使用 Scenes 创建自定义布局、在目的地之间添加动画，或为目的地应用逻辑或包装。
 
-## Recipes
+## 示例方案
 
-Code examples showcasing common patterns.
+展示常见模式的代码示例。
 
-### Basic API usage
+### 基础 API 用法
 
-- *[Basic](references/android/guide/navigation/navigation-3/recipes/basic.md)*: Shows most basic API usage.
-- *[Saveable back stack](references/android/guide/navigation/navigation-3/recipes/basicsaveable.md)*: Shows basic API usage with a persistent back stack.
-- *[Entry provider DSL](references/android/guide/navigation/navigation-3/recipes/basicdsl.md)*: Shows basic API usage using the entryProvider DSL.
+- *[基础](references/android/guide/navigation/navigation-3/recipes/basic.md)*：演示最基本的 API 用法。
+- *[可保存的返回栈](references/android/guide/navigation/navigation-3/recipes/basicsaveable.md)*：演示带持久返回栈的基础 API 用法。
+- *[Entry provider DSL](references/android/guide/navigation/navigation-3/recipes/basicdsl.md)*：演示使用 entryProvider DSL 的基础 API 用法。
 
-### Common UI
+### 通用 UI
 
-- *[Common UI](references/android/guide/navigation/navigation-3/recipes/common-ui.md)*: Demonstrates how to implement a common navigation UI pattern with a bottom navigation bar and multiple back stacks, where each tab in the navigation bar has its own navigation history.
+- *[通用 UI](references/android/guide/navigation/navigation-3/recipes/common-ui.md)*：演示如何实现带底部导航栏和多个返回栈的常见导航 UI 模式，其中导航栏的每个标签都有自己的导航历史。
 
-### Deep links
+### 深链接
 
-- *[Static URI](references/android/guide/navigation/navigation-3/recipes/deeplinks-staticuri.md)*: Shows how to handle simple static URI deep links.
-- *[URI with Arguments](references/android/guide/navigation/navigation-3/recipes/deeplinks-uriarguments.md)*: Shows how to parse path and query arguments from a deep link.
-- *[Synthetic BackStack](references/android/guide/navigation/navigation-3/recipes/deeplinks-syntheticbackstack.md)*: Shows how to handle deep links with a synthetic back stack.
-- *[Custom Matcher](references/android/guide/navigation/navigation-3/recipes/deeplinks-custommatcher.md)*: Shows how to implement custom deep link matching logic.
+- *[静态 URI](references/android/guide/navigation/navigation-3/recipes/deeplinks-staticuri.md)*：演示如何处理简单的静态 URI 深链接。
+- *[带参数的 URI](references/android/guide/navigation/navigation-3/recipes/deeplinks-uriarguments.md)*：演示如何从深链接中解析路径参数和查询参数。
+- *[合成 BackStack](references/android/guide/navigation/navigation-3/recipes/deeplinks-syntheticbackstack.md)*：演示如何处理带合成返回栈的深链接。
+- *[自定义匹配器](references/android/guide/navigation/navigation-3/recipes/deeplinks-custommatcher.md)*：演示如何实现自定义深链接匹配逻辑。
 
-### Scenes
+### 场景
 
-#### Use built-in Scenes
+#### 使用内置 Scenes
 
-- *[Dialog](references/android/guide/navigation/navigation-3/recipes/dialog.md)*: Shows how to create a Dialog.
+- *[Dialog](references/android/guide/navigation/navigation-3/recipes/dialog.md)*：演示如何创建 Dialog。
 
-#### Create custom Scenes
+#### 创建自定义 Scenes
 
-- *[BottomSheet](references/android/guide/navigation/navigation-3/recipes/bottomsheet.md)*: Shows how to create a BottomSheet destination.
-- *[List-Detail Scene](references/android/guide/navigation/navigation-3/recipes/scenes-listdetail.md)*: Demonstrates how to implement adaptive list-detail layouts using the Navigation 3 Scenes API.
-- *[Two pane Scene](references/android/guide/navigation/navigation-3/recipes/scenes-twopane.md)*: Demonstrates how to implement adaptive two-pane layouts using the Navigation 3 Scenes API.
+- *[BottomSheet](references/android/guide/navigation/navigation-3/recipes/bottomsheet.md)*：演示如何创建 BottomSheet 目的地。
+- *[列表-详情场景](references/android/guide/navigation/navigation-3/recipes/scenes-listdetail.md)*：演示如何使用 Navigation 3 Scenes API 实现自适应的列表-详情布局。
+- *[双栏场景](references/android/guide/navigation/navigation-3/recipes/scenes-twopane.md)*：演示如何使用 Navigation 3 Scenes API 实现自适应的双栏布局。
 
 ### Material Adaptive
 
-- *[Material List-Detail](references/android/guide/navigation/navigation-3/recipes/material-listdetail.md)*: Demonstrates how to implement an adaptive list-detail layout using Material 3 Adaptive.
-- *[Material Supporting Pane](references/android/guide/navigation/navigation-3/recipes/material-supportingpane.md)*: Demonstrates how to implement an adaptive supporting pane layout using Material 3 Adaptive.
+- *[Material 列表-详情](references/android/guide/navigation/navigation-3/recipes/material-listdetail.md)*：演示如何使用 Material 3 Adaptive 实现自适应的列表-详情布局。
+- *[Material 辅助栏](references/android/guide/navigation/navigation-3/recipes/material-supportingpane.md)*：演示如何使用 Material 3 Adaptive 实现自适应的辅助栏布局。
 
-### Animations
+### 动画
 
-- *[Animations](references/android/guide/navigation/navigation-3/recipes/animations.md)*: Shows how to override the default animations for all destinations and a single destination.
-- *[Conditional Transitions](references/android/guide/navigation/navigation-3/recipes/conditional-transitions.md)*: Shows how to implement conditional transition animations.
+- *[动画](references/android/guide/navigation/navigation-3/recipes/animations.md)*：演示如何为所有目的地和单个目的地覆盖默认动画。
+- *[条件转场](references/android/guide/navigation/navigation-3/recipes/conditional-transitions.md)*：演示如何实现条件转场动画。
 
-### Common back stack behavior
+### 常见返回栈行为
 
-- *[Multiple back stacks](references/android/guide/navigation/navigation-3/recipes/multiple-backstacks.md)*: Shows how to create multiple top level routes, each with its own back stack. Top level routes are displayed in a navigation bar allowing users to switch between them. State is retained for each top level route, and the navigation state persists config changes and process death.
+- *[多返回栈](references/android/guide/navigation/navigation-3/recipes/multiple-backstacks.md)*：演示如何创建多个顶层路由，每个都有自己的返回栈。顶层路由显示在导航栏中，让用户可以在它们之间切换。每个顶层路由的状态都会保留，导航状态在配置变更和进程死亡后依然存在。
 
-### Conditional navigation
+### 条件导航
 
-- *[Conditional navigation](references/android/guide/navigation/navigation-3/recipes/conditional.md)*: Switch to a different navigation flow when a condition is met. For example, for authentication or first-time user onboarding.
+- *[条件导航](references/android/guide/navigation/navigation-3/recipes/conditional.md)*：满足条件时切换到另一条导航流程。例如用于身份验证或首次使用引导。
 
-### Lifecycle
+### 生命周期
 
-- *[Lifecycle Owner](references/android/guide/navigation/navigation-3/recipes/lifecycle-owner.md)*: Shows how to use and observe Lifecycle in Navigation 3.
+- *[Lifecycle Owner](references/android/guide/navigation/navigation-3/recipes/lifecycle-owner.md)*：演示在 Navigation 3 中如何使用和观察 Lifecycle。
 
-### Architecture
+### 架构
 
-- *[Modularized navigation code (Hilt)](references/android/guide/navigation/navigation-3/recipes/modular-hilt.md)*: Demonstrates how to decouple navigation code into separate modules using Hilt or Dagger for DI.
-- *[Modularized navigation code (Koin)](references/android/guide/navigation/navigation-3/recipes/modular-koin.md)*: Demonstrates how to decouple navigation code into separate modules using Koin for DI.
+- *[模块化导航代码（Hilt）](references/android/guide/navigation/navigation-3/recipes/modular-hilt.md)*：演示如何使用 Hilt 或 Dagger 做依赖注入，把导航代码解耦到独立模块中。
+- *[模块化导航代码（Koin）](references/android/guide/navigation/navigation-3/recipes/modular-koin.md)*：演示如何使用 Koin 做依赖注入，把导航代码解耦到独立模块中。
 
-### Working with ViewModel
+### 配合 ViewModel 使用
 
-#### Passing navigation arguments
+#### 传递导航参数
 
-- *[Basic ViewModel](references/android/guide/navigation/navigation-3/recipes/passingarguments.md)* : Navigation arguments are passed to a `ViewModel` constructed using `viewModel()`
+- *[基础 ViewModel](references/android/guide/navigation/navigation-3/recipes/passingarguments.md)*：导航参数会传给用 `viewModel()` 构造的 `ViewModel`
 
-### Returning results
+### 返回结果
 
-- *[Returning Results as Events](references/android/guide/navigation/navigation-3/recipes/results-event.md)* : Returning results as events to content in another `NavEntry`
-- *[Returning Results as State](references/android/guide/navigation/navigation-3/recipes/results-state.md)* : Returning results as state stored in a `CompositionLocal`
+- *[以事件形式返回结果](references/android/guide/navigation/navigation-3/recipes/results-event.md)*：把结果作为事件返回给另一个 `NavEntry` 中的内容
+- *[以状态形式返回结果](references/android/guide/navigation/navigation-3/recipes/results-state.md)*：把结果作为存储在 `CompositionLocal` 中的状态返回

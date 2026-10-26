@@ -1,10 +1,10 @@
 ---
 name: wear-compose-m3
-description: Guidance for Wear OS Compose Material3 (Wear Compose Material 3 / Wear
-  Compose Material3) watch and wearable apps. Covers creating, updating, and migrating
-  projects (Material 2.5 and Horologist migration) using androidx.wear.compose.material3,
-  androidx.wear.compose.foundation, and androidx.wear.compose.navigation3, including
-  AppScaffold, ScreenScaffold, TransformingLazyColumn, ambient mode, and previews.
+description: Wear OS Compose Material3（Wear Compose Material 3 / Wear
+  Compose Material3）手表与可穿戴应用指南。涵盖使用 androidx.wear.compose.material3、
+  androidx.wear.compose.foundation 和 androidx.wear.compose.navigation3 创建、更新和迁移
+  项目（Material 2.5 与 Horologist 迁移），包括
+  AppScaffold、ScreenScaffold、TransformingLazyColumn、ambient mode 和预览。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -24,50 +24,45 @@ metadata:
   - ambient mode
 ---
 
-## Prerequisites and compatibility
+## 前置条件与兼容性
 
-1. **Current Wear OS Compose version in-use:** To find the installed library version, read `gradle/libs.versions.toml` or `build.gradle.kts` directly. Don't run `./gradlew dependencies` or other shell commands to resolve versions.
-2. **Wear OS Compose Material3 version:** If an internal tool is available to establish the **latest stable version** `{VERSION}` of `androidx.wear.compose:compose-material3`, use that tool.
-   - Otherwise, fetch the [official Maven metadata XML](https://dl.google.com/dl/android/maven2/androidx/wear/compose/compose-material3/maven-metadata.xml) to identify `{VERSION}` (highest number, ignoring `-alpha`, `-beta`, or `-rc`).
-3. **Strict compliance:** If a version is listed as stable, you MUST use it, unless overridden by the user. Do not downgrade based on initial "Unresolved reference" errors in the editor or outdated web search results.
-4. **Kotlin \& Compose compiler:** Use Kotlin **2.0.0+** with the `org.jetbrains.kotlin.plugin.compose` Gradle plugin.
-5. **Min SDK:** Ensure `minSdk` is at least **25**.
-6. **Compile SDK \& AGP:** Ensure `compileSdk` and AGP meet the library's AAR metadata floors (`compileSdk >= 35` and `AGP >= 8.6.0` for `1.6.x`; `compileSdk >= 37` and `AGP >= 9.1.0` for `1.7.x`).
+1. **当前在用的 Wear OS Compose 版本：** 要找到已安装的库版本，直接读取 `gradle/libs.versions.toml` 或 `build.gradle.kts`。不要运行 `./gradlew dependencies` 或其他 shell 命令来解析版本。
+2. **Wear OS Compose Material3 版本：** 如果有内部工具可以确定 `androidx.wear.compose:compose-material3` 的 **最新稳定版本** `{VERSION}`，就使用该工具。
+   - 否则，获取 [官方 Maven metadata XML](https://dl.google.com/dl/android/maven2/androidx/wear/compose/compose-material3/maven-metadata.xml) 来确定 `{VERSION}`（取最大编号，忽略 `-alpha`、`-beta` 或 `-rc`）。
+3. **严格遵守：** 如果某个版本被列为稳定版，你必须使用它，除非用户另有指定。不要因为编辑器里最初出现的「Unresolved reference」错误或过时的网页搜索结果而降级。
+4. **Kotlin \& Compose 编译器：** 使用 Kotlin **2.0.0+** 和 `org.jetbrains.kotlin.plugin.compose` Gradle 插件。
+5. **Min SDK：** 确保 `minSdk` 至少为 **25**。
+6. **Compile SDK \& AGP：** 确保 `compileSdk` 和 AGP 满足库的 AAR metadata 下限（`1.6.x` 要求 `compileSdk >= 35` 且 `AGP >= 8.6.0`；`1.7.x` 要求 `compileSdk >= 37` 且 `AGP >= 9.1.0`）。
 
-## Gotchas
+## 常见陷阱
 
-1. **Mandatory sync and validation:** After updating versions in `libs.versions.toml` or `build.gradle.kts`, perform a Gradle sync (or `./gradlew assembleDebug`) before refactoring, and run `./gradlew assembleDebug` after refactoring to verify the build.
-2. **Prohibition of guessing (error protocol):** If you encounter an 'Unresolved Reference' or API mismatch after a successful sync, do not attempt to 'fix' it by downgrading the library version.
+1. **必须同步并验证：** 在 `libs.versions.toml` 或 `build.gradle.kts` 中更新版本后，重构前先做一次 Gradle 同步（或运行 `./gradlew assembleDebug`），重构后再运行 `./gradlew assembleDebug` 验证构建。
+2. **禁止猜测（错误处理协议）：** 如果同步成功后遇到「Unresolved Reference」或 API 不匹配，不要试图通过降级库版本来「修复」它。
 
-## Capabilities and tools
+## 能力与工具
 
-### Capability 1: Migration, updates, and adding features
+### 能力 1：迁移、更新与添加功能
 
-Use this guidance when migrating from an older version of Wear OS Compose or
-Horologist, updating an existing Wear Compose Material3 project, or adding
-features.
+在从旧版 Wear OS Compose 或 Horologist 迁移、更新现有的 Wear Compose Material3 项目，或
+添加功能时，使用本指南。
 
-1. Unless otherwise indicated by the developer, use the latest stable version of Wear Compose Material3 from `{VERSION}` (superseding any literal version strings in the migration guide).
-2. When migrating from Material 2.5 or Horologist, read the [migration guide](references/android/training/wearables/compose/migrate-to-material3.md) and use its official component mappings.
-3. Before refactoring any component (for example, `Chip` -\> `Button`), check the parameter names, slot types, and "Expressive" design tokens.
-4. Do not use the Horologist Composables, Compose Layout, or Compose Material libraries; replace Horologist components with Wear Compose M3 equivalents (`AppScaffold` -\> M3 `AppScaffold`, `ScreenScaffold` -\> M3 `ScreenScaffold`, `ScalingLazyColumn` -\> `TransformingLazyColumn`, `ResponsiveListHeader` -\> `ListHeader`, `PagerScreen` -\> `HorizontalPagerScaffold`, `Chip` -\> `Button`, `Confirmation` -\> `ConfirmationDialog`).
-5. **Always** check against the component guidance in Capability 3.
-6. Expect screenshot tests to fail when migrating or updating components: expected defaults for padding and positioning will have changed. Do not seek to artificially match the previous screenshot, but give preference to the Material3 defaults.
+1. 除非开发者另有说明，使用 `{VERSION}` 中最新的稳定版 Wear Compose Material3（优先于迁移指南中出现的任何字面版本号）。
+2. 从 Material 2.5 或 Horologist 迁移时，阅读[迁移指南](references/android/training/wearables/compose/migrate-to-material3.md)并使用其中官方的组件映射。
+3. 重构任何组件前（例如 `Chip` -\> `Button`），检查参数名、slot 类型和「Expressive」设计令牌。
+4. 不要使用 Horologist 的 Composables、Compose Layout 或 Compose Material 库；用对应的 Wear Compose M3 组件替换 Horologist 组件（`AppScaffold` -\> M3 `AppScaffold`，`ScreenScaffold` -\> M3 `ScreenScaffold`，`ScalingLazyColumn` -\> `TransformingLazyColumn`，`ResponsiveListHeader` -\> `ListHeader`，`PagerScreen` -\> `HorizontalPagerScaffold`，`Chip` -\> `Button`，`Confirmation` -\> `ConfirmationDialog`）。
+5. **始终** 对照能力 3 中的组件指南进行检查。
+6. 迁移或更新组件时，要预期截图测试会失败：内边距和定位的预期默认值会发生变化。不要试图人为匹配旧截图，而应优先采用 Material3 的默认值。
 
-### Capability 2: Component samples
+### 能力 2：组件示例
 
-Use this table of reference to find canonical samples for Wear Compose
-components.
-When working with a Wear Compose component, you must use the samples linked
-from the table to ensure you know how to correctly use it.
+使用这张参考表查找 Wear Compose 组件的规范示例。
+处理某个 Wear Compose 组件时，你必须使用表中链接的示例，以确保你知道如何正确使用它。
 
-**Important:** Symbols marked with `[alpha]`, `[beta]`, or `[rc]` are only
-available in that pre-release track and are **not** in stable `{VERSION}`. Do
-not use them unless the project explicitly targets that pre-release version.
+**重要：** 标有 `[alpha]`、`[beta]` 或 `[rc]` 的符号只在对应的预发布轨道中可用，**不在** 稳定版 `{VERSION}` 中。除非项目明确面向该预发布版本，否则不要使用它们。
 
-#### Material 3 components in `androidx.wear.compose.material3.*`
+#### `androidx.wear.compose.material3.*` 中的 Material 3 组件
 
-| Component / Symbol | Reference Samples |
+| 组件 / 符号 | 参考示例 |
 |---|---|
 | `AlertDialog`, `AlertDialogDefaults` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md) |
 | `AnimatedPage`, `HorizontalPagerScaffold`, `VerticalPagerScaffold` | [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md), [PageIndicatorSample](references/material3/PageIndicatorSample.kt.md), [PagerScaffoldSample](references/material3/PagerScaffoldSample.kt.md) |
@@ -140,9 +135,9 @@ not use them unless the project explicitly targets that pre-release version.
 | `rememberTransformationSpec`, `transformedHeight` | [AlertDialogSample](references/material3/AlertDialogSample.kt.md), [DynamicColorSchemeSample](references/material3/DynamicColorSchemeSample.kt.md), [ListHeaderSample](references/material3/ListHeaderSample.kt.md), [ScaffoldSample](references/material3/ScaffoldSample.kt.md), [SurfaceTransformationSample](references/material3/SurfaceTransformationSample.kt.md), [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md), [SwipeToRevealSample](references/material3/SwipeToRevealSample.kt.md), [TransformationSpecSample](references/material3/TransformationSpecSample.kt.md), [TransformingLazyColumnNotificationsSample](references/material3/TransformingLazyColumnNotificationsSample.kt.md), [TransformingLazyColumnSample](references/foundation/TransformingLazyColumnSample.kt.md), [TransformingLazyColumnSample](references/material3/TransformingLazyColumnSample.kt.md) |
 | `timeTextSeparator` | [ScrollAwaySample](references/material3/ScrollAwaySample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
 
-#### Foundation components in `androidx.wear.compose.foundation.*`
+#### `androidx.wear.compose.foundation.*` 中的 Foundation 组件
 
-| Component / Symbol | Reference Samples |
+| 组件 / 符号 | 参考示例 |
 |---|---|
 | `AmbientMode`, `LocalAmbientModeManager`, `rememberAmbientModeManager` | [AmbientModeSample](references/foundation/AmbientModeSample.kt.md), [OneHandedGestureSamples](references/material3/OneHandedGestureSamples.kt.md) |
 | `AmbientTickEffect` | [AmbientModeSample](references/foundation/AmbientModeSample.kt.md) |
@@ -168,24 +163,22 @@ not use them unless the project explicitly targets that pre-release version.
 | `requestFocusOnHierarchyActive` | [HierarchicalFocusSample](references/foundation/HierarchicalFocusSample.kt.md), [RotarySamples](references/foundation/RotarySamples.kt.md) |
 | `weight` | [CurvedWorldSample](references/foundation/CurvedWorldSample.kt.md), [TimeTextSample](references/material3/TimeTextSample.kt.md) |
 
-#### Navigation 3 components in `androidx.wear.compose.navigation3.*`
+#### `androidx.wear.compose.navigation3.*` 中的 Navigation 3 组件
 
-| Component / Symbol | Reference Samples |
+| 组件 / 符号 | 参考示例 |
 |---|---|
 | `rememberSwipeDismissableSceneStrategy` | [SwipeDismissableSceneStrategySample](references/navigation3/SwipeDismissableSceneStrategySample.kt.md) |
 
-### Capability 3: Component guidance
+### 能力 3：组件指南
 
-**Mandatory**: Use this capability as a checklist against any component use. It
-provides more holistic guidance on how to use each component in practice, beyond
-the component syntax.
+**强制要求**：把本能力当作检查清单，用于任何组件使用场景。它提供比组件语法更全面的实践
+指南，说明如何在实践中使用每个组件。
 
-1. `AppScaffold` and `ScreenScaffold`
-   - \[ \] Use `AppScaffold` as the outer container, with `ScreenScaffold` children.
-   - \[ \] Use only **ONE** `AppScaffold` and any number of `ScreenScaffold`.
-2. `ScalingLazyColumn` - Use `TransformingLazyColumn` instead.
-3. `TransformingLazyColumn` - You will need the following imports:
-
+1. `AppScaffold` 和 `ScreenScaffold`
+   - \[ \] 把 `AppScaffold` 作为外层容器，`ScreenScaffold` 作为其子级。
+   - \[ \] 只使用 **一个** `AppScaffold`，`ScreenScaffold` 数量不限。
+2. `ScalingLazyColumn` —— 改用 `TransformingLazyColumn`。
+3. `TransformingLazyColumn` —— 你需要以下 import：
 
    ```kotlin
    import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -198,8 +191,7 @@ the component syntax.
 
    <br />
 
-   **Canonical example**:
-
+   **规范示例**：
 
    ```kotlin
    val columnState = rememberTransformingLazyColumnState()
@@ -251,16 +243,15 @@ the component syntax.
 
    <br />
 
-   - \[ \] Use `TransformingLazyColumn` instead of `ScalingLazyColumn`.
-   - \[ \] You must pass the `contentPadding` parameter from `ScreenScaffold` to the `TransformingLazyColumn`.
-   - \[ \] Use the `minimumVerticalContentPadding` modifier to achieve required padding top and bottom.
-     - This expects a value from defaults, such as `ButtonDefaults`, `CardDefaults`, `ListHeaderDefaults`.
-     - Note: This is a scoped modifier available within `TransformingLazyColumnItemScope`.
-   - \[ \] Ensure items morph and scale (apply to components **within** `TransformingLazyColumn`, not the list itself):
-     - \[ \] Use `Modifier.transformedHeight(this, transformationSpec)`.
-     - \[ \] Use `transformation = SurfaceTransformation(transformationSpec)`.
-   - \[ \] If configuring a list for snapping, use `flingBehavior` and `rotaryScrollableBehavior` **together**:
-
+   - \[ \] 用 `TransformingLazyColumn` 而不是 `ScalingLazyColumn`。
+   - \[ \] 必须把 `ScreenScaffold` 的 `contentPadding` 参数传给 `TransformingLazyColumn`。
+   - \[ \] 使用 `minimumVerticalContentPadding` 修饰符达到所需的上下内边距。
+     - 该值应来自 defaults，例如 `ButtonDefaults`、`CardDefaults`、`ListHeaderDefaults`。
+     - 注意：这是 `TransformingLazyColumnItemScope` 内可用的作用域修饰符。
+   - \[ \] 确保项目能变形和缩放（作用于 `TransformingLazyColumn` **内部** 的组件，而不是列表本身）：
+     - \[ \] 使用 `Modifier.transformedHeight(this, transformationSpec)`。
+     - \[ \] 使用 `transformation = SurfaceTransformation(transformationSpec)`。
+   - \[ \] 如果要把列表配置为吸附，**同时** 使用 `flingBehavior` 和 `rotaryScrollableBehavior`：
 
    ```kotlin
    val columnState = rememberTransformingLazyColumnState()
@@ -280,12 +271,11 @@ the component syntax.
 
 4. `ScreenScaffold`
 
-   - \[ \] Guard the `scrollIndicator` with `!LocalScrollCaptureInProgress.current` (`androidx.compose.ui.platform`).
+   - \[ \] 用 `!LocalScrollCaptureInProgress.current`（`androidx.compose.ui.platform`）守护 `scrollIndicator`。
 5. `EdgeButton`
 
-   - \[ \] Do **NOT** use as the final item within a `TransformingLazyColumn`. Instead, use the slot in `ScreenScaffold`.
-   - \[ \] When used in a `TransformingLazyColumn`, add the required overscroll behavior:
-
+   - \[ \] **不要** 把它用作 `TransformingLazyColumn` 内的最后一项。而应使用 `ScreenScaffold` 中的 slot。
+   - \[ \] 在 `TransformingLazyColumn` 中使用时，添加所需的过度滚动行为：
 
    ```kotlin
    val columnState = rememberTransformingLazyColumnState()
@@ -320,32 +310,32 @@ the component syntax.
 
 6. `Column`
 
-   - \[ \] USE as a direct child of `ScreenScaffold` *if* the screen will **never** scroll, even with the largest system font.
-   - \[ \] Use `TransformingLazyColumn` instead for all other cases.
-7. Styles
+   - \[ \] 如果屏幕 **永不** 滚动（即使系统字体调到最大），可以把 `Column` 用作 `ScreenScaffold` 的直接子级。
+   - \[ \] 其他情况改用 `TransformingLazyColumn`。
+7. 样式
 
-   - \[ \] Do **NOT** hard-code text sizes, use `typography` from `MaterialTheme`.
-   - \[ \] Do **NOT** hard-code colors, use `colorScheme` from `MaterialTheme`.
-8. Use component defaults:
+   - \[ \] **不要** 硬编码文字尺寸，使用 `MaterialTheme` 的 `typography`。
+   - \[ \] **不要** 硬编码颜色，使用 `MaterialTheme` 的 `colorScheme`。
+8. 使用组件的 defaults：
 
-   - \[ \] Components such as `Button` have a corresponding `ButtonDefaults` object.
-   - \[ \] Check for and use the `*Defaults` object for any component when working with padding and styling values, in preference to hard-coded values.
-9. Use Wear-specific preview annotations
-   (`androidx.wear.compose.ui.tooling.preview`):
+   - \[ \] `Button` 这类组件都有对应的 `ButtonDefaults` 对象。
+   - \[ \] 处理内边距和样式值时，检查并使用任何组件的 `*Defaults` 对象，而不是硬编码值。
+9. 使用 Wear 专属的预览注解
+   （`androidx.wear.compose.ui.tooling.preview`）：
 
    - \[ \] `@WearPreviewDevices`
    - \[ \] `@WearPreviewFontScales`
-   - \[ \] Ensure the `androidx.wear.compose:compose-ui-tooling` dependency is included.
+   - \[ \] 确保已包含 `androidx.wear.compose:compose-ui-tooling` 依赖。
 10. Ambient mode
 
-    - \[ \] Use `LocalAmbientModeManager` (provided by `CompositionLocalProvider` and `rememberAmbientModeManager()`) instead of `AmbientLifecycleObserver`.
-11. Navigation
+    - \[ \] 使用 `LocalAmbientModeManager`（由 `CompositionLocalProvider` 和 `rememberAmbientModeManager()` 提供），而不是 `AmbientLifecycleObserver`。
+11. 导航
 
-    - \[ \] When adding navigation fresh, use Navigation3 (`androidx.wear.compose:compose-navigation3`).
-    - \[ \] Use `rememberSwipeDismissableSceneStrategy()` / `SwipeDismissableSceneStrategy` (`androidx.wear.compose.navigation3`).
-12. Comments
+    - \[ \] 新增导航时，使用 Navigation3（`androidx.wear.compose:compose-navigation3`）。
+    - \[ \] 使用 `rememberSwipeDismissableSceneStrategy()` / `SwipeDismissableSceneStrategy`（`androidx.wear.compose.navigation3`）。
+12. 注释
 
-    - \[ \] Where any Kotlin file has been modified, ensure that the existing comments are up to date and accurately reflect any changes to the implementation.
-13. `HorizontalPager` or `VerticalPager`
+    - \[ \] 任何 Kotlin 文件被修改后，确保现有注释是最新的，并准确反映实现的变更。
+13. `HorizontalPager` 或 `VerticalPager`
 
-    - \[ \] Use the Composable hierarchy in this order: `AppScaffold`, `HorizontalPagerScaffold`, `HorizontalPager`, `AnimatedPage`, `ScreenScaffold`. Or similarly for `VerticalPager`.
+    - \[ \] 按此顺序使用 Composable 层级：`AppScaffold`、`HorizontalPagerScaffold`、`HorizontalPager`、`AnimatedPage`、`ScreenScaffold`。`VerticalPager` 同理。

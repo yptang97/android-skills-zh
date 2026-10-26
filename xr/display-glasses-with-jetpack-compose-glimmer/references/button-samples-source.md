@@ -1,5 +1,4 @@
-When creating a Glimmer Button component, refer to the following implementation
-samples in `ButtonSamples.kt`:
+创建 Glimmer Button 组件时，参考 `ButtonSamples.kt` 中的以下实现示例：
 
 
 ```kotlin

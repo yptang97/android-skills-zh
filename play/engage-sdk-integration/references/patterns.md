@@ -1,11 +1,8 @@
 ## EngageBroadcastReceiver
 
-Setting up the `BroadcastReceiver` correctly requires **both** static and
-dynamic registration. Static registration allows the app to receive broadcasts
-even when it isn't running, while dynamic registration is required on newer
-Android versions to safely receive broadcasts when the app is live in memory.
+要正确配置 `BroadcastReceiver`，**静态**注册和**动态**注册两者都需要。静态注册让应用即使未运行也能接收广播，而在较新的 Android 版本上，为了在应用处于内存中运行时安全地接收广播，还需要动态注册。
 
-### BroadcastReceiver implementation
+### BroadcastReceiver 实现
 
 
 ```kotlin
@@ -69,10 +66,9 @@ class EngageBroadcastReceiver : BroadcastReceiver() {
 
 <br />
 
-### Static registration in AndroidManifest.xml
+### 在 AndroidManifest.xml 中静态注册
 
-Add the `<receiver>` tag inside the `<application>` block in
-`AndroidManifest.xml`
+在 `AndroidManifest.xml` 的 `<application>` 块内添加 `<receiver>` 标签
 
 
 ```xml
@@ -423,18 +419,14 @@ object ItemToEntityConverter {
 
 <br />
 
-> **Strict image aspect ratio requirement** : Play Engage has strict
-> requirements for image aspect ratios depending on the vertical and entity type
-> (e.g., 16:9 for landscape, 1:1 for square, 2:3 for portrait). Ensure your
-> `ItemToEntityConverter` maps images that conform to these strict requirements
-> to avoid cropping or content rejection by Play.
+> **严格的图片宽高比要求**：Play Engage 对图片宽高比有严格要求，具体取决于垂直领域和实体类型
+> （例如横图 16:9、方图 1:1、竖图 2:3）。请确保你的
+> `ItemToEntityConverter` 映射的图片符合这些严格要求，
+> 以避免被 Play 裁剪或拒绝收录。
 
-## Dependency specifications (libs.versions.toml)
+## 依赖声明（libs.versions.toml）
 
-This skill specifies all dependencies using the `libs.versions.toml` format.
-Adapt these definitions to other formats (such as standard Groovy `build.gradle`
-or Kotlin DSL `build.gradle.kts` implementation lines) as required by the
-project.
+这个 skill 的所有依赖都用 `libs.versions.toml` 格式给出。请按项目要求把这些定义适配成其他格式（例如标准的 Groovy `build.gradle` 或 Kotlin DSL `build.gradle.kts` 的 implementation 行）。
 
     [versions]
     engage-core = "1.6.0"
@@ -453,11 +445,9 @@ project.
     kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
     kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
-## Dual content rating fields for Watch and TV
+## Watch 与 TV 的双内容分级字段
 
-For Watch and TV integrations, you must populate both the new `contentRatings`
-(which uses `RatingSystem`) and the legacy `contentRatingsLegacies` (which uses
-`String` lists) to ensure compatibility across all Google Play surfaces.
+对于 Watch 和 TV 集成，你必须同时填充新的 `contentRatings`（使用 `RatingSystem`）和旧的 `contentRatingsLegacies`（使用 `String` 列表），以确保在所有 Google Play 展示面上兼容。
 
 
 ```kotlin
@@ -478,12 +468,11 @@ fun convertMovie(movie: MovieData): MovieEntity {
 
 <br />
 
-## TV integrations
+## TV 集成
 
-The following patterns and configurations are specific to Android TV
-integrations.
+以下模式与配置专用于 Android TV 集成。
 
-### AndroidManifest.xml for TV
+### 用于 TV 的 AndroidManifest.xml
 
 
 ```xml
@@ -493,7 +482,7 @@ integrations.
 
 <br />
 
-### PlatformSpecificUri example
+### PlatformSpecificUri 示例
 
 
 ```kotlin
@@ -511,7 +500,7 @@ val platformSpecificPlaybackUris = listOf(
 
 <br />
 
-### AccountProfile example
+### AccountProfile 示例
 
 
 ```kotlin

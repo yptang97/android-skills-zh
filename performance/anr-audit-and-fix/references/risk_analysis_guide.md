@@ -1,58 +1,52 @@
-Goal: decide whether code **in the file under review** stalls the main thread
-(or a Binder thread that a caller waits on synchronously) long enough to cause
-an ANR, and point to the exact lines. Work through the steps in order. A
-candidate becomes a finding only if it passes Steps 2, 3, and 5. The one
-exception is Step 4 (View threading): its proof is off-main execution on an
-attached View, followed by Step 5.
+目标：判断**待审查文件中**的代码是否让主线程（或调用方同步等待的 Binder 线程）阻塞到足以引发 ANR，并指出具体行号。按顺序走完这些步骤。一个候选只有通过步骤 2、3 和 5 才能成为问题项。唯一的例外是步骤 4（View 线程问题）：它的证明依据是已附加（attached）View 上的非主线程执行，然后再走步骤 5。
 
-## Step 1: List candidates in the file
+## 步骤 1：列出文件中的候选
 
-- **Blocking primitives and locks** : `runBlocking`, blocking futures, latches, monitors, `Thread.sleep`, RxJava `blocking*` operators, or locks contended with background work.
-- **Synchronous I/O or heavy compute** : network, disk, file, or database reads and writes (`SharedPreferences.Editor.commit()`, `ContentResolver.query`, non-suspend DAO calls), bitmap decoding, JSON or XML payload parsing, `MediaPlayer.prepare()`, or unbounded loops.
-- **Synchronous IPC or slow component lifecycle** : cross-process Binder or `ContentProvider` calls, or heavy work inside `Application`, `Activity`, `Service`, `BroadcastReceiver`, or `ContentProvider` lifecycle callbacks.
-- **Off-main mutation of attached Views** (Step 4).
+- **阻塞原语与锁** ：`runBlocking`、阻塞式 future、latch、monitor、`Thread.sleep`、RxJava 的 `blocking*` 操作符，或与后台工作争用的锁。
+- **同步 I/O 或重计算** ：网络、磁盘、文件或数据库读写（`SharedPreferences.Editor.commit()`、`ContentResolver.query`、非挂起的 DAO 调用）、位图解码、JSON 或 XML 负载解析、`MediaPlayer.prepare()`，或无界循环。
+- **同步 IPC 或缓慢的组件生命周期** ：跨进程 Binder 或 `ContentProvider` 调用，或 `Application`、`Activity`、`Service`、`BroadcastReceiver`、`ContentProvider` 生命周期回调中的重工作。
+- **已附加 View 的非主线程修改**（步骤 4）。
 
-## Step 2: Prove the executing thread (mandatory)
+## 步骤 2：证明执行线程（强制）
 
-Establish which thread actually executes each candidate rather than assuming:
+确定每个候选实际由哪个线程执行，而不是靠假设：
 
-- **Inspect the enclosing scope** : check coroutine dispatchers (`lifecycleScope` and `viewModelScope` default to Main), reactive schedulers, executors or handlers, and Android component callbacks (`ContentProvider` queries run on a Binder thread cross-process, or the caller's thread in-process).
-- **Trace callers when the thread depends on the caller**: locate callers in the project (1 to 2 hops) to verify the dispatching thread, and state the verified call chain.
-- **Listeners and callbacks**: verify which thread or executor dispatches the callback before assuming it runs on a worker thread.
-- **Dismiss unproven candidates**: if you can't show that the candidate runs on the main thread or a synchronously awaited Binder thread (or off the main thread for Step 4 candidates), list it under dismissed as "thread not established".
+- **检查外层作用域** ：检查协程 dispatcher（`lifecycleScope` 和 `viewModelScope` 默认是 Main）、响应式调度器、executor 或 handler，以及 Android 组件回调（`ContentProvider` 查询在跨进程时运行在 Binder 线程上，进程内则运行在调用方线程上）。
+- **线程取决于调用方时追踪调用方**：在项目中向上定位调用方（1 到 2 跳）以确认派发线程，并写明已确认的调用链。
+- **监听器与回调**：在假设回调运行在工作线程之前，先确认是哪个线程或 executor 派发它。
+- **排除未证明的候选**：如果你无法证明该候选运行在主线程或同步等待的 Binder 线程上（对步骤 4 的候选则是无法证明运行在非主线程上），就把它列在「已排除」中，理由写「线程未确认」。
 
-## Step 3: Prove the call blocks
+## 步骤 3：证明调用会阻塞
 
-- **Seeded in-memory reactive reads return immediately** : `blockingFirst()` or `getValue()` on a seeded `BehaviorRelay` or `BehaviorSubject`, `StateFlow.value`, or `first()` on a `StateFlow` / populated `SharedFlow` (`replay >= 1`) return in-memory state immediately. Check how the source is initialized before flagging.
-- **Suspension isn't blocking** : suspend functions, `delay`, and coroutine `Mutex`/`Semaphore` suspend the coroutine without blocking the underlying thread.
-- **`runBlocking` blocks only its calling thread** : `runBlocking` called on a background thread (even with `Dispatchers.Main` inside) doesn't block the main thread unless the main thread is waiting on that worker.
-- **Short bounded waits aren't findings**: a single sleep or wait of roughly a frame to a few frames (tens of milliseconds to about a hundred), not in a loop and not on a hot path, causes minor frame drops, not an ANR. Don't report it as a finding; mention it under dismissed candidates at most.
-- **Latent hazard** : a blocking primitive on the main thread whose inner work completes in memory without I/O or suspension is a `LOW` finding. Explain why it doesn't block today and what change would make it block.
+- **已预置数据的内存响应式读取会立即返回** ：对已预置数据的 `BehaviorRelay` 或 `BehaviorSubject` 调用 `blockingFirst()` 或 `getValue()`、`StateFlow.value`，或对 `StateFlow` / 已有数据的 `SharedFlow`（`replay >= 1`）调用 `first()`，都会立即返回内存中的状态。标记之前先检查数据源是如何初始化的。
+- **挂起不等于阻塞** ：挂起函数、`delay`，以及协程 `Mutex`/`Semaphore` 会让协程挂起，而不阻塞底层线程。
+- **`runBlocking` 只阻塞其调用线程** ：在后台线程上调用 `runBlocking`（即使内部使用 `Dispatchers.Main`）并不阻塞主线程，除非主线程正在等待那个工作线程。
+- **短暂有界的等待不算问题项**：单次大约一帧到几帧（几十毫秒到约一百毫秒）的 sleep 或 wait，不在循环中也不在热路径上，只会造成轻微掉帧，不会导致 ANR。不要把它报为问题项；最多在已排除候选中提一句。
+- **潜在隐患** ：主线程上的阻塞原语，其内部工作在内存中完成且没有 I/O 或挂起，是 `LOW` 问题项。要说明它为什么当前不会阻塞，以及什么样的改动会让它阻塞。
 
-## Step 4: View threading violations (sync barrier leak)
+## 步骤 4：View 线程违规（同步屏障泄漏）
 
-Treat off-main-thread UI access on an **attached** View as a **Sync Barrier
-Leak ANR** risk, not merely a `CalledFromWrongThreadException` crash risk.
+把**已附加** View 上的非主线程 UI 访问视为**同步屏障泄漏型 ANR** 风险，而不仅仅是 `CalledFromWrongThreadException` 崩溃风险。
 
-- **Mechanism** : `ViewRootImpl.requestLayout()` calls `checkThread()`, but invalidation paths (`invalidate()` -\> `onDescendantInvalidated()` -\> `scheduleTraversals()`) don't, allowing a background thread to enter `scheduleTraversals()` concurrently with the main thread. Both call `mHandler.getLooper().getQueue().postSyncBarrier()` and overwrite the unsynchronized `mTraversalBarrier` token; `doTraversal()` removes only one token, leaking an orphaned synchronization barrier in `MessageQueue` (freezing synchronous main-thread messages between VSYNC frames or throwing `IllegalStateException` at `MessageQueue.removeSyncBarrier`). Android 17 fixed this platform race; Android 16 and older remain vulnerable, so apps shipping to those versions must still remove the violation. Creating or configuring a *detached* View off-main doesn't trigger this race.
-- **What to check** : View or adapter mutations inside background coroutine scopes (`Dispatchers.Default`/`IO`), background Rx schedulers, executors or threads, or asynchronous callbacks invoked on worker threads (such as network, image-loading, media, sensor, or Binder listeners).
-- **Detection** : Android 17's `View#registerCalledFromWrongThreadListener` (requires `compileSdk 37`; guard calls with `Build.VERSION.SDK_INT >= 37`), `adb shell am compat enable ENFORCE_THREAD_CHECKS_ON_VIEW_ROOT_IMPL_APIS
-  <package>` (debuggable builds), or the Robolectric unit-test flag `-Drobolectric.enforceViewMethodsCalledOnMainThread=true`.
-- **Remediation** : fix the threading context at the **root scope** :
-  - *Coroutines* : start UI flows on `Dispatchers.Main` (`lifecycleScope` or `viewModelScope`) and wrap only slow I/O or compute work in `withContext(Dispatchers.IO)` or `Dispatchers.Default`.
-  - *Threads, executors, and callbacks* : keep in-memory UI reads and mutations on the main thread before submitting background work, or configure the upstream stream, callback executor, or target API to deliver results on the main thread (`AndroidSchedulers.mainThread()`, main-thread UI targets, or main executor).
+- **机制** ：`ViewRootImpl.requestLayout()` 会调用 `checkThread()`，但失效路径（`invalidate()` -\> `onDescendantInvalidated()` -\> `scheduleTraversals()`）不会，这就允许后台线程与主线程并发进入 `scheduleTraversals()`。两者都会调用 `mHandler.getLooper().getQueue().postSyncBarrier()` 并覆盖未加同步的 `mTraversalBarrier` 令牌；`doTraversal()` 只移除一个令牌，于是在 `MessageQueue` 中泄漏一个孤立的同步屏障（在 VSYNC 帧之间冻结同步的主线程消息，或在 `MessageQueue.removeSyncBarrier` 处抛出 `IllegalStateException`）。Android 17 修复了这个平台竞态；Android 16 及更早版本仍然脆弱，因此面向这些版本发布的应用仍必须消除该违规。在非主线程上创建或配置**未附加**的 View 不会触发这个竞态。
+- **要检查什么** ：后台协程作用域（`Dispatchers.Default`/`IO`）、后台 Rx 调度器、executor 或线程，或在工作线程上被调用的异步回调（例如网络、图片加载、媒体、传感器或 Binder 监听器）内部的 View 或 adapter 修改。
+- **检测** ：Android 17 的 `View#registerCalledFromWrongThreadListener`（需要 `compileSdk 37`；调用处用 `Build.VERSION.SDK_INT >= 37` 保护）、`adb shell am compat enable ENFORCE_THREAD_CHECKS_ON_VIEW_ROOT_IMPL_APIS
+  <package>`（可调试构建），或 Robolectric 单元测试标志 `-Drobolectric.enforceViewMethodsCalledOnMainThread=true`。
+- **修复** ：在**根作用域**修正线程上下文：
+  - *协程* ：在 `Dispatchers.Main`（`lifecycleScope` 或 `viewModelScope`）上启动 UI 流程，只把缓慢的 I/O 或计算工作包进 `withContext(Dispatchers.IO)` 或 `Dispatchers.Default`。
+  - *线程、executor 与回调* ：在提交后台工作之前，把内存中的 UI 读取和修改留在主线程，或配置上游流、回调 executor 或目标 API 在主线程交付结果（`AndroidSchedulers.mainThread()`、主线程 UI target 或 main executor）。
 
-## Step 5: Attribute and grade
+## 步骤 5：归属与定级
 
-- **Attribute to the file that owns the defect**: report a finding only if the blocking statement or off-main View mutation originates in the file under review (or in a concrete dependency that unconditionally blocks when called on the main thread from this file). If this file invokes an abstract callback or listener interface and an external caller or host class chooses to block inside its callback implementation, attribute the defect to that external file and dismiss it here as "owned by caller or host file".
-- **Severity** :
-  - `HIGH`: main-thread I/O or long waits on primary paths (startup, lifecycle, input), or off-main mutation of attached Views.
-  - `MEDIUM`: main-thread blocking on secondary paths, or bounded work stalling for hundreds of milliseconds.
-  - `LOW`: latent hazards that complete in memory today, or Binder-thread blocking reached only from external processes.
+- **归属到缺陷所属的文件**：只有当阻塞语句或非主线程 View 修改源自待审查文件（或源自本文件在主线程调用时无条件阻塞的具体依赖）时，才报告问题项。如果本文件调用的是一个抽象回调或监听器接口，而外部调用方或宿主类选择在其回调实现中阻塞，就把缺陷归属到那个外部文件，并在这里以「归属调用方或宿主文件」排除。
+- **严重程度** ：
+  - `HIGH`：主路径（启动、生命周期、输入）上的主线程 I/O 或长等待，或已附加 View 的非主线程修改。
+  - `MEDIUM`：次要路径上的主线程阻塞，或有界工作停顿数百毫秒。
+  - `LOW`：当前在内存中完成的潜在隐患，或只有外部进程才可能触达的 Binder 线程阻塞。
 
-## Output
+## 输出
 
-1. One-line verdict first: `ANR risk: yes (<highest severity>)` or `ANR risk:
-   none found in this file`.
-2. For each finding: line range, executing thread and verified call chain, why it blocks (or, for Step 4, why it leaks the sync barrier), severity, and suggested fix.
-3. **Dismissed candidates**: one line each with the reason (for example, "thread not established", "seeded relay, returns immediately", "runs on IO through caller X", "owned by caller or host file").
+1. 先给一行结论：`ANR risk: yes (<highest severity>)` 或 `ANR risk:
+   none found in this file`。
+2. 对每个问题项：行号范围、执行线程与已确认的调用链、为什么阻塞（对步骤 4 则是为什么会泄漏同步屏障）、严重程度，以及建议的修复。
+3. **已排除的候选**：每条一行并给出原因（例如「线程未确认」「已预置的 relay，立即返回」「通过调用方 X 运行在 IO 上」「归属调用方或宿主文件」）。

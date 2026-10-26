@@ -1,28 +1,19 @@
-If Paparazzi is used in the project, update it to version 2.0.0-alpha04 or
-higher.
+如果项目中使用了 Paparazzi，请把它升级到 2.0.0-alpha04 或更高版本。
 
-Paparazzi version 2.0.0-alpha04 and lower is not fully compatible with Gradle
-9, and Gradle 9 is required by AGP 9. This means that, without workarounds,
-projects that use Paparazzi v2.0.0-alpha04 and lower cannot migrate to AGP 9.
+Paparazzi 2.0.0-alpha04 及更低版本与 Gradle 9 并不完全兼容，而 AGP 9 要求使用 Gradle 9。这意味着，如果不做规避处理，使用 Paparazzi v2.0.0-alpha04 及更低版本的项目无法迁移到 AGP 9。
 
-At time of writing, there are no higher versions of Paparazzi. That is,
-v2.0.0-alpha04 is the latest release.
+撰写本文时，Paparazzi 还没有更高的版本。也就是说，v2.0.0-alpha04 就是最新的发布版本。
 
-The issue is due to Paparazzi using internal classes from Gradle that tend to
-move in breaking ways without warning. This specific issue is related to HTML
-test reports. To work around it, disable those HTML test reports. Here
-are two examples of how to do this, one for Kotlin DSL and the other for Groovy
-DSL. Any module that has the paparazzi plugin (`app.cash.paparazzi`) applied
-must apply one of these two workarounds.
+这个问题源于 Paparazzi 使用了 Gradle 的内部类，而这些类经常会在没有预警的情况下以破坏性的方式变动。这个具体问题与 HTML 测试报告有关。要规避它，请关闭这些 HTML 测试报告。下面给出两个示例，一个用于 Kotlin DSL，另一个用于 Groovy DSL。任何应用了 paparazzi 插件（`app.cash.paparazzi`）的模块都必须采用这两种规避方式之一。
 
-Kotlin DSL:
+Kotlin DSL：
 
     tasks.withType<Test>().configureEach {
       // https://github.com/cashapp/paparazzi/issues/2111
       reports.html.required = false
     }
 
-Groovy DSL:
+Groovy DSL：
 
     tasks.withType(Test).configureEach {
       // https://github.com/cashapp/paparazzi/issues/2111

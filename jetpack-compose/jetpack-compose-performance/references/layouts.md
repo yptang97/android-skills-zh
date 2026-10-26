@@ -1,19 +1,15 @@
-## 1. Layout coordinates, rects, and visibility tracking
+## 1. 布局坐标、矩形与可见性跟踪
 
-`Modifier.onGloballyPositioned` fires for its node whenever that node's global
-position in the window may have changed after a layout pass (for example, on
-every frame during scrolling or animation when an ancestor moves), making it a
-frequent source of frame drops, unnecessary callbacks, and layout feedback
-loops. Use targeted modern APIs instead:
+`Modifier.onGloballyPositioned` 会在布局阶段之后、该节点的全局窗口位置可能发生变化时对其触发（例如滚动或动画期间祖先节点移动时的每一帧），因此它是掉帧、多余回调和布局反馈循环的常见来源。请改用有针对性的现代 API：
 
-### 1. Viewport and dwell tracking: use `Modifier.onVisibilityChanged`
+### 1. 视口与停留时长跟踪：使用 `Modifier.onVisibilityChanged`
 
-Avoid calculating viewport intersections manually inside `onGloballyPositioned`.
-Use **`Modifier.onVisibilityChanged`** (with `minFractionVisible` and optional
-`minDurationMs` dwell thresholds) for:
+不要在 `onGloballyPositioned` 内部手工计算视口交集。
+使用 **`Modifier.onVisibilityChanged`**（配合 `minFractionVisible` 和可选的
+`minDurationMs` 停留阈值）来实现：
 
-- **Impression Logging**: Ensures analytics fire only when an item actually enters the viewport and stays visible for a minimum duration (preventing premature logging on pre-fetched lazy items).
-- **Deferring Lookahead Shared Transitions** : Attaches `Modifier.sharedBounds` or `Modifier.sharedElement` only when an item enters the viewport, eliminating Lookahead passes on offscreen items.
+- **曝光日志记录**：确保分析事件只在条目真正进入视口并保持可见满最短时长时才触发（防止对预取的懒加载条目过早记录）。
+- **延迟 Lookahead 共享过渡**：只在条目进入视口时才附加 `Modifier.sharedBounds` 或 `Modifier.sharedElement`，从而消除屏幕外条目上的 Lookahead 阶段。
 
 
 ```kotlin
@@ -32,28 +28,24 @@ Box(
 
 <br />
 
-### 2. Local placement and throttled bounds: prefer `onPlaced` or `onLayoutRectChanged`
+### 2. 本地位置与限流边界：优先使用 `onPlaced` 或 `onLayoutRectChanged`
 
-- **Dimensions Only (`IntSize`)** : If you only need width and height, use `Modifier.onSizeChanged`. It executes only when the node's dimensions change, ignoring position shifts.
-- **Local Coordinates after Placement (`Modifier.onPlaced`)** : Use `Modifier.onPlaced` when you need placement coordinates relative to the parent after the node is placed, without subscribing to window or screen movement from ancestors.
-- **Throttled Bounds Tracking (`Modifier.onLayoutRectChanged`)** : When you need root-, window-, or screen-relative bounds (`RelativeLayoutBounds`), prefer `Modifier.onLayoutRectChanged` over `onGloballyPositioned`; it supports built-in `throttleMillis` and `debounceMillis` parameters to avoid firing on every frame.
+- **仅需尺寸（`IntSize`）**：如果你只需要宽度和高度，使用 `Modifier.onSizeChanged`。它只在节点尺寸变化时执行，忽略位置移动。
+- **放置后的本地坐标（`Modifier.onPlaced`）**：需要在节点放置后获取相对于父级的放置坐标、又不想订阅祖先带来的窗口或屏幕移动时，使用 `Modifier.onPlaced`。
+- **限流边界跟踪（`Modifier.onLayoutRectChanged`）**：需要根、窗口或屏幕相对的边界（`RelativeLayoutBounds`）时，优先使用 `Modifier.onLayoutRectChanged` 而不是 `onGloballyPositioned`；它支持内置的 `throttleMillis` 和 `debounceMillis` 参数，避免每帧触发。
 
-### 3. On-demand coordinate queries: avoid `MutableState` position tracking
+### 3. 按需查询坐标：不要用 `MutableState` 跟踪位置
 
-Avoid continuously listening to coordinate callbacks (`onGloballyPositioned` or
-`onPlaced`) solely to cache layout coordinates into a `MutableState` for later
-use when an event occurs (such as showing a tooltip, menu, or handling a
-gesture). Storing coordinates in state causes redundant callback executions on
-every layout or scroll pass and risks recomposition trashing or backwards
-writes.
+不要只为在某事件发生（例如显示 tooltip、菜单，或处理手势）时把布局坐标缓存进 `MutableState` 备用，而持续监听坐标回调（`onGloballyPositioned` 或
+`onPlaced`）。把坐标存入 state 会导致每次布局或滚动阶段都执行多余回调，并有重组抖动或反向写入的风险。
 
-#### A. In Custom Modifiers (`Modifier.Node`)
+#### A. 在自定义 Modifier 中（`Modifier.Node`）
 
-`requireLayoutCoordinates()` is an API on `Modifier.Node` (specifically
-`DelegatableNode`), designed to pull coordinates on demand:
+`requireLayoutCoordinates()` 是 `Modifier.Node`（具体来说是
+`DelegatableNode`）上的 API，专为按需拉取坐标而设计：
 
-- **Query inside Event Handlers** : In custom modifier nodes (such as `PointerInputModifierNode` or `DrawModifierNode`), call `requireLayoutCoordinates()` directly inside gesture, touch, or draw callbacks at the moment the event occurs.
-- **Eliminates continuous listeners** : You do not need to implement `LayoutAwareModifierNode` or listen to `onGloballyPositioned` continuously just to have coordinates available when an interaction happens.
+- **在事件处理器内部查询**：在自定义 modifier 节点（例如 `PointerInputModifierNode` 或 `DrawModifierNode`）中，在事件发生的时刻直接在手势、触摸或绘制回调内部调用 `requireLayoutCoordinates()`。
+- **消除持续监听**：你不需要为了实现 `LayoutAwareModifierNode`，或只为了在交互发生时拿到坐标而持续监听 `onGloballyPositioned`。
 
 
 ```kotlin
@@ -76,14 +68,14 @@ class InteractiveTooltipNode : Modifier.Node(), PointerInputModifierNode {
 
 <br />
 
-#### B. In high-level composable code (versus `Modifier.clickable`)
+#### B. 在高阶 composable 代码中（相对于 `Modifier.clickable`）
 
-`requireLayoutCoordinates()` is strictly a `Modifier.Node` API---it is **not**
-available in high-level composables, and `Modifier.clickable` does not provide
-coordinates to its `onClick: () -> Unit` lambda:
+`requireLayoutCoordinates()` 严格来说是 `Modifier.Node` API——它在高阶
+composable 中**不可用**，而 `Modifier.clickable` 也不会把坐标传给它的
+`onClick: () -> Unit` lambda：
 
-- **Standard clicks (`Modifier.clickable`)** : If your click handler does not require exact screen coordinates, use `Modifier.clickable` directly without attaching any coordinate listeners.
-- **Position-aware gestures (`Modifier.pointerInput`)** : If you need the exact tap position in composable code (for example, to anchor a drop-down menu at the touch point), use `Modifier.pointerInput` with `detectTapGestures` to receive the tap `Offset` directly on the event, rather than storing `onGloballyPositioned` bounds in `MutableState`:
+- **普通点击（`Modifier.clickable`）**：如果你的点击处理器不需要精确的屏幕坐标，就直接用 `Modifier.clickable`，不要附加任何坐标监听器。
+- **需要位置感知的手势（`Modifier.pointerInput`）**：如果你在 composable 代码中需要精确的点按位置（例如把下拉菜单锚定在触点处），就用 `Modifier.pointerInput` 配合 `detectTapGestures` 在事件上直接接收点按的 `Offset`，而不是把 `onGloballyPositioned` 的边界存进 `MutableState`：
 
 
 ```kotlin
@@ -99,38 +91,25 @@ Box(
 
 <br />
 
-### 4. Prohibit layout feedback loops (back-writing during Layout)
+### 4. 禁止布局反馈循环（在 Layout 期间反向写入）
 
-Never write to `MutableState` inside `onPlaced`, `onSizeChanged`, or
-`onGloballyPositioned` if reading that state invalidates the layout, size, or
-placement of the node being measured.
+绝不要在 `onPlaced`、`onSizeChanged` 或 `onGloballyPositioned` 内部写入
+`MutableState`——如果读取该 state 会使正在测量的节点的布局、尺寸或放置失效，就会出问题。
 
-Writing to state in the Layout phase that is read in Composition creates a
-**backwards write** , which triggers the **first-frame correctness problem**: the
-first frame is rendered with invalid, default, or unsettled dimensions (such as
-zero size or an incorrect offset), followed by a second frame recomposition that
-causes visible visual popping, layout flashing, and dropped frames. If the
-layout sizing continuously writes back a new value to state, it results in an
-infinite recomposition loop.
+在 Layout 阶段写入、并在 Composition 阶段读取的 state 会形成**反向写入**，进而触发**首帧正确性问题**：第一帧以无效、默认或未稳定的尺寸（例如零尺寸或错误的偏移）渲染，随后第二帧重组，造成可见的视觉跳变、布局闪烁和掉帧。如果布局尺寸持续把新值写回 state，就会导致无限重组循环。
 
-Similarly, within the Layout phase itself, state changes must flow forward:
-updating state during measurement and reading it in placement is acceptable, but
-writing to state in placement that is read during measurement causes a
-continuous remeasure loop.
+同样，在 Layout 阶段内部，state 变更也必须单向向前流动：在测量期间更新 state、在放置期间读取是可以接受的，但在放置期间写入、又在测量期间读取的 state 会造成持续重新测量的循环。
 
-If sizes or coordinates are needed for custom drawing or placement, read them
-directly in the Draw or Layout phase using `Modifier.drawWithCache` or
-`Modifier.layout` instead of passing them back to Composition. For more
-information on phase flow and eliminating recomposition loops, see the
-[Backwards Write documentation](https://developer.android.com/develop/ui/compose/performance/backwards-write).
+如果自定义绘制或放置需要尺寸或坐标，请在 Draw 或 Layout 阶段直接用
+`Modifier.drawWithCache` 或
+`Modifier.layout` 读取，而不是把它们传回 Composition。关于阶段流转与消除重组循环的更多信息，参见
+[Backwards Write 文档](https://developer.android.com/develop/ui/compose/performance/backwards-write)。
 
-## 2. Phase deferral for layout offsets and constraints
+## 2. 布局偏移与约束的阶段延迟
 
-Defer reading animated or scroll-driven state values to the **Layout** phase by
-wrapping reads in lambda-based layout modifiers. This bypasses the Composition
-phase entirely on state changes:
+通过把读取包进基于 lambda 的布局 modifier，把对动画或滚动驱动的 state 值的读取延迟到 **Layout** 阶段。这样在 state 变化时就能完全跳过 Composition 阶段：
 
-- **Bad (Recomposes on every offset change)**:
+- **坏做法（每次偏移变化都重组）**：
 
 
   ```kotlin
@@ -140,7 +119,7 @@ phase entirely on state changes:
 
   <br />
 
-- **Optimized (Skips Composition, evaluates in Layout phase)**:
+- **优化做法（跳过 Composition，在 Layout 阶段求值）**：
 
 
   ```kotlin
@@ -149,30 +128,26 @@ phase entirely on state changes:
 
   <br />
 
-## 3. Minimizing layout tree depth and wrapper nodes
+## 3. 尽量减少布局树深度和包装节点
 
-Every layout node in Compose incurs measurement, placement, and snapshot
-tracking costs. Minimize layout hierarchy depth:
+Compose 中的每个布局节点都有测量、放置和快照跟踪开销。尽量减少布局层级深度：
 
-- **Avoid Decorative Wrapper Layouts** : Do not wrap a composable in an extra `Box` solely to apply a background, border, padding, or clickable modifier. Attach modifiers directly to the child composable.
-- **Avoid Canvas Nodes for Decorative Backgrounds** : Avoid using the `Canvas` composable solely to add decorative drawings behind content. Use `Modifier.drawBehind` or `Modifier.drawWithCache` on the existing layout node to avoid adding an extra node to the layout tree.
+- **避免装饰性包装布局**：不要只为应用背景、边框、内边距或可点击 modifier 就把 composable 包进一个额外的 `Box`。把 modifier 直接附加到子 composable 上。
+- **避免为装饰性背景使用 Canvas 节点**：不要只为在内容后面添加装饰性绘制而使用 `Canvas` composable。在已有的布局节点上使用 `Modifier.drawBehind` 或 `Modifier.drawWithCache`，以免给布局树增加额外节点。
 
-## 4. Subcomposition overhead (`SubcomposeLayout` and `BoxWithConstraints`)
+## 4. 子组合开销（`SubcomposeLayout` 与 `BoxWithConstraints`）
 
-`SubcomposeLayout` (and composables built on top of it, such as
-`BoxWithConstraints`) defers composition until the measurement pass, breaking
-Compose's standard single-pass layout pipeline into multiple subcomposition
-passes:
+`SubcomposeLayout`（以及构建在其之上的 composable，例如
+`BoxWithConstraints`）会把组合推迟到测量阶段，把 Compose 标准的单趟布局流水线拆成多个子组合
+阶段：
 
-- **Avoid `BoxWithConstraints` for Simple Responsiveness** : Do not use `BoxWithConstraints` when standard modifiers (`Modifier.fillMaxWidth()`, `Modifier.weight()`, or `Modifier.aspectRatio()`) or flow layouts can achieve the same visual layout.
-- **Avoid `BoxWithConstraints` inside Lazy Items** : Using `BoxWithConstraints` inside `LazyColumn` or `LazyRow` items introduces subcomposition overhead for every recycled and pre-fetched item, increasing scroll jank.
-- **Prefer `Modifier.layout` or `LayoutModifierNode`** : When custom measurement or placement rules depend on incoming constraints, prefer using `Modifier.layout { measurable, constraints -> ... }` or implementing `LayoutModifierNode` rather than spawning a `SubcomposeLayout` or `BoxWithConstraints`.
+- **不要为简单的响应式适配使用 `BoxWithConstraints`**：当标准 modifier（`Modifier.fillMaxWidth()`、`Modifier.weight()` 或 `Modifier.aspectRatio()`）或流式布局能实现相同的视觉布局时，不要使用 `BoxWithConstraints`。
+- **不要在 Lazy 条目内使用 `BoxWithConstraints`**：在 `LazyColumn` 或 `LazyRow` 的条目内使用 `BoxWithConstraints` 会给每个被回收和预取的条目引入子组合开销，加剧滚动卡顿。
+- **优先使用 `Modifier.layout` 或 `LayoutModifierNode`**：当自定义测量或放置规则依赖于传入的约束时，优先使用 `Modifier.layout { measurable, constraints -> ... }` 或实现 `LayoutModifierNode`，而不是新建一个 `SubcomposeLayout` 或 `BoxWithConstraints`。
 
-## 5. Intrinsic measurements
+## 5. 固有测量
 
-Intrinsic measurements (`IntrinsicSize.Min`, `IntrinsicSize.Max`) query children
-for their preferred size before the final measurement pass, effectively running
-a two-pass layout:
+固有测量（`IntrinsicSize.Min`、`IntrinsicSize.Max`）会在最终测量阶段之前向子节点查询其首选尺寸，实际上相当于跑了两趟布局：
 
-- Use intrinsic measurements judiciously and only when siblings must match dimensions (for example, a `Divider` matching the height of adjacent text).
-- Avoid chaining nested intrinsic measurements across deep hierarchies.
+- 审慎使用固有测量，只在兄弟节点必须尺寸匹配时使用（例如一个 `Divider` 要与相邻文本的高度一致）。
+- 避免在深层级中链式嵌套固有测量。

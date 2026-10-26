@@ -1,9 +1,9 @@
-## 1. GlanceWearWidget and GlanceWearWidgetService
+## 1. GlanceWearWidget 与 GlanceWearWidgetService
 
-Every Wear OS widget requires two classes:
+每个 Wear OS widget 都需要两个类：
 
-1. A `GlanceWearWidget` subclass overriding `provideWidgetData(context, params)` and returning a `WearWidgetDocument`.
-2. A `GlanceWearWidgetService` subclass annotated with `@AssociateWithGlanceWearWidget` so build tools, linters, and `GlanceWearWidgetManager` resolve the widget provider statically without reflective instantiation.
+1. 一个 `GlanceWearWidget` 子类，重写 `provideWidgetData(context, params)` 并返回 `WearWidgetDocument`。
+2. 一个带 `@AssociateWithGlanceWearWidget` 注解的 `GlanceWearWidgetService` 子类，使构建工具、linter 和 `GlanceWearWidgetManager` 能以静态方式解析 widget provider，而不必通过反射实例化。
 
 ```kotlin
 import android.content.Context
@@ -40,14 +40,14 @@ class MyWidget : GlanceWearWidget() {
 }
 ```
 
-## 2. AndroidManifest.xml registration
+## 2. AndroidManifest.xml 注册
 
-Register the `GlanceWearWidgetService` subclass in
-`app/src/main/AndroidManifest.xml`. The `<service>` tag **MUST** declare the
-`com.google.android.wearable.permission.BIND_TILE_PROVIDER` permission and the
-`androidx.glance.wear.action.BIND_WIDGET_PROVIDER` intent filter. Include the
-`androidx.glance.wear.widget.provider` `<meta-data>` pointing to the `@xml/`
-provider configuration file:
+在
+`app/src/main/AndroidManifest.xml` 中注册 `GlanceWearWidgetService` 子类。`<service>` 标签**必须**声明
+`com.google.android.wearable.permission.BIND_TILE_PROVIDER` 权限和
+`androidx.glance.wear.action.BIND_WIDGET_PROVIDER` intent filter。还要包含指向 `@xml/`
+provider 配置文件的
+`androidx.glance.wear.widget.provider` `<meta-data>`：
 
 ```xml
 <service
@@ -63,11 +63,11 @@ provider configuration file:
 </service>
 ```
 
-## 3. Provider XML (`res/xml/<widget_name>_info.xml`)
+## 3. Provider XML（`res/xml/<widget_name>_info.xml`）
 
-Create the `<wearwidget-provider>` XML resource in `app/src/main/res/xml/`
-declaring `SMALL` and `LARGE` `<container>` elements with `@drawable/` picker
-preview images:
+在 `app/src/main/res/xml/` 中创建 `<wearwidget-provider>` XML 资源，
+声明 `SMALL` 和 `LARGE` 两个 `<container>` 元素，并使用 `@drawable/` 选择器
+预览图：
 
 ```xml
 <wearwidget-provider
@@ -84,10 +84,10 @@ preview images:
 </wearwidget-provider>
 ```
 
-## 4. Migrating a legacy ProtoLayout TileService
+## 4. 迁移遗留的 ProtoLayout TileService
 
-When migrating a legacy `androidx.wear.tiles.TileService` (or
-`Material3TileService`) to a Glance Wear widget:
+把遗留的 `androidx.wear.tiles.TileService`（或
+`Material3TileService`）迁移为 Glance Wear widget 时：
 
-1. **Replace the service and manifest registration** : For a full replacement migration, remove the legacy `TileService` class. Replace the legacy `<service>` registration (`BIND_TILE_PROVIDER` and `androidx.wear.tiles.PREVIEW`) in `app/src/main/AndroidManifest.xml` with the `GlanceWearWidgetService` declaration. Don't delete existing `res/drawable*/` image assets such as legacy tile preview PNGs. Add new `448x168` and `464x288` `res/drawable-nodpi/` widget picker PNGs alongside existing drawables. Depict the migrated widget's actual UI layout, such as contact avatar badges with initials and a bottom action button. **NEVER** render generic `"Small"` or `"Large"` text labels as preview images. For backward-compatible coexistence with a legacy tile, set `group="<FullyQualifiedLegacyTileService>"` on `<wearwidget-provider>` and add `androidx.wear.tiles.GROUP` `<meta-data>`.
-2. **Remove legacy tile dependencies** : After migrating the legacy `TileService` and ProtoLayout code, remove unused `androidx.wear.tiles` and `androidx.wear.protolayout.*` dependencies from `app/build.gradle.kts`. Keep existing Android and Kotlin Gradle plugin configurations intact. If other tiles, previews, or source sets still depend on ProtoLayout, retain or scope those dependencies. Verify that `./gradlew :app:assembleDebug` compiles without errors and without deleting unrelated app features.
+1. **替换 service 与清单注册**：如果做完整替换式迁移，删除遗留的 `TileService` 类。把 `app/src/main/AndroidManifest.xml` 里遗留的 `<service>` 注册（`BIND_TILE_PROVIDER` 和 `androidx.wear.tiles.PREVIEW`）替换为 `GlanceWearWidgetService` 声明。不要删除已有的 `res/drawable*/` 图像资源，例如遗留 tile 的预览 PNG。在已有 drawable 旁边新增 `448x168` 和 `464x288` 的 `res/drawable-nodpi/` widget 选择器 PNG。要描绘迁移后 widget 的实际 UI 布局，例如带头像首字母徽章的联系人以及底部操作按钮。**绝不**用通用的 `"Small"` 或 `"Large"` 文字标签作为预览图。若要与遗留 tile 向后兼容并存，在 `<wearwidget-provider>` 上设置 `group="<FullyQualifiedLegacyTileService>"` 并添加 `androidx.wear.tiles.GROUP` `<meta-data>`。
+2. **移除遗留 tile 依赖**：迁移完遗留的 `TileService` 与 ProtoLayout 代码后，从 `app/build.gradle.kts` 中移除未使用的 `androidx.wear.tiles` 和 `androidx.wear.protolayout.*` 依赖。保持现有 Android 与 Kotlin Gradle 插件配置不变。如果其他 tile、预览或 source set 仍依赖 ProtoLayout，则保留这些依赖或限定其作用范围。验证 `./gradlew :app:assembleDebug` 能在不删除无关应用功能的情况下编译通过，无报错。

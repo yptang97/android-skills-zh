@@ -1,23 +1,18 @@
 > [!NOTE]
-> **Note:** Prefix caching is experimental and may change in the future. This feature is only available on a subset of the supported devices for Prompt API, with support for more devices coming soon. We encourage you to experiment with this API on a Pixel device to understand how it can improve inference latency speeds for your specific use case.
+> **注意：** 前缀缓存尚属实验性功能，将来可能变化。该功能目前仅在 Prompt API 支持的部分设备上可用，后续会支持更多设备。我们鼓励你在 Pixel 设备上试用这个 API，了解它能为你的具体使用场景带来多少推理延迟改善。
 
-*Prefix caching* is a feature that reduces inference time by storing and reusing
-the intermediate LLM state of processing a shared and recurring prompt prefix
-part. To enable prefix caching, you only have to separate the static prefix from
-the dynamic suffix in your API request.
+*前缀缓存*是一项通过存储并复用处理共享且重复出现的提示词前缀部分时产生的中间 LLM 状态，来缩短推理时间的功能。要启用前缀缓存，你只需在 API 请求中把静态前缀与动态后缀分开。
 
-Prefix caching currently only supports text-only input, so you shouldn't use
-this feature if you're providing an image in your prompt.
+前缀缓存目前仅支持纯文本输入，因此如果你的提示词中包含图像，就不应使用该功能。
 
-There are two approaches to implement prefix caching: implicit or explicit:
+实现前缀缓存有两种方式：隐式或显式：
 
-- [Implicit (automatic) prefix caching](https://developer.android.com/agents/skills/device-ai/ml-kit-genai-prompt-api/references/prefix-caching#implicit) is a lightweight approach where the application only needs to define a shared portion of the prompt.
-- [Explicit (manual) prefix caching](https://developer.android.com/agents/skills/device-ai/ml-kit-genai-prompt-api/references/prefix-caching#explicit) allows applications to have more control over caches, including cache creation, querying, and deletion.
+- [隐式（自动）前缀缓存](https://developer.android.com/agents/skills/device-ai/ml-kit-genai-prompt-api/references/prefix-caching#implicit)是一种轻量方式，应用只需定义提示词中共享的那部分。
+- [显式（手动）前缀缓存](https://developer.android.com/agents/skills/device-ai/ml-kit-genai-prompt-api/references/prefix-caching#explicit)让应用对缓存有更多控制，包括缓存的创建、查询与删除。
 
-## Use prefix caching implicitly
+## 隐式使用前缀缓存
 
-To enable prefix caching, add the shared portion of the prompt to the
-`promptPrefix` field, as shown in the following code snippets:
+要启用前缀缓存，把提示词中共享的部分加到 `promptPrefix` 字段，如下方代码片段所示：
 
 ### Kotlin
 
@@ -41,40 +36,32 @@ To enable prefix caching, add the shared portion of the prompt to the
         .build())
         .get();
 
-In the preceding snippet, the `dynamicSuffix` is passed as the main content, and
-the `promptPrefix` is provided separately.
+在前面的片段中，`dynamicSuffix` 作为主内容传入，`promptPrefix` 则单独提供。
 
-### Estimated performance gains
+### 预估性能收益
 
 |---|---|---|
-|   | **Without prefix caching** | **With prefix cache-hit** (Prefix cache-miss may occur when prefix is used for the first time) |
-| Pixel 9 with 300-token fixed prefix and a 50-token dynamic suffix prompt | 0.82 seconds | 0.45 seconds |
-| Pixel 9 with a 1,000-token fixed prefix and a 100-token dynamic suffix prompt | 2.11 seconds | 0.5 seconds |
+|   | **不使用前缀缓存** | **前缀缓存命中时**（首次使用前缀时可能出现缓存未命中） |
+| Pixel 9，300 token 固定前缀加 50 token 动态后缀提示词 | 0.82 秒 | 0.45 秒 |
+| Pixel 9，1,000 token 固定前缀加 100 token 动态后缀提示词 | 2.11 秒 | 0.5 秒 |
 
-### Storage considerations
+### 存储注意事项
 
-With implicit prefix caching, cache files are saved on the client application's
-private storage, which increases your app's storage usage. Encrypted cache files
-and their associated metadata, including original prefix text, are stored. Keep
-the following storage considerations in mind:
+使用隐式前缀缓存时，缓存文件保存在客户端应用的私有存储中，这会增加应用的存储占用。加密后的缓存文件及其关联元数据（包括原始前缀文本）都会被存储。请注意以下存储方面的事项：
 
-- The number of caches is managed by an LRU (Least Recently Used) mechanism. Least used caches are deleted automatically when exceeding the max total cache amount.
-- Prompt cache sizes are dependent on the length of the prefix.
-- To clear all caches created from prefix caching, use the
-  [`generativeMode.clearImplicitCaches()`](https://developer.android.com/android/reference/kotlin/com/google/mlkit/genai/prompt/GenerativeModel#clearCaches%28%29) method.
+- 缓存数量由 LRU（最近最少使用）机制管理。超过缓存总量上限时，最少使用的缓存会被自动删除。
+- 提示词缓存的大小取决于前缀长度。
+- 要清除前缀缓存创建的所有缓存，使用
+  [`generativeMode.clearImplicitCaches()`](https://developer.android.com/android/reference/kotlin/com/google/mlkit/genai/prompt/GenerativeModel#clearCaches%28%29) 方法。
 
   > [!NOTE]
-  > **Note:** The `clearImplicitCaches()` method is experimental and may change in the future.
+  > **注意：** `clearImplicitCaches()` 方法尚属实验性功能，将来可能变化。
 
-## Use explicit cache management
+## 使用显式缓存管理
 
-The Prompt API includes explicit cache management methods to give developers
-more precise control over how caches are created, searched, used, and removed.
-These manual operations run independently of the system's automated cache
-handling.
+Prompt API 包含显式缓存管理方法，让开发者能更精确地控制缓存的创建、搜索、使用与移除。这些手动操作独立于系统的自动缓存处理运行。
 
-This example illustrates how to initialize explicit cache management and
-perform inference:
+下面的示例演示如何初始化显式缓存管理并执行推理：
 
 ### Kotlin
 
@@ -112,8 +99,7 @@ perform inference:
       .build())
       .get();
 
-This example demonstrates how to query, retrieve, and delete explicitly managed
-caches using `generativeModel.caches`:
+下面的示例演示如何使用 `generativeModel.caches` 查询、获取和删除显式管理的缓存：
 
 ### Kotlin
 

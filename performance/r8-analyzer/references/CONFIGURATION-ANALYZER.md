@@ -1,22 +1,18 @@
-On each step, keep the user informed of the progress by displaying the output.
+在每一步都要通过显示输出让用户了解进度。
 
-### 1. Requirements
+### 1. 要求
 
-- R8 Version: 9.3.7-dev or later
+- R8 版本：9.3.7-dev 或更高
 
-### 2. Generate proto
+### 2. 生成 proto
 
-The report and files must be generated at `{project_root}/tmp/r8analysis`. If
-the folder is not present, create it. For example:
+报告和文件必须生成在 `{project_root}/tmp/r8analysis`。如果该文件夹不存在，就创建它。例如：
 
     mkdir -p "$PWD/tmp/r8analysis"
 
-### 3. Remove existing files
+### 3. 删除已有文件
 
-To make sure that this invocation doesn't source data from previous runs, remove
-the intermediate files `keepruleradius.json` and `analysis_result.txt` and
-remove the proto files in the `{project_root}/tmp/r8analysis` folder. Example
-bash commands:
+为确保本次调用不会引用之前运行的数据，请删除中间文件 `keepruleradius.json` 和 `analysis_result.txt`，并删除 `{project_root}/tmp/r8analysis` 文件夹中的 proto 文件。示例 bash 命令：
 
     # Remove the intermediate JSON and the directory containing protobuf files
     rm tmp/r8analysis/keepruleradius.json
@@ -27,21 +23,18 @@ bash commands:
     then cat tmp/r8analysis/analysis_result.txt > tmp/r8analysis/history.txt &&
      rm tmp/r8analysis/analysis_result.txt; fi
 
-### 4. Generate the Configuration Analyzer report
+### 4. 生成 Configuration Analyzer 报告
 
-Run the R8 enabled build with the system property
-"-Dcom.android.tools.r8.dumpkeepradiustodirectory=$PWD/tmp/r8analysis" to
-generate Configuration Analyzer report
+用系统属性
+"-Dcom.android.tools.r8.dumpkeepradiustodirectory=$PWD/tmp/r8analysis"
+运行启用 R8 的构建，以生成 Configuration Analyzer 报告
 
     ./gradlew assembleRelease \
     -Dcom.android.tools.r8.dumpkeepradiustodirectory=$PWD/tmp/r8analysis
 
-### 5. Convert to JSON
+### 5. 转换为 JSON
 
-To convert the generated protobuf files in `{project_root}/tmp/r8analysis` into
-json, run the following script. The json must be generated in
-`{project_root}/tmp/r8analysis`. Ensure `keep_radius_pb2.py` (from Step 10) is
-in the same directory.
+要把 `{project_root}/tmp/r8analysis` 中生成的 protobuf 文件转换为 json，请运行以下脚本。json 必须生成在 `{project_root}/tmp/r8analysis` 中。确保 `keep_radius_pb2.py`（来自步骤 10）位于同一目录。
 
     import sys
     import os
@@ -91,10 +84,9 @@ in the same directory.
         if not convert_pb_to_json(input_pb, output_json):
             sys.exit(1)
 
-### 6. Analyze
+### 6. 分析
 
-Run the following analysis script on the generated JSON to get the impact of the
-keep rules and sort it.
+对生成的 JSON 运行以下分析脚本，以获得 keep 规则的影响并对其排序。
 
     import json, sys
 
@@ -146,12 +138,11 @@ keep rules and sort it.
         path = sys.argv[1] if len(sys.argv) > 1 else "tmp/r8analysis/keepruleradius.json"
         analyze(path)
 
-Outputs `analysis_result.txt` containing scores and rule impacts.
+输出 `analysis_result.txt`，其中包含评分和规则影响。
 
-### 7. Report impactful rules
+### 7. 报告影响较大的规则
 
-Identify the keep rules with the highest impact and the subsumed rules using the
-following script.
+使用以下脚本找出影响最大的 keep 规则以及被其包含的规则。
 
     import json, sys
 
@@ -198,27 +189,22 @@ following script.
     if __name__ == "__main__":
         report("tmp/r8analysis/keepruleradius.json")
 
-Add this data to the `analysis_result.txt` with the top impactful rules and
-subsumed rules.
+把这些数据（影响最大的规则与被包含的规则）加入 `analysis_result.txt`。
 
-### 8. Compare with previous report
+### 8. 与之前的报告比较
 
-If `{project_root}/tmp/r8analysis/history.txt` exists, use the following script
-to compare the previous run. Use this to compare with the current values
+如果 `{project_root}/tmp/r8analysis/history.txt` 存在，就用以下脚本与上一次运行做比较。用它来对比当前数值
 
-### 9. Remove generated files
+### 9. 删除生成的文件
 
-After the final report and analysis results are generated, remove the
-intermediate files `keepruleradius.json` and `analysis_result.txt` and remove
-the proto files in "{project_root}/tmp/r8analysis" folder
+在最终报告和分析结果生成之后，删除中间文件 `keepruleradius.json` 和 `analysis_result.txt`，并删除 "{project_root}/tmp/r8analysis" 文件夹中的 proto 文件
 
     rm tmp/r8analysis/keepruleradius.json
     rm tmp/r8analysis/*.pb
 
-### 10. Protobuf Python bindings
+### 10. Protobuf Python 绑定
 
-The following script `keep_radius_pb2.py` is required by the conversion script
-in Step 5.
+步骤 5 中的转换脚本需要以下 `keep_radius_pb2.py` 脚本。
 
     from google.protobuf import descriptor as _descriptor
     from google.protobuf import descriptor_pool as _descriptor_pool

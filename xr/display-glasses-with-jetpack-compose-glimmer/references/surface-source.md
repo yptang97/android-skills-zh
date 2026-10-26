@@ -1,5 +1,4 @@
-When using surfaces to build a custom component, refer to the following source
-code in `Surface.kt`:
+使用 surface 构建自定义组件时，参考 `Surface.kt` 中的以下源代码：
 
 
 ```kotlin

@@ -1,24 +1,16 @@
-Use the guidelines below to find the right analysis path to follow based on the
-user intent (for example, analyzing a system trace or a heap dump).
+使用下面的指南，根据用户意图（例如分析系统 trace 或 heap dump）找到合适的分析路径。
 
-## Understand the Goal
+## 明确目标
 
-Identify the explicit artifact and the analysis goal the user wants (for
-example, analyzing a system trace or a heap dump). Before proceeding, ensure you
-have an answer to the following question: "User intends to
-{analyze \| query \| investigate} {target artifact and goal}".
+确定用户要处理的明确产物与分析目标（例如分析系统 trace 或 heap dump）。在继续之前，确保你已经能回答这个问题：「用户意图为
+{分析 \| 查询 \| 排查} {目标产物与目标}」。
 
-## Workflow Discovery and Execution Planning
+## 工作流发现与执行规划
 
-If the user's request involves multiple distinct analysis goals (for example,
-analyzing a trace for jank AND checking for memory leaks or GPU issues), do not
-merge them:
+如果用户的请求涉及多个不同的分析目标（例如既分析 trace 找卡顿，又要检查内存泄漏或 GPU 问题），不要把它们合并：
 
-1. Use your file search tools (for example, `grep_search`) to recursively scan the `$SKILL_ROOT/analysis/workflows/` directory for workflow entry points (markdown files defining a top-level `name:` key in their frontmatter, ignoring internal `references/` subdirectories). Find all the workflows that match the user's target artifact and goal.
-2. Propose all the matched workflows as options to the user, along with simple details on why they apply. Work with the user and converge on an execution plan.
-3. Continue with the user selection.
+1. 用你的文件搜索工具（例如 `grep_search`）递归扫描 `$SKILL_ROOT/analysis/workflows/` 目录，查找工作流入口（即 frontmatter 中定义了顶层 `name:` 键的 markdown 文件，忽略内部的 `references/` 子目录）。找出所有与用户的目标产物和目标相匹配的工作流。
+2. 把所有匹配到的工作流作为选项提给用户，并简要说明它们为何适用。与用户一起讨论，形成统一的执行计划。
+3. 按用户的选择继续。
 
-> The user may ask to execute one or more workflows - sequentially or in
-> parallel, or stitch two analysis workflows together. When this happens,
-> perform a quick scan of these workflows to ensure they are compatible with
-> each other, and clarify with the user before proceeding.
+> 用户可能要求执行一个或多个工作流——顺序执行、并行执行，或把两个分析工作流拼接起来。出现这种情况时，先快速浏览这些工作流，确认它们彼此兼容，并在继续前与用户确认。

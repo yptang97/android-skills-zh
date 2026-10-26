@@ -1,5 +1,4 @@
-When creating a Glimmer Stack component, refer to the following source code in
-`StackItemScope.kt` for setting the stack item scope:
+创建 Glimmer Stack 组件时，设置堆叠项作用域可参考 `StackItemScope.kt` 中的以下源代码：
 
 
 ```kotlin

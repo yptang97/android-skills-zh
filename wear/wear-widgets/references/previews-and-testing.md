@@ -1,12 +1,12 @@
-## 1. Composable preview suites (`Squircle`, `Round`, and `Rectangular`)
+## 1. Composable 预览套件（`Squircle`、`Round` 与 `Rectangular`）
 
-Annotate preview functions with `@Preview` and pass one of the predefined
-`PreviewParameterProvider` suites to `@PreviewParameter`. Call
-`WearWidgetPreview(widget, params)` to render `SMALL` and `LARGE` containers:
+用 `@Preview` 注解预览函数，并把预定义的某个
+`PreviewParameterProvider` 套件传给 `@PreviewParameter`。调用
+`WearWidgetPreview(widget, params)` 渲染 `SMALL` 与 `LARGE` 容器：
 
-- **`SquircleAllWidgetPreviewParams`**: Rounded rectangle containers.
-- **`RoundAllWidgetPreviewParams`**: Pill-shaped containers.
-- **`RectangularAllWidgetPreviewParams`** : Uncropped rectangular containers with display-safe padding at `320 dpi` for generating widget picker preview assets.
+- **`SquircleAllWidgetPreviewParams`**：圆角矩形容器。
+- **`RoundAllWidgetPreviewParams`**：胶囊形（pill）容器。
+- **`RectangularAllWidgetPreviewParams`**：`320 dpi` 下带显示安全内边距的未裁剪矩形容器，用于生成小组件选择器预览资源。
 
 ```kotlin
 import androidx.compose.runtime.Composable
@@ -55,34 +55,34 @@ fun MyWidgetCatalogPreview(
 }
 ```
 
-## 2. Widget picker preview PNGs (`res/drawable-nodpi/`)
+## 2. 小组件选择器预览 PNG（`res/drawable-nodpi/`）
 
-Wear OS displays static preview images in the system widget picker for each
-`<container>` declared in the `@xml/` provider configuration.
+Wear OS 会在系统小组件选择器中，为 `@xml/` provider 配置里声明的每个
+`<container>` 显示静态预览图。
 
-### Generating and saving rectangular preview assets
+### 生成并保存矩形预览资源
 
-1. Render the `@Preview` function configured with `RectangularAllWidgetPreviewParams::class` and `device = "spec:width=1000dp,height=1000dp,dpi=320"`. This suite produces uncropped rectangular variants for both `SMALL` and `LARGE` containers.
-2. Extract the rendered images from the Android Studio **Design** surface (**Copy Image** or save) or using CLI preview tools.
-3. Save the `SMALL` and `LARGE` PNGs into `app/src/main/res/drawable-nodpi/` to prevent density scaling.
+1. 渲染使用 `RectangularAllWidgetPreviewParams::class` 与 `device = "spec:width=1000dp,height=1000dp,dpi=320"` 配置的 `@Preview` 函数。该套件会为 `SMALL` 与 `LARGE` 两种容器都生成未裁剪的矩形变体。
+2. 从 Android Studio 的 **Design** 面板（**Copy Image** 或保存）或使用 CLI 预览工具导出渲染后的图片。
+3. 把 `SMALL` 与 `LARGE` 的 PNG 保存到 `app/src/main/res/drawable-nodpi/`，以避免密度缩放。
 
-### Platform asset requirements
+### 平台资源要求
 
-- **Directory** : Place raster PNG files in `app/src/main/res/drawable-nodpi/` so the system doesn't apply density scaling.
-- **Dimensions (at 320 dpi, or 2.0x watch density)** :
-  - `SMALL` (`CONTAINER_TYPE_SMALL`, `224x84` dp): **`448x168` px** (aspect ratio `2.67`).
-  - `LARGE` (`CONTAINER_TYPE_LARGE`, `232x144` dp): **`464x288` px** (aspect ratio `1.61`).
-- **Visual fidelity** : Every preview PNG **MUST** be a non-blank, unmasked rectangular image depicting the widget's actual UI elements. Include the widget's title or value text, interactive buttons, icons, avatar initials, or composited background drawable. **NEVER** use a solid-color placeholder, empty unlabeled shapes, a raw background texture, or a 1:1 (`400x400`) tile preview.
+- **目录**：把位图 PNG 放在 `app/src/main/res/drawable-nodpi/`，这样系统不会应用密度缩放。
+- **尺寸（320 dpi，即 2.0x 手表密度）**：
+  - `SMALL`（`CONTAINER_TYPE_SMALL`，`224x84` dp）：**`448x168` px**（宽高比 `2.67`）。
+  - `LARGE`（`CONTAINER_TYPE_LARGE`，`232x144` dp）：**`464x288` px**（宽高比 `1.61`）。
+- **视觉保真度**：每张预览 PNG **必须**是能体现小组件真实 UI 元素的非空白、未加遮罩的矩形图片。要包含小组件的标题或数值文本、可交互按钮、图标、头像缩写，或合成后的背景 drawable。**严禁**使用纯色占位图、无标签的空形状、原始背景纹理，或 1:1（`400x400`）的方块预览。
 
-## 3. Robolectric unit testing (`provideWidgetData` and `captureRawContent`)
+## 3. Robolectric 单元测试（`provideWidgetData` 与 `captureRawContent`）
 
-When unit-testing a widget with JUnit 4 and Robolectric, call
-`widget.provideWidgetData(context, params)` followed by
-`data.captureRawContent(context, params)`. This evaluates the
-`WearWidgetDocument` composable lambda and verifies that the Remote Compose
-`rcDocument` payload serializes without errors. Because `WearWidgetParams` and
-`captureRawContent` carry `@RestrictTo(LIBRARY_GROUP)` in alpha releases, add
-`@SuppressLint("RestrictedApi")` to the test class:
+用 JUnit 4 与 Robolectric 对小组件做单元测试时，先调用
+`widget.provideWidgetData(context, params)`，再调用
+`data.captureRawContent(context, params)`。这会执行
+`WearWidgetDocument` composable lambda，并验证 Remote Compose 的
+`rcDocument` 载荷能无错误地序列化。由于 alpha 版本中的 `WearWidgetParams` 与
+`captureRawContent` 带有 `@RestrictTo(LIBRARY_GROUP)`，需要在测试类上加
+`@SuppressLint("RestrictedApi")`：
 
 ```kotlin
 import android.annotation.SuppressLint

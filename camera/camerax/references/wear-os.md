@@ -1,34 +1,31 @@
-Developing camera features for Wear OS is rarely about the watch's own lens, if
-it even has one. It's almost always about creating a **Remote Viewfinder** to
-control the phone's camera.
+为 Wear OS 开发相机功能，很少是围绕手表自己的镜头——如果它真有镜头的话。这件事几乎总是关于创建一个**远程取景器**来控制手机的相机。
 
-## The Wear OS remote mindset
+## Wear OS 远程控制的思维方式
 
-| Feature | Phone camera app | Wear OS remote app |
+| 特性 | 手机相机应用 | Wear OS 遥控应用 |
 |---|---|---|
-| **Screen** | Rectangular (Large) | **Circular and less than 2 inches in size** |
-| **Connectivity** | Local Hardware | **Bluetooth or Wi-Fi data layer API** |
-| **Latency** | Direct and less than 20 ms | **Networked, 100 ms to 500 ms** |
-| **Interaction** | Multi-touch gestures | **Rotary input or single taps** |
+| **屏幕** | 矩形（大） | **圆形，尺寸小于 2 英寸** |
+| **连接方式** | 本地硬件 | **Bluetooth 或 Wi-Fi 数据层 API** |
+| **延迟** | 直接连接，低于 20 ms | **走网络，100 ms 到 500 ms** |
+| **交互** | 多点触控手势 | **旋转输入或单击** |
 
 *** ** * ** ***
 
-## Follow the implementation guide
+## 遵循实现指南
 
-### The circular UI challenge
+### 圆形 UI 的挑战
 
-Wear OS devices are often round. Standard rectangular layouts clip corner
-buttons.
+Wear OS 设备通常是圆形的。标准的矩形布局会裁掉角落的按钮。
 
-Follow these blueprint recommendations:
+遵循以下蓝图建议：
 
-- Use `Horologist` or `Wear Compose` libraries.
-- Use `ScalingLazyColumn` for lists so that items stay within the "safe zone" of the circular display.
-- **Preview scaling**: Crop the center of the rectangular phone viewfinder to fit the circular watch screen.
+- 使用 `Horologist` 或 `Wear Compose` 库。
+- 列表使用 `ScalingLazyColumn`，让条目始终处于圆形显示区的“安全区”内。
+- **预览缩放**：裁切矩形手机取景器的中心区域，使其适配圆形手表屏幕。
 
-### Stream the viewfinder
+### 串流取景器画面
 
-You can't send a raw 60 fps stream over Bluetooth. compress and throttle.
+你无法通过 Bluetooth 发送原始的 60 fps 码流。要压缩并限流。
 
 
 ```kotlin
@@ -45,13 +42,11 @@ if (bitmap != null) {
 
 <br />
 
-**Optimization** : Cap the watch preview at **10-15 fps** to preserve battery and
-bandwidth.
+**优化**：把手表预览限制在 **10-15 fps**，以节省电量和带宽。
 
-### Remote triggers and syncing
+### 远程触发与同步
 
-Use the `MessageClient` for low-latency commands like "Take Photo" or "Switch
-Camera."
+对“拍照”或“切换相机”这类低延迟命令，使用 `MessageClient`。
 
 
 ```kotlin
@@ -61,16 +56,15 @@ Wearable.getMessageClient(context).sendMessage(nodeId, "/camera/capture", null)
 
 <br />
 
-### Rotary input support
+### 支持旋转输入
 
-On devices that support it, use the physical crown, Rotary Input, to control
-**Zoom** or **Exposure**.
+在支持该功能的设备上，使用物理表冠（旋转输入）来控制**变焦**或**曝光**。
 
 *** ** * ** ***
 
-## Wear OS pitfalls
+## Wear OS 常见陷阱
 
-- **Corner clipping** : Placing a **Close** button in the top-right corner of a square layout makes it impossible to tap the button on a round watch display.
-- **Battery drain**: Sustained Bluetooth data transfer, viewfinder sync, drains watch battery. Proactively close the remote app if the phone screen is turned off.
-- **Node discovery** : The phone is possibly connected to multiple "Nodes" (watches, earbuds, or tablets). Ensure your `CapabilityClient` filters for the specific `camera_remote_host` capability.
-- **Disconnect handling**: If the watch disconnects, the phone camera must stop its high-power preview to save energy.
+- **角落被裁切**：把**关闭**按钮放在方形布局的右上角，会导致在圆形手表显示区上无法点按该按钮。
+- **电量消耗**：持续的 Bluetooth 数据传输、取景器同步，会消耗手表电量。手机屏幕关闭时，主动关闭遥控应用。
+- **节点发现**：手机可能同时连接多个“节点”（手表、耳机或平板）。确保你的 `CapabilityClient` 过滤出具体的 `camera_remote_host` 能力。
+- **断连处理**：如果手表断开连接，手机相机必须停止高功耗预览以节省电量。

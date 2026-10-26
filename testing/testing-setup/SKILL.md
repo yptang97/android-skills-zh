@@ -1,8 +1,7 @@
 ---
 name: testing-setup
-description: Analyze and create a testing strategy for Android apps - install testing
-  libraries, set up test infrastructure, create harnesses for unit tests, UI tests,
-  screenshot tests, and end-to-end tests.
+description: 分析并制定 Android 应用的测试策略：安装测试库、搭建测试基础设施，
+  为单元测试、UI 测试、截图测试和端到端测试创建测试骨架。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -15,195 +14,169 @@ metadata:
   - coverage
 ---
 
-## Step 1: analyze the current testing setup
+## 步骤 1：分析当前的测试配置
 
-To understand the testing setup of an existing project, look for these
-dependencies in the libs.versions.toml file, or build files:
+要了解现有项目的测试配置，请在 libs.versions.toml 文件或构建文件中查找这些依赖：
 
-1. Dependency Injection framework used. For example, Hilt, Koin, Anvil, or vanilla Dagger.
-2. Unit (local) testing framework this project uses. For example, JUnit4 or JUnit5.
-3. Mocking framework (if any) used for unit tests, and for instrumented and UI tests. For example, Mockito or Mockk.
-4. Robolectric. Identify which of these three uses apply:
-   1. Used in unit tests to have fakes for platform entities
-   2. To run behavior UI tests without a device or emulator. For example, used to run Espresso or Compose tests.
-   3. To do screenshot testing with Roborazzi
-5. Is the app 100% Compose, Views or hybrid?
-6. Behavior UI tests:
-   1. Compose Tests (`androidx.compose.ui:ui-test-*`)
-   2. Espresso Tests for Views. Check for wrappers such as Kaspresso. Dependencies: `androidx.test.espresso:espresso-core`, `androidx.test:runner`, `androidx.test:rules`.
-7. Screenshot tests. Identify which of these types the project uses:
-   1. Instrumented (device-based). For example, using Dropshots.
-   2. Based on Robolectric, so they run locally. For example, using Roborazzi.
-   3. Based on LayoutLib, so they run locally. For example, Paparazzi, or the Compose Preview Screenshot Testing tool.
-8. End to end tests (also known as Release Candidate tests) always run on device and use high-level frameworks such as UIAutomator, Appium, or Robotium.
-9. Generate a Markdown report with the analysis
+1. 使用的依赖注入框架。例如 Hilt、Koin、Anvil 或原生 Dagger。
+2. 本项目使用的单元（本地）测试框架。例如 JUnit4 或 JUnit5。
+3. 用于单元测试，以及 instrumented 测试和 UI 测试的 Mock 框架（如果有）。例如 Mockito 或 Mockk。
+4. Robolectric。判断下列三种用法中哪些适用：
+   1. 在单元测试中使用，为平台实体提供 fake
+   2. 在没有设备或模拟器的情况下运行行为 UI 测试。例如用于运行 Espresso 或 Compose 测试。
+   3. 配合 Roborazzi 做截图测试
+5. 应用是 100% Compose、Views 还是混合？
+6. 行为 UI 测试：
+   1. Compose 测试（`androidx.compose.ui:ui-test-*`）
+   2. 针对 Views 的 Espresso 测试。检查是否有 Kaspresso 这类封装。依赖：`androidx.test.espresso:espresso-core`、`androidx.test:runner`、`androidx.test:rules`。
+7. 截图测试。判断项目使用下列哪种类型：
+   1. Instrumented（基于设备）。例如使用 Dropshots。
+   2. 基于 Robolectric，因此在本地运行。例如使用 Roborazzi。
+   3. 基于 LayoutLib，因此在本地运行。例如 Paparazzi，或 Compose Preview Screenshot Testing 工具。
+8. 端到端测试（也称 Release Candidate 测试）始终在设备上运行，使用 UIAutomator、Appium 或 Robotium 这类高层框架。
+9. 生成一份包含分析结果的 Markdown 报告
 
-## Step 2: Set up Dependency Injection frameworks for testing
+## 步骤 2：为测试配置依赖注入框架
 
-If there is no Dependency Injection framework, install one: if it's a
-multiplatform application, ask the user whether they want to install Koin, or
-kotlin-inject. If it's not multiplatform, install Hilt.
+如果没有依赖注入框架，就安装一个：如果是多平台应用，询问用户想安装 Koin 还是
+kotlin-inject。如果不是多平台，安装 Hilt。
 
-Install the testing dependencies (for example `com.google.dagger:hilt-compiler`
-that should be applied with a `kspAndroidTest` configuration).
+安装测试依赖（例如 `com.google.dagger:hilt-compiler`
+应配合 `kspAndroidTest` 配置应用）。
 
 > [!IMPORTANT]
-> **Important:** Always consult the documentation of the applicable framework to learn about testing (for example: [Hilt testing guide](references/android/training/dependency-injection/hilt-testing.md), [Koin Instrumented tests](https://insert-koin.io/docs/reference/koin-android/instrumented-testing)).
+> **重要：** 始终查阅适用框架的文档来了解测试（例如：[Hilt 测试指南](references/android/training/dependency-injection/hilt-testing.md)、[Koin instrumented 测试](https://insert-koin.io/docs/reference/koin-android/instrumented-testing)）。
 
-For instrumented tests, create and configure (by adding
-`testInstrumentationRunner` to the build gradle files) a new test runner and
-apply the testing rules required by the framework (for example in Hilt, annotate
-your test classes with `@HiltAndroidTest` and apply the `HiltAndroidRule`).
-Other frameworks use other mechanisms, consult their documentation.
+对于 instrumented 测试，创建并配置（在 build gradle 文件中添加
+`testInstrumentationRunner`）一个新的测试 runner，并应用框架要求的测试规则（例如在 Hilt 中，用
+`@HiltAndroidTest` 注解测试类并应用 `HiltAndroidRule`）。
+其他框架使用其他机制，请查阅它们的文档。
 
-## Step 3: Install frameworks
+## 步骤 3：安装框架
 
-Unless otherwise specified, respect the current stack of testing frameworks.
+除非另有说明，沿用当前的测试框架栈。
 
-If there are no testing frameworks, and the user didn't specify any preference,
-install the following:
+如果没有测试框架，且用户没有指定任何偏好，安装以下内容：
 
-- JUnit4 for local and instrumented tests
-- Jacoco for test coverage
-- For UI tests: if the project has views, Espresso. If it's fully Compose, use the Compose Testing APIs.
-- Robolectric to run UI Tests
-- Compose Preview Screenshot Testing tool for screenshot tests. Check the
-  project's AGP version first, then pick the matching setup and follow it
-  strictly:
+- JUnit4，用于本地和 instrumented 测试
+- Jacoco，用于测试覆盖率
+- UI 测试：如果项目使用 views，用 Espresso。如果完全用 Compose，用 Compose Testing API。
+- Robolectric，用于运行 UI 测试
+- Compose Preview Screenshot Testing 工具，用于截图测试。先检查
+  项目的 AGP 版本，然后选择匹配的配置并严格遵守：
 
-  - **AGP 9.5.0-alpha03 or higher (recommended):** configure an AGP test suite using `testOptions { screenshotTests.create(...) }`, as described in [Screenshot testing with test suites](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md).
-  - **Lower AGP versions:** use the [legacy standalone plugin setup](references/android/studio/preview/compose-screenshot-testing.md) with `com.android.compose.screenshot`, and tell the user it's deprecated. Don't upgrade AGP as part of setting up screenshot tests. Mention that test suites are available on 9.5.0-alpha03 or higher, and leave the upgrade as a separate decision.
+  - **AGP 9.5.0-alpha03 或更高版本（推荐）：** 用 `testOptions { screenshotTests.create(...) }` 配置 AGP 测试套件，如[使用测试套件做截图测试](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md)所述。
+  - **较低的 AGP 版本：** 使用[旧式独立插件配置](references/android/studio/preview/compose-screenshot-testing.md)搭配 `com.android.compose.screenshot`，并告知用户该方式已废弃。不要在配置截图测试的过程中升级 AGP。说明测试套件在 9.5.0-alpha03 或更高版本才可用，把升级留作单独的决定。
 
-  Don't combine both setups in the same module. If the project already uses
-  the standalone plugin and its AGP version supports test suites, offer to
-  migrate it using the tasks and paths mapping table in
-  [Screenshot testing with test suites](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md).
-- Dropshots for device screenshot tests
+  不要在同一模块里混用两种配置。如果项目已经在用独立插件，且其 AGP 版本支持测试套件，
+  可以提议用[使用测试套件做截图测试](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md)中的任务与路径映射表进行迁移。
+- Dropshots，用于设备上的截图测试
 
-- If a mocking framework is necessary, install Mockk (`io.mockk:mockk`). Do
-  not install it unless it is clearly necessary.
+- 如果确实需要 Mock 框架，安装 Mockk（`io.mockk:mockk`）。除非明确需要，
+  否则不要安装。
 
-If instrumented screenshot tests are requested, install Dropshots.
+如果要求 instrumented 截图测试，安装 Dropshots。
 
-If end-to-end testing is requested, install UI Automator.
+如果要求端到端测试，安装 UI Automator。
 
-## Step 4: Refactor and create fakes for testing
+## 步骤 4：重构并为测试创建 fake
 
-### **Refactor for unit tests**
+### **为单元测试重构**
 
-In the next sections you'll be asked to create tests. If you have dependencies
-on Android framework classes, or entities that are not part of the codebase:
+接下来的小节会要求你创建测试。如果你依赖 Android 框架类，或不在代码库中的实体：
 
-- First, use a fake. If it doesn't exist, create an interface for the class
-  and a "Default" implementation with the existing code. Add the Fake version
-  to the test sourceset (test or androidTest).
+- 首先使用 fake。如果不存在，为该类创建一个接口，并用现有代码写一个「Default」实现。把 Fake 版本
+  加到测试 sourceset（test 或 androidTest）。
 
-- If not possible to use a fake (example: no access to the class or
-  interface), mock the dependencies.
+- 如果无法使用 fake（例如无法访问该类或接口），就 mock 这些依赖。
 
-### **Refactor for UI tests**
+### **为 UI 测试重构**
 
-If you need to fake components to make testing easier and faster and more
-reliable, replace slow and problematic dependencies with fakes. Use runtime
-fakes using the Dependency Injection framework installed to:
+如果你需要 fake 组件来让测试更简单、更快、更可靠，就用 fake 替换慢或有问题的依赖。使用已安装的
+依赖注入框架提供运行时 fake，以便：
 
-- **Simulate** different scenarios with the user (wrong credentials or a password reset flow), with a server (no connection, server down, or bad JSON from the server) or with a platform component (insufficient permissions, no disk space, no front camera available)
-- **Improve** speed and reliability (replacing a database with an in-memory database, replacing a repository with an in-memory fake to avoid hitting the network)
+- 与用户（错误凭据或密码重置流程）、与服务器（无连接、服务器宕机或服务器返回错误 JSON）或与平台组件（权限不足、磁盘空间不足、没有可用前置摄像头）**模拟**不同场景
+- **改善**速度和可靠性（用内存数据库替换数据库，用内存 fake 替换仓库以避免访问网络）
 
-## Step 5: Unit testing
+## 步骤 5：单元测试
 
-Create a task to add or review unit tests in every file that contains business
-logic (ViewModels, Repositories, and database-related classes such as DAOs).
-Don't create unit tests for Activities, Compose layouts, or dependency injection
-configuration files.
+为每个包含业务逻辑的文件创建添加或审查单元测试的任务（ViewModels、Repositories，以及 DAO
+这类与数据库相关的类）。不要为 Activity、Compose 布局或依赖注入配置文件创建单元测试。
 
-## Step 6: UI testing
+## 步骤 6：UI 测试
 
-Espresso or Compose UI tests live in the `test` sourceset because they will be
-run with Robolectric. If instrumented (emulator or device) tests are requested,
-put them in the `androidTest` sourceset.
+Espresso 或 Compose UI 测试放在 `test` sourceset，因为它们会用 Robolectric 运行。如果要求
+instrumented（模拟器或设备）测试，把它们放在 `androidTest` sourceset。
 
-## Step 7: Test databases
+## 步骤 7：测试数据库
 
-If the database is using SQLite (through a library such as Room or SQLDelight),
-create instrumented tests using an in-memory database to make sure that they
-work with the SQLite engine on device.
+如果数据库使用 SQLite（通过 Room 或 SQLDelight 这类库），用内存数据库创建 instrumented 测试，
+确保它们在设备上与 SQLite 引擎配合正常。
 
-## Step 8: Screenshot tests
+## 步骤 8：截图测试
 
-Regardless of the framework used, screenshot tests focus on two types of tests:
+无论使用哪个框架，截图测试都聚焦两类测试：
 
-- Screen-level screenshot tests, where each screen is tested in nine different sizes, combining compact, medium and expanded widths (400, 610, 900 dp) and heights (400, 500 and 1000 dp).
-- Screen-level variations. Add a mobile (400x500) screenshot of:
-  - All the alternative themes, if used.
-  - Font scale set to 1.5.
-- Component-level screenshot tests, where each component is tested in different themes and font scales.
+- 屏幕级截图测试：每个屏幕在九种不同尺寸下测试，组合 compact、medium 和 expanded 宽度（400、610、900 dp）与高度（400、500 和 1000 dp）。
+- 屏幕级变体。添加以下内容的移动端（400x500）截图：
+  - 所有备选主题（如果使用）。
+  - 字体缩放设为 1.5。
+- 组件级截图测试：每个组件在不同主题和字体缩放下测试。
 
-Behavior isn't tested with screenshots, but do test different common scenarios
-if their UIs change a lot depending on the state. For example, test loading
-screens by injecting a loading state to the UI or simulating it with a fake.
+截图不测试行为，但如果常见场景的 UI 会随状态大幅变化，就要测试这些场景。例如通过向 UI 注入加载状态
+或用 fake 模拟来测试加载屏幕。
 
-## Step 9: UI Behavior tests
+## 步骤 9：UI 行为测试
 
-Test the UI logic using behavior tests, which ensures that the UIs react as
-expected when different states are passed, and when user actions are performed.
+用行为测试检查 UI 逻辑，确保 UI 在不同状态被传入、以及用户执行操作时按预期响应。
 
-### **Compose UI behavior tests**
+### **Compose UI 行为测试**
 
-- Use the ComposeTestRule with a `ComponentActivity` to access resources such as strings.
-- Always match with semantic matchers first. If the matcher is too complicated to write (using more than three matchers to find a single element), use `testTag`.
-- Always verify state restoration.
+- 使用带 `ComponentActivity` 的 ComposeTestRule 访问字符串这类资源。
+- 始终先用语义匹配器匹配。如果匹配器太复杂（查找单个元素要用三个以上匹配器），就用 `testTag`。
+- 始终验证状态恢复。
 
-### **Views (XML) UI behavior tests**
+### **Views（XML）UI 行为测试**
 
-Use Espresso to match views and interact with them.
+用 Espresso 匹配视图并与它们交互。
 
-## Step 10: Navigation tests
+## 步骤 10：导航测试
 
-Create a test suite to verify navigation logic. Include:
+创建一个测试套件来验证导航逻辑。包含：
 
-- Back handling
-- Deeplinks
-- Special patterns like "exit through home" with multiple backstacks.
+- 返回处理
+- 深链接
+- 多返回栈下「通过 home 退出」这类特殊模式。
 
-## Step 11: Simulate different window sizes and settings
+## 步骤 11：模拟不同的窗口尺寸和设置
 
-For Compose layouts, use `DeviceConfigurationOverride` described in "[UI testing
-common patterns](references/android/develop/ui/compose/testing/common-patterns.md)" to simulate different window sizes, font scales
+对于 Compose 布局，使用「[UI 测试常用模式](references/android/develop/ui/compose/testing/common-patterns.md)」中介绍的 `DeviceConfigurationOverride` 来模拟不同窗口尺寸和字体缩放
 
-## Step 12: End-to-end tests
+## 步骤 12：端到端测试
 
-Create a low number (about 5% of all tests) of end-to-end tests that cover big
-user journeys. Use Compose Test APIs or Espresso for that. If you have to access
-platform features such as notifications or system UI, use UI Automator.
+创建少量（约占全部测试的 5%）覆盖大型用户旅程的端到端测试。用 Compose Test API 或 Espresso 编写。如果
+必须访问通知或系统 UI 这类平台功能，使用 UI Automator。
 
-If you need to take screenshots of the app running in a device, use
-[Dropshots](https://raw.githubusercontent.com/dropbox/dropshots/refs/heads/main/README.md). You need a device for screenshot tests when verifying
-interaction with the system UI (examples: edge-to-edge rendering, notifications,
-picture-in-picture)
+如果需要截取在设备上运行的应用的截图，使用
+[Dropshots](https://raw.githubusercontent.com/dropbox/dropshots/refs/heads/main/README.md)。验证与系统 UI 的交互时（例如 edge-to-edge 渲染、通知、画中画），截图测试需要真机
 
-### Step 13: Instrumented Screenshot tests
+### 步骤 13：instrumented 截图测试
 
-Install the `com.dropbox.dropshots` plugin in the module and a `Dropshots()`
-JUnit Rule. Create a new instrumented screenshot test for one of the app's
-features.
+在模块中安装 `com.dropbox.dropshots` 插件和一个 `Dropshots()`
+JUnit Rule。为应用的某个功能创建一个新的 instrumented 截图测试。
 
-### Step 14: Install jacoco
+### 步骤 14：安装 jacoco
 
-Install jacoco for local testing code coverage.
+安装 jacoco 以获取本地测试的代码覆盖率。
 
-- Add the `jacoco` plugin to each module that contains tests.
+- 为每个包含测试的模块添加 `jacoco` 插件。
 
-## Final touches
+## 收尾
 
-- Ask whether to document the findings of the analysis and the changes applied
-  to the testing strategy. If the user agrees:
+- 询问是否需要记录分析结论和对测试策略所做的改动。如果用户同意：
 
-  - If there is an AGENTS.md file present in the project, update it with any
-    changes you've made to the testing strategy.
+  - 如果项目中存在 AGENTS.md 文件，把你对测试策略所做的改动更新进去。
 
-  - If there is no AGENTS.md file, create a new file (docs/testing.md) with
-    a description of the testing strategy, including the commands needed to
-    run every type of test and where the screenshot reference files live.
-    Also create a new AGENTS.md file in the root and create a link to
-    docs/testing.md.
+  - 如果没有 AGENTS.md 文件，新建一个文件（docs/testing.md），描述测试策略，包括运行每种测试
+    所需的命令以及截图参考文件的位置。
+    同时在根目录新建 AGENTS.md 文件，并链接到 docs/testing.md。

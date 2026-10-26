@@ -1,14 +1,13 @@
-Specialized instructions for generating Kotlin implementations of AppFunctions,
-handling system-wide configuration, and managing build dependencies.
+关于生成 AppFunctions 的 Kotlin 实现、处理系统级配置和管理构建依赖的专项指令。
 
-## Instructions
+## 指令
 
-### Step 1: Configure Gradle dependencies and KSP
+### 步骤 1：配置 Gradle 依赖和 KSP
 
-Add the following to `build.gradle.kts`. App Functions requires the KSP (Kotlin
-Symbol Processing) plugin.
+把以下内容添加到 `build.gradle.kts`。App Functions 需要 KSP（Kotlin
+Symbol Processing）插件。
 
-1. **Version check** : Use library version `1.0.0-alpha10` or later from maven.google.com.
+1. **版本检查**：使用来自 maven.google.com 的库版本 `1.0.0-alpha10` 或更高。
 
 
 ```kotlin
@@ -22,10 +21,9 @@ ksp(libs.androidx.appfunctions.compiler)
 
 <br />
 
-### Step 2: Set up app metadata XML
+### 步骤 2：设置应用元数据 XML
 
-Describe the app's capabilities to the LLM by defining
-`res/xml/app_metadata.xml`.
+通过定义 `res/xml/app_metadata.xml` 向 LLM 描述应用的能力。
 
 
 ```xml
@@ -40,8 +38,7 @@ Describe the app's capabilities to the LLM by defining
 
 <br />
 
-Register the service and reference the app metadata in `AndroidManifest.xml`
-within the `<application>` tag:
+在 `AndroidManifest.xml` 的 `<application>` 标签内注册服务并引用应用元数据：
 
 
 ```xml
@@ -67,44 +64,43 @@ within the `<application>` tag:
 
 <br />
 
-### Step 3: Implement functions
+### 步骤 3：实现函数
 
-When generating Kotlin code for AppFunctions, you MUST adhere to these rules:
+为 AppFunctions 生成 Kotlin 代码时，你必须遵守以下规则：
 
-1. **Annotations** :
-   - Annotate the function with `@AppFunction(isDescribedByKDoc = true)`.
-   - Annotate associated data classes with `@AppFunctionSerializable(isDescribedByKDoc = true)`.
-2. **Parameter strategy** :
-   - **Specificity**: Keep parameters specific. State objects must be unambiguous.
-   - **Optionality**: If a parameter isn't essential, make it optional with a default value.
-3. **Execution and threading** :
-   - Use `suspend` functions.
-   - To avoid blocking the Android UI thread, always run AppFunction implementations on a background dispatcher, such as `withContext(Dispatchers.IO)`.
-4. **Supported types** :
-   - **Primitives** : `Int`, `Long`, `Float`, `Double`, `Boolean`
-   - **Arrays** : `IntArray`, `LongArray`, `FloatArray`, `DoubleArray`, `BooleanArray`
-   - **Native types** : `String`, `PendingIntent`, `Uri`, `LocalTime`, `LocalDate`, `LocalDateTime`, `Instant`. Prefer using `LocalDateTime` or `Instant` for date and time fields.
-   - **Custom objects** : Classes annotated with `@AppFunctionSerializable`.
-   - **Collections** : `List` of any supported non-primitive type
-5. **Default values** :
-   - Use defaults that align with the type's empty state, such as `0` for `Int`, `null` for nullable objects, and `emptyList()` for `List`.
-6. **Error handling** :
-   - Throw subclasses of `androidx.appfunctions.AppFunctionException` to report errors to callers.
-7. **Security** :
-   - Don't expose highly sensitive user data, such as passwords or financial details.
-   - Don't expose irreversible destructive actions without confirmation steps.
+1. **注解**：
+   - 用 `@AppFunction(isDescribedByKDoc = true)` 注解函数。
+   - 用 `@AppFunctionSerializable(isDescribedByKDoc = true)` 注解关联的数据类。
+2. **参数策略**：
+   - **具体性**：保持参数具体。状态对象必须无歧义。
+   - **可选性**：如果某个参数并非必需，就把它设为带默认值的可选参数。
+3. **执行与线程**：
+   - 使用 `suspend` 函数。
+   - 为避免阻塞 Android UI 线程，始终在后台调度器上运行 AppFunction 实现，例如 `withContext(Dispatchers.IO)`。
+4. **支持的类型**：
+   - **基本类型**：`Int`、`Long`、`Float`、`Double`、`Boolean`
+   - **数组**：`IntArray`、`LongArray`、`FloatArray`、`DoubleArray`、`BooleanArray`
+   - **原生类型**：`String`、`PendingIntent`、`Uri`、`LocalTime`、`LocalDate`、`LocalDateTime`、`Instant`。日期和时间字段优先使用 `LocalDateTime` 或 `Instant`。
+   - **自定义对象**：用 `@AppFunctionSerializable` 注解的类。
+   - **集合**：任意受支持的非基本类型的 `List`
+5. **默认值**：
+   - 使用与该类型空状态一致的默认值，例如 `Int` 用 `0`、可空对象用 `null`、`List` 用 `emptyList()`。
+6. **错误处理**：
+   - 抛出 `androidx.appfunctions.AppFunctionException` 的子类，向调用方报告错误。
+7. **安全**：
+   - 不要暴露高度敏感的用户数据，例如密码或财务信息。
+   - 不要在缺少确认步骤的情况下暴露不可逆的破坏性操作。
 
-### Step 4: Set up dependency injection and service entry points
+### 步骤 4：配置依赖注入和 service entry point
 
-In version 1.0.0-alpha10 and later, App Functions use the compile-time
-`@AppFunctionServiceEntryPoint` architecture. Create an abstract class extending
-`AppFunctionService` annotated with `@AppFunctionServiceEntryPoint`. KSP
-generates the concrete service class and XML schema.
+在 1.0.0-alpha10 及更高版本中，App Functions 使用编译期的
+`@AppFunctionServiceEntryPoint` 架构。创建一个继承 `AppFunctionService` 并标注
+`@AppFunctionServiceEntryPoint` 的抽象类。KSP 会生成具体的服务类和 XML schema。
 
-#### Recommended approach with Hilt
+#### 使用 Hilt 的推荐做法
 
-Annotate your service with `@AndroidEntryPoint` and inject your data
-repositories or use cases using standard `@Inject internal lateinit var`:
+用 `@AndroidEntryPoint` 注解你的服务，并使用标准的
+`@Inject internal lateinit var` 注入数据仓库或用例：
 
 
 ```kotlin
@@ -130,14 +126,13 @@ abstract class BaseAppFunctionServiceHeader : AppFunctionService() {
 
 <br />
 
-#### Framework-agnostic approach with alternative dependency injection or service locators
+#### 使用其他依赖注入框架或 service locator 的框架无关做法
 
-While Hilt is recommended, many Android applications implement AppFunctions with
-alternative dependency injection frameworks (like Koin, Anvil, or manual Service
-Locators). Because `AppFunctionService` inherits from Android
-`android.app.Service` (and therefore `Context`), you are able access your
-application's DI container directly through `applicationContext` in property
-getters or during service lifecycle execution:
+虽然推荐使用 Hilt，但很多 Android 应用会用其他依赖注入框架（例如 Koin、Anvil
+或手写的 Service Locator）实现 AppFunctions。由于 `AppFunctionService` 继承自
+Android 的 `android.app.Service`（因此也继承了 `Context`），你可以通过
+`applicationContext` 在属性 getter 中或服务生命周期执行期间直接访问应用的 DI
+容器：
 
 
 ```kotlin
@@ -167,31 +162,30 @@ abstract class BaseAppFunctionServiceLocator : AppFunctionService() {
 
 <br />
 
-### Step 5: Architectural cleanliness
+### 步骤 5：架构整洁
 
-Don't attempt to make an `AppFunction` class or method OS-agnostic---App Functions are inherently part of the Android platform integration in `androidx.appfunctions`. For architectural cleanliness, use existing
-application functionality (such as existing repositories, use cases, or domain
-orchestrators) to execute the behavior within your `@AppFunction` methods rather
-than creating redundant abstraction layers around the OS service.
+不要试图让 `AppFunction` 类或方法做到与操作系统无关——App Functions 本身就是
+`androidx.appfunctions` 中 Android 平台集成的一部分。为了架构整洁，应在
+`@AppFunction` 方法内使用应用已有的功能（例如已有的仓库、用例或领域编排器）
+来执行行为，而不是围绕 OS 服务创建多余的抽象层。
 
 <br />
 
-## Critical constraints
+## 关键约束
 
-### KSP compliance for serializables
+### 可序列化类的 KSP 合规性
 
-**Critical constraints** : For `@AppFunctionSerializable` data classes, KSP
-only extracts documentation if it's written as inline KDoc directly for each
-property definition. Don't use class-level `@param` or `@property` tags.
+**关键约束**：对 `@AppFunctionSerializable` 数据类，只有当 KDoc 以内联形式直接
+写在每个属性定义上时，KSP 才会提取其中的文档。不要使用类级别的 `@param` 或
+`@property` 标签。
 
-### Package integrity
+### 包完整性
 
-Configuration APIs and the `@AppFunction` annotation are located in
-`androidx.appfunctions`.
+配置 API 和 `@AppFunction` 注解位于 `androidx.appfunctions`。
 
-## Examples
+## 示例
 
-### Example: Serializable with inline KDoc
+### 示例：带内联 KDoc 的可序列化类
 
 
 ```kotlin
@@ -220,7 +214,7 @@ data class Task(
 
 <br />
 
-### Example: Implementation detail
+### 示例：实现细节
 
 
 ```kotlin
@@ -268,15 +262,15 @@ abstract class BaseTaskAppFunctionService : AppFunctionService() {
 
 <br />
 
-## Troubleshooting
+## 故障排查
 
-### Error: "AppFunction unavailable" or "Metadata missing"
+### 错误：「AppFunction unavailable」或「Metadata missing」
 
-**Cause**: The AppSearch indexing failed to extract the schema correctly.
+**原因**：AppSearch 索引未能正确提取 schema。
 
-**Solution**:
+**解决方案**：
 
-1. Verify `@AppFunctionSerializable` classes use inline KDoc comments, not class-level `@param` tags.
-2. Check that the `assets/<appFunctionXmlFileName>.xml` file exists in the APK.
-3. Confirm the `ksp("androidx.appfunctions:appfunctions-compiler")` dependency is correctly applied.
-4. Ensure the `ksp` argument `appfunctions:aggregateAppFunctions` is set to `"true"`.
+1. 确认 `@AppFunctionSerializable` 类使用内联 KDoc 注释，而不是类级别的 `@param` 标签。
+2. 检查 `assets/<appFunctionXmlFileName>.xml` 文件是否存在于 APK 中。
+3. 确认 `ksp("androidx.appfunctions:appfunctions-compiler")` 依赖已正确应用。
+4. 确保 `ksp` 参数 `appfunctions:aggregateAppFunctions` 设为 `"true"`。

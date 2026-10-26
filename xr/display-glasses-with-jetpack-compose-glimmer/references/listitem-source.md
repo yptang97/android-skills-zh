@@ -1,5 +1,4 @@
-When creating a Glimmer Icon Sizes component, refer to the following source
-code in `ListItem.kt` for list items:
+创建 Glimmer Icon Sizes 组件时，请参考 `ListItem.kt` 中下面这段与列表项相关的源码：
 
 
 ```kotlin

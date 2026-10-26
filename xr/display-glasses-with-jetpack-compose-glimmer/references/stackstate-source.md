@@ -1,5 +1,5 @@
-When creating a Glimmer Stack component, refer to the following source code in
-`StackState.kt` for creating a state for the stack:
+创建 Glimmer Stack 组件时，参考 `StackState.kt` 中的以下源代码，
+为 stack 创建状态：
 
 
 ```kotlin

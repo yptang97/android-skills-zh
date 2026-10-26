@@ -1,9 +1,8 @@
 ---
 name: navigation-event
-description: Intercept back gestures and run Predictive Back animations using the
-  NavigationEvent (androidx.navigationevent) library in Compose Android. Handles Activity
-  setup, parent-child dispatcher scoping in `ViewPagers` or tabs, Compose `NavigationBackHandler`,
-  and migration from legacy `BackHandler` on SDK 36+.
+description: 在 Compose Android 中使用 NavigationEvent（androidx.navigationevent）库拦截返回手势
+  并运行 Predictive Back 动画。涵盖 Activity 配置、`ViewPagers` 或标签页中的父子 dispatcher
+  作用域、Compose 的 `NavigationBackHandler`，以及 SDK 36+ 上从旧 `BackHandler` 的迁移。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
@@ -21,70 +20,67 @@ metadata:
   - ViewPager
 ---
 
-## Common guidelines
+## 通用指南
 
-- **For architecture concepts** : To understand the foundational architecture, continuous gesture event lifecycles, or class definitions of the Navigation Event library, read [Navigation Event overview](references/android/guide/navigation/navigation-event/index.md).
-- **For Android target** : If compile SDK is lower than 36, set it to `36` or higher in `build.gradle.kts`.
-- **For Compose Android target**: The project must use Jetpack Compose for Compose-specific APIs. This skill is scoped exclusively to Compose Android (Android Views and non-Compose implementations are excluded).
-- **For activity dispatchers** : `ComponentActivity` automatically implements `NavigationEventDispatcherOwner` out-of-the-box. You must use the built-in `navigationEventDispatcher` without creating anonymous delegate owners or overriding member properties.
-- **For dialog scoping** : Floating windows (Compose `Dialog`, `ModalBottomSheet`, `ComponentDialog`) automatically provide a `NavigationEventDispatcherOwner`. You don't need manual `CompositionLocalProvider` propagation for dialogs.
-- **For parent-child dispatcher hierarchies** : When scoping navigation handling to `ViewPagers`, tabbed interfaces, or nested navigation containers in Compose, use `rememberNavigationEventDispatcherOwner()` to create a child owner linked to the parent. Disabling the owner (`enabled = false`) automatically cascades to disable all child handlers.
-- **For Compose handlers** : A one-to-one relationship between `NavigationEventState` and handlers is strictly enforced. Never bind the same `NavigationEventState` to multiple active `NavigationBackHandler` instances (`IllegalArgumentException`).
+- **关于架构概念**：如需了解 Navigation Event 库的基础架构、连续手势事件生命周期或类定义，请阅读 [Navigation Event 概览](references/android/guide/navigation/navigation-event/index.md)。
+- **关于 Android 目标平台**：如果 compile SDK 低于 36，请在 `build.gradle.kts` 中设为 `36` 或更高。
+- **关于 Compose Android 目标平台**：项目必须使用 Jetpack Compose，才能用到 Compose 专属 API。这个 skill 仅覆盖 Compose Android（不包含 Android Views 和非 Compose 实现）。
+- **关于 activity dispatcher**：`ComponentActivity` 开箱即自动实现 `NavigationEventDispatcherOwner`。你必须使用内置的 `navigationEventDispatcher`，不要创建匿名 delegate owner，也不要覆盖成员属性。
+- **关于 dialog 作用域**：浮动窗口（Compose `Dialog`、`ModalBottomSheet`、`ComponentDialog`）会自动提供 `NavigationEventDispatcherOwner`。dialog 不需要你手动做 `CompositionLocalProvider` 传播。
+- **关于父子 dispatcher 层级**：在 Compose 中把导航处理限定到 `ViewPagers`、标签页界面或嵌套导航容器时，使用 `rememberNavigationEventDispatcherOwner()` 创建关联到父级的子 owner。禁用该 owner（`enabled = false`）会自动级联禁用所有子 handler。
+- **关于 Compose handler**：`NavigationEventState` 与 handler 之间强制一对一关系。绝不要把同一个 `NavigationEventState` 绑定到多个活跃的 `NavigationBackHandler` 实例（会抛出 `IllegalArgumentException`）。
 
-## Step 1: Plan
+## 步骤 1：规划
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你 **必须** 确保以下事项：
 
-1. **Identify the target platform** : Verify the app is targeting Compose Android. If `compileSdk` is lower than 36, set it to `36` or higher in `build.gradle.kts`.
-2. **Navigation check**: Check if Navigation 3 is in use. If it is in use, use Navigation 3's built-in back navigation support rather than manually implementing low-level dispatchers from this skill.
-3. **Hierarchy check** : Identify host Activities, `ViewPagers`, tabbed interfaces, or nested navigation hosts that require back gesture interception or parent-child dispatcher linking.
-4. **Migration check** : Check if the project is migrating from back handling (`OnBackPressedCallback`, `BackHandler`, `onBackPresser`) to `NavigationEvent` and `NavigationBackHandler`.
-5. **Input interception** : Detect where the app is intercepting navigation events from gestures or hardware button presses requiring translation to `NavigationEvent`.
+1. **确认目标平台**：确认应用面向 Compose Android。如果 `compileSdk` 低于 36，请在 `build.gradle.kts` 中设为 `36` 或更高。
+2. **导航检查**：检查是否在用 Navigation 3。如果已在使用，请使用 Navigation 3 内置的返回导航支持，而不要手动实现本 skill 中的底层 dispatcher。
+3. **层级检查**：找出需要拦截返回手势、或需要父子 dispatcher 关联的宿主 Activity、`ViewPagers`、标签页界面或嵌套导航宿主。
+4. **迁移检查**：检查项目是否正在从旧的返回处理方式（`OnBackPressedCallback`、`BackHandler`、`onBackPresser`）迁移到 `NavigationEvent` 和 `NavigationBackHandler`。
+5. **输入拦截**：找出应用在何处拦截来自手势或硬件按键、且需要转换为 `NavigationEvent` 的导航事件。
 
-## Step 2: Set up dependencies
+## 步骤 2：配置依赖
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你 **必须** 确保以下事项：
 
-- For setting up compile SDKs, declaring catalog versions, and adding dependencies, follow [setup guide](references/android/guide/navigation/navigation-event/setup.md).
+- 关于配置 compile SDK、声明版本目录条目和添加依赖，请遵循 [配置指南](references/android/guide/navigation/navigation-event/setup.md)。
 
-## Step 3: Configure dispatcher and inputs
+## 步骤 3：配置 dispatcher 与输入
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你 **必须** 确保以下事项：
 
-- To configure your dispatcher, leverage automatic `ComponentActivity` or `ComponentDialog` owner resolution.
-- Link parent-child dispatchers in Compose following [dispatcher guide](references/android/guide/navigation/navigation-event/dispatcher.md).
+- 要配置 dispatcher，请利用 `ComponentActivity` 或 `ComponentDialog` 的 owner 自动解析。
+- 在 Compose 中按 [dispatcher 指南](references/android/guide/navigation/navigation-event/dispatcher.md) 关联父子 dispatcher。
 
-## Step 4: Handle back navigation and UI transitions
+## 步骤 4：处理返回导航与 UI 过渡
 
-To complete this step, you **MUST** ensure the following:
+要完成这一步，你 **必须** 确保以下事项：
 
-- To create navigation event handlers, integrate back gesture interception in Compose, animate UI components during swipes, and migrate from legacy back handlers, follow [handle back guide](references/android/guide/navigation/navigation-event/handle-back.md).
+- 要创建导航事件处理程序、在 Compose 中集成返回手势拦截、在滑动过程中为 UI 组件添加动画，并从旧的 back handler 迁移，请遵循 [处理返回指南](references/android/guide/navigation/navigation-event/handle-back.md)。
 
-## Step 5: Clean up resources
+## 步骤 5：清理资源
 
 > [!WARNING]
-> **Warning:** Compose APIs perform teardown automatically. When using Compose APIs such as `NavigationBackHandler` and `rememberNavigationEventDispatcherOwner()`, handler removal and dispatcher disposal occur automatically when the composable leaves the composition.
+> **警告：** Compose API 会自动执行清理。使用 `NavigationBackHandler` 和 `rememberNavigationEventDispatcherOwner()` 这类 Compose API 时，handler 移除与 dispatcher 销毁会在 composable 离开组合时自动发生。
 
-You **MUST** perform explicit manual cleanup only when managing custom
-dispatchers or non-Compose handlers:
+只有在管理自定义 dispatcher 或非 Compose handler 时，你 **必须** 执行显式的手动清理：
 
-- Call `remove()` on active handlers during teardown.
-- Call `isEnabled = false` to temporarily disable navigation subtrees.
-- Call `dispose()` on dispatcher instances when hosting components are destroyed. Disposing a parent dispatcher automatically cascades to all child dispatchers.
+- 在清理时对活跃的 handler 调用 `remove()`。
+- 调用 `isEnabled = false` 来临时禁用导航子树。
+- 在承载组件销毁时对 dispatcher 实例调用 `dispose()`。销毁父 dispatcher 会自动级联到所有子 dispatcher。
 
-## Core troubleshooting guidelines
+## 核心故障排查指南
 
-### 1. Activity dispatcher setup (StackOverflowError recursion)
+### 1. Activity dispatcher 配置（StackOverflowError 递归）
 
-`ComponentActivity` implements `NavigationEventDispatcherOwner` automatically
-out-of-the-box. Don't override `navigationEventDispatcher` or wrap it in an
-anonymous delegate owner.
+`ComponentActivity` 开箱即自动实现 `NavigationEventDispatcherOwner`。不要覆盖
+`navigationEventDispatcher`，也不要把它包进匿名 delegate owner。
 
-#### RIGHT
+#### 正确
 
-**Why this is RIGHT** : Compose apps use `ComponentActivity` as the host.
-`LocalNavigationEventDispatcherOwner.current` automatically resolves the
-Activity's built-in dispatcher.
+**为什么这是正确的**：Compose 应用使用 `ComponentActivity` 作为宿主。
+`LocalNavigationEventDispatcherOwner.current` 会自动解析 Activity 内置的 dispatcher。
 
 
 ```kotlin
@@ -101,13 +97,12 @@ class MainActivity : ComponentActivity() {
 
 <br />
 
-#### WRONG
+#### 错误
 
-**Why this is WRONG** : Implementing `NavigationEventDispatcherOwner` directly on
-`MainActivity` and overriding `navigationEventDispatcher` with a new instance
-shadows the library's extension property, causing a recursive infinite loop
-crash on launch (`StackOverflowError`). Creating redundant anonymous delegate
-owners (`object : NavigationEventDispatcherOwner`) is unnecessary.
+**为什么这是错误的**：在 `MainActivity` 上直接实现 `NavigationEventDispatcherOwner`，并用新
+实例覆盖 `navigationEventDispatcher`，会遮蔽库的扩展属性，导致启动时因无限递归而崩溃
+（`StackOverflowError`）。创建多余的匿名 delegate owner
+（`object : NavigationEventDispatcherOwner`）是不必要的。
 
 
 ```kotlin
@@ -125,18 +120,16 @@ class MainActivity : ComponentActivity(), NavigationEventDispatcherOwner {
 
 <br />
 
-### 2. Floating window and dialog scoping (automatic ComponentDialog owner)
+### 2. 浮动窗口与 dialog 作用域（自动的 ComponentDialog owner）
 
-Floating windows (Compose `Dialog`, `ModalBottomSheet`, and any window backed by
-`ComponentDialog`) automatically provide a `NavigationEventDispatcherOwner`.
-Don't manually re-provide `LocalNavigationEventDispatcherOwner` using
-`CompositionLocalProvider` inside dialogs.
+浮动窗口（Compose `Dialog`、`ModalBottomSheet`，以及任何由 `ComponentDialog` 承载的窗口）会
+自动提供 `NavigationEventDispatcherOwner`。不要在 dialog 内用 `CompositionLocalProvider`
+手动重新提供 `LocalNavigationEventDispatcherOwner`。
 
-#### RIGHT
+#### 正确
 
-**Why this is RIGHT** : `ComponentDialog` handles navigation dispatchers
-automatically. Compose `Dialog` components resolve their dispatcher owner
-out-of-the-box without manual propagation.
+**为什么这是正确的**：`ComponentDialog` 会自动处理导航 dispatcher。Compose `Dialog` 组件
+开箱即会解析自己的 dispatcher owner，无需手动传播。
 
 
 ```kotlin
@@ -155,11 +148,10 @@ fun MyDialog(onDismiss: () -> Unit) {
 
 <br />
 
-#### WRONG
+#### 错误
 
-**Why this is WRONG** : Wrapping dialog content in a manual
-`CompositionLocalProvider` creates redundant boilerplate and obscures the
-automatic dispatcher resolution provided by `ComponentDialog`.
+**为什么这是错误的**：用手动 `CompositionLocalProvider` 包裹 dialog 内容会产生多余的样板
+代码，并掩盖 `ComponentDialog` 提供的自动 dispatcher 解析。
 
 
 ```kotlin
@@ -182,21 +174,18 @@ fun MyDialog(onDismiss: () -> Unit) {
 
 <br />
 
-### 3. Parent-child dispatcher hierarchy (`ViewPagers` and nested navigation)
+### 3. 父子 dispatcher 层级（`ViewPagers` 与嵌套导航）
 
-When managing nested UI hierarchies such as `ViewPagers`, tabbed
-interfaces, or custom navigation containers in Compose, use
-`rememberNavigationEventDispatcherOwner()` to create a child owner linked to the
-composition hierarchy. Setting `enabled = false` on the child owner
-automatically disables its dispatcher and all registered child handlers.
+在 Compose 中管理 `ViewPagers`、标签页界面或自定义导航容器这类嵌套 UI 层级时，使用
+`rememberNavigationEventDispatcherOwner()` 创建关联到组合层级的子 owner。在子 owner 上设置
+`enabled = false` 会自动禁用其 dispatcher 和所有已注册的子 handler。
 
-#### RIGHT
+#### 正确
 
-**Why this is RIGHT** : Using `rememberNavigationEventDispatcherOwner(enabled =
-isSelected)` creates a scoped child dispatcher linked to the parent from
-`LocalNavigationEventDispatcherOwner.current`. Providing it using
-`CompositionLocalProvider` ensures non-visible tabs or pages automatically stop
-intercepting back gestures without leaking handlers.
+**为什么这是正确的**：使用 `rememberNavigationEventDispatcherOwner(enabled =
+isSelected)` 会创建一个限定作用域的子 dispatcher，并关联到 `LocalNavigationEventDispatcherOwner.current`
+中的父级。用 `CompositionLocalProvider` 提供它，可以确保不可见的标签页或页面自动停止拦截
+返回手势，而不会泄漏 handler。
 
 
 ```kotlin
@@ -217,12 +206,11 @@ fun TabPage(isSelected: Boolean) {
 
 <br />
 
-#### WRONG
+#### 错误
 
-**Why this is WRONG** : Creating unlinked standalone dispatchers, instantiating
-raw dispatchers without remembering them across recompositions, or attempting to
-use non-existent methods like `.addChild()` breaks hierarchy routing and leaves
-child handlers active even when the page is inactive.
+**为什么这是错误的**：创建未关联的独立 dispatcher、在重组之间不 remember 就直接实例化原始
+dispatcher，或尝试使用 `.addChild()` 这类不存在的方法，会破坏层级路由，并让子 handler 在
+页面不活跃时仍然生效。
 
 
 ```kotlin
@@ -238,19 +226,16 @@ fun TabPage(isSelected: Boolean) {
 
 <br />
 
-### 4. Compose multi-handler registration (IllegalArgumentException)
+### 4. Compose 多 handler 注册（IllegalArgumentException）
 
-You must not bind the same `NavigationEventState` to multiple active
-`NavigationBackHandler` instances, as this throws an `IllegalArgumentException`
-at runtime. To handle conditional workflows (such as checking for unsaved
-changes versus navigating back immediately), you must register a single unified
-handler and branch logic inside `onBackCompleted`.
+你不能把同一个 `NavigationEventState` 绑定到多个活跃的 `NavigationBackHandler` 实例，因为这
+会在运行时抛出 `IllegalArgumentException`。要处理条件分支流程（例如在检查未保存改动与立即
+返回之间做判断），你必须注册单个统一的 handler，并在 `onBackCompleted` 内部做逻辑分支。
 
-#### RIGHT
+#### 正确
 
-**Why this is RIGHT** : Using a single `NavigationBackHandler` with internal
-branching logic inside `onBackCompleted` maintains a strict 1:1 mapping between
-`NavigationEventState` and the handler, preventing state collisions.
+**为什么这是正确的**：使用单个 `NavigationBackHandler`，并在 `onBackCompleted` 内部做分支
+逻辑，可以保持 `NavigationEventState` 与 handler 之间严格的 1:1 映射，避免状态冲突。
 
 
 ```kotlin
@@ -271,11 +256,11 @@ NavigationBackHandler(
 
 <br />
 
-#### WRONG
+#### 错误
 
-**Why this is WRONG** : Attaching multiple `NavigationBackHandler` composables to
-the same `navigationState` instance attempts to bind duplicate handlers to a
-single state object, which throws an `IllegalArgumentException` at runtime.
+**为什么这是错误的**：把多个 `NavigationBackHandler` composable 挂到同一个 `navigationState`
+实例上，相当于试图把重复的 handler 绑定到单个状态对象，运行时会抛出
+`IllegalArgumentException`。
 
 
 ```kotlin
@@ -295,15 +280,15 @@ NavigationBackHandler(
 
 <br />
 
-## Checklist
+## 检查清单
 
-**For Compose Android targets:**
+**面向 Compose Android 目标平台：**
 
-- \[ \] Is compile SDK set to `36` or higher? (If compile SDK is lower than 36, set it to `36` or higher in `build.gradle.kts`).
-- \[ \] Is `android:enableOnBackInvokedCallback` NOT explicitly set to `"false"` in `AndroidManifest.xml`? (On API 36+, it defaults to `"true"`; on API 33--35, ensure it is set to `"true"`).
-- \[ \] Does the Activity rely on the built-in `ComponentActivity` dispatcher owner without redundant anonymous delegate wrapping?
-- \[ \] Do dialogs or sheets rely on automatic `ComponentDialog` dispatcher resolution without redundant `CompositionLocalProvider` wrapping?
-- \[ \] Are parent-child dispatcher relationships in Compose scoped using `rememberNavigationEventDispatcherOwner()` when managing nested hierarchies?
-- \[ \] Is conditional back logic handled within a single unified `NavigationBackHandler` to avoid duplicate registration (`IllegalArgumentException`)?
-- \[ \] Are legacy `BackHandler` usages migrated to `NavigationBackHandler` with predictive progress support?
-- \[ \] Does the project build and pass tests successfully?
+- \[ \] compile SDK 是否设为 `36` 或更高？（如果 compile SDK 低于 36，请在 `build.gradle.kts` 中设为 `36` 或更高）。
+- \[ \] `AndroidManifest.xml` 中的 `android:enableOnBackInvokedCallback` 是否 **未** 显式设为 `"false"`？（在 API 36+ 上它默认是 `"true"`；在 API 33--35 上请确保设为 `"true"`）。
+- \[ \] Activity 是否依赖内置的 `ComponentActivity` dispatcher owner，而没有多余的匿名 delegate 包装？
+- \[ \] dialog 或 sheet 是否依赖 `ComponentDialog` 的自动 dispatcher 解析，而没有多余的 `CompositionLocalProvider` 包装？
+- \[ \] 管理嵌套层级时，Compose 中的父子 dispatcher 关系是否用 `rememberNavigationEventDispatcherOwner()` 限定了作用域？
+- \[ \] 条件返回逻辑是否在单个统一的 `NavigationBackHandler` 内处理，以避免重复注册（`IllegalArgumentException`）？
+- \[ \] 旧的 `BackHandler` 用法是否已迁移到支持预测性进度的 `NavigationBackHandler`？
+- \[ \] 项目是否能成功构建并通过测试？

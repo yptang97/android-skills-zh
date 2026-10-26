@@ -1,25 +1,21 @@
-Use the guidelines below to orchestrate between recording workflows after
-disambiguating the user intent (for example, recording a system trace or a heap
-dump). The guidelines below ensure pre-flight checks are always performed and
-domain-specific profiling flags are applied accurately.
+在消除用户意图歧义（例如录制系统 trace 还是堆转储）之后，使用下面的指南在
+各录制工作流之间做编排。这些指南确保预检总是被执行，并且领域相关的性能分析
+选项被准确应用。
 
-## Understand the Goal
+## 理解目标
 
-Identify the explicit artifact and the recording goal the user wants (for
-example, a system trace or a heap dump). Before proceeding, ensure you have an
-answer to the following question: "User intends to record a {target artifact}".
+确定用户想要的具体产物和录制目标（例如系统 trace 或堆转储）。在继续之前，
+确保你能回答下面这个问题：「用户打算录制一个 {target artifact}」。
 
-## Workflow Discovery and Execution Planning
+## 工作流发现与执行计划
 
-If the user's request involves multiple distinct recording goals (for example,
-setting up a specialized environment AND recording a system trace), do not merge
-them:
+如果用户的请求涉及多个不同的录制目标（例如既要搭建专门的环境，又要录制系统
+trace），不要把它们合并处理：
 
-1. Use your file search tools (for example, `grep_search`) to recursively scan the `$SKILL_ROOT/recording/workflows/` directory for workflow entry points (markdown files defining a top-level `name:` key in their frontmatter, ignoring internal `references/` subdirectories). Find all the workflows that match the user's target artifact and goal.
-2. Propose all the matched workflows as options to the user, along with simple details on why they apply. Work with the user and converge on an execution plan.
-3. Continue with the user selection.
+1. 使用你的文件搜索工具（例如 `grep_search`）递归扫描 `$SKILL_ROOT/recording/workflows/` 目录，找出工作流入口点（即 frontmatter 中定义了顶层 `name:` 键的 markdown 文件，忽略内部的 `references/` 子目录）。找出所有与用户目标产物和目的相匹配的工作流。
+2. 把所有匹配到的工作流作为选项提供给用户，并简要说明它们为什么适用。与用户一起收敛出一份执行计划。
+3. 按用户的选择继续执行。
 
-> The user may ask to execute one or more workflows - sequentially or in
-> parallel, or stitch two workflows together. When this happens, perform a quick
-> scan of these workflows to ensure they are compatible with each other, and
-> clarify with the user before proceeding.
+> 用户可能要求执行一个或多个工作流——顺序执行或并行执行，或者把两个工作流
+> 拼接起来。遇到这种情况，先快速扫一遍这些工作流，确认彼此兼容，并在继续
+> 之前与用户确认。

@@ -1,4 +1,4 @@
-The Engage SDK defines cluster structures as shown in this reference:
+Engage SDK 定义的 cluster 结构如本参考所示：
 
     {
       "clusters": {

@@ -1,26 +1,14 @@
-Defines the ubiquitous language for the Android AppFunctions skill suite.
+定义 Android AppFunctions skill 套件的统一语言。
 
-## Architecture and versioning
+## 架构与版本
 
-`AppFunctionServiceEntryPoint` API:
-This compile-time AppFunctions architecture was introduced in version
-1.0.0-alpha10. You annotate a wrapper service extending
-`AppFunctionService` with `@AppFunctionServiceEntryPoint`. KSP then generates
-XML metadata and routes services at compile time.
+`AppFunctionServiceEntryPoint` API：
+这套编译期 AppFunctions 架构从 1.0.0-alpha10 版本引入。用一个包装 service 扩展 `AppFunctionService`，并为它加上 `@AppFunctionServiceEntryPoint` 注解。随后 KSP 会生成 XML 元数据，并在编译期完成 service 路由。
 
-Legacy manual provider API:
-This deprecated AppFunctions architecture applies to version
-1.0.0-alpha09 and earlier. Applications implement
-`AppFunctionConfiguration.Provider` on the `Application` class. Methods
-require `AppFunctionContext` as the first parameter. Projects depend on
-a standalone `appfunctions-service` library.
+旧版手动 provider API：
+这套已废弃的 AppFunctions 架构适用于 1.0.0-alpha09 及更早版本。应用在 `Application` 类上实现 `AppFunctionConfiguration.Provider`。方法需要把 `AppFunctionContext` 作为第一个参数。项目依赖独立的 `appfunctions-service` 库。
 
-## Patterns
+## 模式
 
-Service entry point pattern:
-Version 1.0.0-alpha10 introduced this architectural pattern. You
-declare `@AppFunction` methods directly inside an abstract class extending
-`AppFunctionService`. This class uses `@AppFunctionServiceEntryPoint` and
-`@AndroidEntryPoint` annotations. These annotations let you inject data
-sources or repositories directly, without an intermediate business logic
-delegation layer.
+Service 入口点模式：
+1.0.0-alpha10 版本引入了这种架构模式。你直接在扩展 `AppFunctionService` 的抽象类中声明 `@AppFunction` 方法。该类使用 `@AppFunctionServiceEntryPoint` 和 `@AndroidEntryPoint` 注解。这些注解让你可以直接注入数据源或仓库，无需中间的业务逻辑委派层。

@@ -1,5 +1,4 @@
-When creating a Glimmer Card component, refer to the following source code in
-`Card.kt`:
+创建 Glimmer Card 组件时，请参考以下 `Card.kt` 中的源代码：
 
 
 ```kotlin
