@@ -1,6 +1,6 @@
 {
   "name": "android-skills",
-  "version": "1.0.19",
+  "version": "1.0.19-zh.1",
   "displayName": "Android Skills",
   "description": "Android skills 是 Google 官方维护的、面向 AI 优化的模块化指令与资源仓库，帮助 LLM 更好地理解并执行符合 Android 开发最佳实践与官方指南的特定模式。Android skills 遵循开放标准的 agent skills 规范——用 markdown 文件（SKILL.md）给出任务的技术规格，并为 LLM 提供专业领域与工作流知识。",
   "author": {
