@@ -9,7 +9,7 @@ description: 使用 Jetpack Ink（androidx.ink）与 Compose 为 Android 应用�
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-24'
+  last-updated: '2026-10-28'
   keywords:
   - Android
   - Jetpack Ink

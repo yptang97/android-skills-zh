@@ -9,7 +9,7 @@ description: 为 Android 应用创建基于 Jetpack Ink（androidx.ink 1.1.0-alp
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-24'
+  last-updated: '2026-10-28'
   keywords:
   - Android
   - Jetpack Ink

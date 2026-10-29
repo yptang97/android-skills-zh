@@ -4,7 +4,7 @@ description: 提供在 Android Credential Manager API 上实现已验证邮箱�
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-09-16'
+  last-updated: '2026-10-28'
   keywords:
   - implementation
   - Android
@@ -107,7 +107,7 @@ metadata:
 ## 概述
 
 本指南介绍如何通过 [OpenID for Verifiable
-Presentations (OpenID4VP)](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) 请求，使用 [Digital Credentials Verifier API](references/android/identity/digital-credentials/credential-verifier.md) 实现已验证邮箱获取。
+Presentations (OpenID4VP)](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html) 请求，使用 [Digital Credentials Verifier API](https://developer.android.com/identity/digital-credentials/credential-verifier) 实现已验证邮箱获取。
 
 ## 添加依赖
 
@@ -313,7 +313,7 @@ Credential Manager API 会返回一个 [`DigitalCredential`](https://developer.a
      */
 
 > [!IMPORTANT]
-> **Important:** 强烈建议你在收到已验证邮箱后，触发 Credential Manager 的 [passkey 创建](https://developer.android.com/identity/credential-manager/passkeys/create-passkeys)流程。
+> **Important:** 强烈建议你在收到已验证邮箱后，触发 Credential Manager 的 [passkey 创建](references/android/identity/passkeys/create-passkeys.md)流程。
 
 ## 账号创建的服务端验证
 

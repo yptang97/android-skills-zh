@@ -4,7 +4,7 @@ description: 审计、发现缺口并修复 Android 权限与 IPC 组件相关�
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-22'
+  last-updated: '2026-10-28'
   keywords:
   - recipe
   - Android
@@ -55,9 +55,9 @@ metadata:
 
 | 漏洞领域 | 搜索位置 / 匹配模式 | 风险 | 修复动作 |
 |---|---|---|---|
-| **自定义权限保护过弱** | `AndroidManifest.xml` 中出现 `android:protectionLevel="normal"`、`"dangerous"` 或 `"signatureOrSystem"` | 未授权的应用可以申请或声称该权限而不受限制 | 升级为 `signature` 或 `signature|knownSigner`，并配置 `android:knownCerts`。 |
+| **自定义权限保护过弱** | `AndroidManifest.xml` 中出现 `android:protectionLevel="normal"`、`"dangerous"` 或 `"signatureOrSystem"` | 未授权的应用可以申请或声称该权限而不受限制 | 升级为 `signature`，或 `signature` 配合 `knownSigner` 与 `android:knownCerts`。 |
 | **URI 权限授予范围过宽** | `<provider>` 中出现 `<grant-uri-permission android:pathPrefix="/" />` 或 `pathPrefix=""` | 把 provider 的全部数据泄漏给第三方 | 改为明确的受限子路径（例如 `android:pathPrefix="/shared/"`）。保留 `android:grantUriPermissions="true"`。移除任何通配的 `pathPrefix="/"`。 |
-| **ContentProvider 读写权限未拆分** | `<provider>` 只有通用的 `android:permission`，或缺少 `android:readPermission` 与 `android:writePermission` | 只读调用方能执行写操作，或只写调用方能执行读操作 | 配置细粒度的 `android:readPermission="...READ_DATA"` 和 `android:writePermission="...WRITE_DATA"`，并**同时**在 `<manifest>` 根级别以 `android:protectionLevel="signature"`（或 `signature|knownSigner`）声明对应的自定义 `<permission>` 标签。 |
+| **ContentProvider 读写权限未拆分** | `<provider>` 只有通用的 `android:permission`，或缺少 `android:readPermission` 与 `android:writePermission` | 只读调用方能执行写操作，或只写调用方能执行读操作 | 配置细粒度的 `android:readPermission="...READ_DATA"` 和 `android:writePermission="...WRITE_DATA"`，并**同时**在 `<manifest>` 根级别以 `android:protectionLevel="signature"`（或 `signature` 配合 `knownSigner`）声明对应的自定义 `<permission>` 标签。 |
 | **调用方身份校验可被伪造** | Service 中出现 `intent.getStringExtra("calling_package")`、`intent.getStringExtra("sender")`、`callingPackage == "..."` | 恶意调用方可以伪造 intent extra 或字符串 | 移除字符串校验；使用 `Binder.getCallingUid()` 和 `pm.hasSigningCertificate()` 以密码学方式校验调用方 UID。 |
 | **绑定 Service 权限被绕过** | Binder AIDL stub 中出现 `checkCallingOrSelfPermission()` 或 `enforceCallingOrSelfPermission()` | 在 IPC 之外或身份被清除时回退到宿主应用 UID，导致混淆代理（Confused Deputy）绕过 | 改为 `enforceCallingPermission("...WRITE_DATA", ...)` 或 `checkCallingPermission("...WRITE_DATA")`。 |
 | **绑定 Service 缺少方法级校验** | 绑定 Service 的 AIDL 方法在未强制写权限的情况下修改状态 | 只有只读绑定权限的调用方能调用会修改状态的写操作 | 在会修改状态的 AIDL 方法内添加 `enforceCallingPermission("...WRITE_DATA", "Caller lacks WRITE_DATA permission")`。 |
@@ -131,9 +131,9 @@ metadata:
 - **细粒度 `UriPermission` 管理**：与其在清单中做宽泛授予，不如使用运行时的 `android.content.UriPermission` 令牌，实现按 URI 的最小权限共享：
   - *授予临时访问*：`context.grantUriPermission(targetPackage,
     uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)`，或给外发 intent 附加 `Intent.FLAG_GRANT_READ_URI_PERMISSION`。
-  - *持久化访问*：接收方应用调用 `contentResolver.takePersistableUriPermission(uri, modeFlags)`，以获得重启后依然有效的访问权限。
+  - *持久化与释放访问*：接收方应用调用 `contentResolver.takePersistableUriPermission(uri, modeFlags)`，以获得重启后依然有效的访问权限；当不再需要持久访问时，调用 `contentResolver.releasePersistableUriPermission(uri, modeFlags)`。
   - *审计生效的授予*：检查 `contentResolver.persistedUriPermissions`（`List<UriPermission>`），核实已授予的 URI（`uriPermission.uri`、`uriPermission.isReadPermission()`、`uriPermission.isWritePermission()`）。
-  - *撤销访问*：操作一结束就调用 `context.revokeUriPermission(uri, modeFlags)` 或 `contentResolver.releasePersistableUriPermission(uri, modeFlags)`。
+  - *撤销临时访问*：调用 `context.revokeUriPermission(targetPackage, uri, modeFlags)`（API 26+）；在 API 25 及更低版本上回退到 `context.revokeUriPermission(uri, modeFlags)`，使操作一结束访问就立即失效。
 
 ### 清单片段：完整的安全 ContentProvider 声明
 
@@ -347,7 +347,7 @@ class SecureBoundService : Service() {
 
 1. **检查是否已授予**：`ContextCompat.checkSelfPermission(this,
    permission) == PackageManager.PERMISSION_GRANTED`。
-2. **检查是否需要说明**：用 `shouldShowRequestPermissionRationale(permission)` 在请求前给出解释性上下文。
+2. **检查是否需要说明**：当 `shouldShowRequestPermissionRationale(permission)` 返回 `true` 时，展示说明弹窗，并且只从该弹窗的「继续」按钮发起权限请求。
 3. **启动请求契约**：`ActivityResultContracts.RequestPermission()`。
 4. **处理永久拒绝**：在回调中，如果权限被拒绝且 `!shouldShowRequestPermissionRationale(permission)`，就引导用户到 `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`。
 
