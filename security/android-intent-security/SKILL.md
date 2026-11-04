@@ -4,7 +4,7 @@ description: Android Intent 安全最佳实践。审计 AndroidManifest.xml 中�
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-22'
+  last-updated: '2026-10-30'
   keywords:
   - recipe
   - Android
@@ -492,13 +492,12 @@ fun safeErrorHandling(callingPackage: String?) {
     #### 实现差异
     ```diff
     // Insert Unified Diff here
+    ```
 
-#### 测试与验证
+    #### 测试与验证
 
-1. \[验证组件行为正确的步骤 1，例如运行组件单元测试\]
-2. \[验证回归安全性的步骤 2\] \`\`\`
-
-*** ** * ** ***
+    1.  [验证组件行为正确的步骤 1，例如运行组件单元测试]
+    2.  [验证回归安全性的步骤 2]
 
 ## 反模式
 

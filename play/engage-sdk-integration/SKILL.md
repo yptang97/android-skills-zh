@@ -5,7 +5,7 @@ description: 帮助开发者集成、调试并解决 Play Engage SDK 实现问�
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-28'
+  last-updated: '2026-10-30'
   keywords:
   - android
   - engage
@@ -69,10 +69,9 @@ metadata:
      - \[ \] 在 `Application` 类或主 `Activity` 类中调用 `EngageBroadcastReceiver.register(context)`，从而**动态**注册 `EngageBroadcastReceiver`。
      - \[ \] 在 `EngageBroadcastReceiver` 的 `companion object` 中实现 `register` 方法，以处理动态注册。
      - \[ \] 在 `EngageWorker` 中处理空数据列表（例如删除 cluster，而不是发布空数据）。
-     - \[ \] 所有 Gradle 编译都使用了 `--no-daemon`。
    - 执行一次 Gradle sync。
    - 如果出现错误（例如 import 失败、namespace 冲突或编译错误），阅读 **[references/troubleshooting.md](references/troubleshooting.md)** 来解决。
-   - 执行一次 Gradle 编译。你必须运行 `./gradlew compileDebugUnitTestSources --no-daemon` 或 `./gradlew assembleDebug --no-daemon`。编译规则以及关于快速编译捷径的警告见 **[references/troubleshooting.md](references/troubleshooting.md)**。重复这一步直到编译成功。
+   - 执行一次 Gradle 编译（`./gradlew compileDebugUnitTestSources` 或 `./gradlew assembleDebug`）。编译规则以及关于快速编译捷径的警告见 **[references/troubleshooting.md](references/troubleshooting.md)**。重复这一步直到编译成功。
 7. **用户检查清单：**代码生成结束时，通知用户过一遍这份清单，确认集成已完成并符合预期：
 
    - \[ \] 确认所有与 Engage 相关的文件都已在 `{ENGAGE_CODE_DIR}/` 中创建：

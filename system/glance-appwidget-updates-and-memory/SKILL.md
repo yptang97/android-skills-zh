@@ -12,7 +12,7 @@ description: 管理 Android AppWidget 的状态更新、后台同步，以及用
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-23'
+  last-updated: '2026-10-31'
   keywords:
   - Android
   - AppWidget
