@@ -4,7 +4,7 @@ description: 审计、发现缺口并修复 Android 权限与 IPC 组件相关�
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-29'
+  last-updated: '2026-11-08'
   keywords:
   - recipe
   - Android
@@ -529,21 +529,22 @@ fun performLocationAccess() {
 val intent = Intent("com.example.snippets.permission.ACTION_SECRET_UPDATE").apply {
     setPackage("com.example.partner") // Explicit target
 }
-val isUdc = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-val options = if (isUdc) {
-    BroadcastOptions.makeBasic().apply {
+if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+    val options = BroadcastOptions.makeBasic().apply {
         setShareIdentityEnabled(true)
     }.toBundle()
-} else null
-
-sendBroadcast(intent, "com.example.snippets.permission.RECEIVE_SECRET_UPDATE", options)
+    sendBroadcast(intent, "com.example.snippets.permission.RECEIVE_SECRET_UPDATE", options)
+} else {
+    sendBroadcast(intent, "com.example.snippets.permission.RECEIVE_SECRET_UPDATE")
+}
 ```
 
 <br />
 
 
 ```kotlin
-// Receiver: Validate sender on Android 14+
+// Receiver: Validate sender on Android 14+ (on API 33 and lower, restrict access
+// by declaring android:permission with a signature or knownSigner permission on <receiver>)
 class ProtectedReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == "com.example.snippets.permission.ACTION_SECRET_UPDATE") {

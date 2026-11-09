@@ -6,7 +6,7 @@ description: 为使用 CameraX 进行 Android 相机开发提供技术指导。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-08'
+  last-updated: '2026-11-08'
   keywords:
   - recipe
   - Android
@@ -84,11 +84,11 @@ run {
 - **自定义效果**：优先使用 `Media3Effect` 或 `SurfaceProcessor`，而非手动 OpenGL 管线，除非绝对需要极致性能。
 - **低光**：夜视模式与 LLB 的指导见[低光](references/low-light.md)。
 - **折叠屏**：处理动态姿态与铰链状态的指导见[折叠屏](references/foldables.md)。
-- **XR、AR 与 VR**：空间跟踪、透视同步与延迟护栏的指导见[XR](references/xr.md)。
+- **XR、AR 与 VR**：空间跟踪、透视同步与延迟护栏的指导见 [XR](references/xr.md)。
 - **散热与功耗**：管理 `StreamUseCase` 优化与 `PowerManager` 热状态的指导见[散热](references/thermals.md)。
 - **测试与模拟**：使用 `FakeCameraConfig`、处理异步生命周期、验证分析管线的指导见[测试](references/testing.md)。
-- **ML Kit 空间分析**：坐标映射、旋转逻辑与镜像镜头处理的指导见[ML Kit 空间分析](references/mlkit-spatial.md)。
-- **Wear OS 相机遥控**：圆形 UI 约束、Data Layer API 同步与远程触发逻辑的指导见[Wear OS](references/wear-os.md)。
+- **ML Kit 空间分析**：坐标映射、旋转逻辑与镜像镜头处理的指导见 [ML Kit 空间分析](references/mlkit-spatial.md)。
+- **Wear OS 相机遥控**：圆形 UI 约束、Data Layer API 同步与远程触发逻辑的指导见 [Wear OS](references/wear-os.md)。
 
 分步指南见 [expert-blueprints](references/expert-blueprints.md)。
 

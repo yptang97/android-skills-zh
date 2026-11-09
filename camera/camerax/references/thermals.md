@@ -18,15 +18,17 @@ Android 13（API 级别 33）引入 `StreamUseCase`。这是告诉硬件如何�
 
 
 ```kotlin
-// In CameraX: Set the hint on your Use Case
-val preview = Preview.Builder()
-    .setTargetName("Preview")
-    .apply {
-        Camera2Interop.Extender(this).setStreamUseCase(
-            CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL.toLong()
-        )
-    }
-    .build()
+/** Hints the stream use case to the camera HAL (Android 13+, API level 33). */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalCamera2Interop::class)
+fun buildVideoCallPreview(): Preview {
+    val builder = Preview.Builder().setTargetName("Preview")
+    @Suppress("DEPRECATION") // Deprecated in CameraX 1.7.0 in favor of camera2Interop { }.
+    Camera2Interop.Extender(builder).setStreamUseCase(
+        CameraMetadata.SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL.toLong()
+    )
+    return builder.build()
+}
 ```
 
 <br />
@@ -44,20 +46,26 @@ val preview = Preview.Builder()
 
 
 ```kotlin
-val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-powerManager.addThermalStatusListener { status ->
-    when (status) {
-        PowerManager.THERMAL_STATUS_MODERATE -> {
-            // Signal to UI: "Device is warming up"
-        }
-        PowerManager.THERMAL_STATUS_SEVERE -> {
-            // ACTION: Reduce Frame Rate from 60fps to 30fps
-            // ACTION: Disable HDR or High-Quality Post-processing
-        }
-        PowerManager.THERMAL_STATUS_CRITICAL -> {
-            // ACTION: Close the camera session to prevent hardware damage
+/** Requires Android 10 (API level 29) or higher. */
+@RequiresApi(Build.VERSION_CODES.Q)
+fun registerThermalListener(context: Context): PowerManager.OnThermalStatusChangedListener {
+    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    val listener = PowerManager.OnThermalStatusChangedListener { status ->
+        when (status) {
+            PowerManager.THERMAL_STATUS_MODERATE -> {
+                // Signal to UI: "Device is warming up"
+            }
+            PowerManager.THERMAL_STATUS_SEVERE -> {
+                // ACTION: Reduce Frame Rate from 60fps to 30fps
+                // ACTION: Disable HDR or High-Quality Post-processing
+            }
+            PowerManager.THERMAL_STATUS_CRITICAL -> {
+                // ACTION: Close the camera session to prevent hardware damage
+            }
         }
     }
+    powerManager.addThermalStatusListener(listener)
+    return listener // Remove it with removeThermalStatusListener when done.
 }
 ```
 

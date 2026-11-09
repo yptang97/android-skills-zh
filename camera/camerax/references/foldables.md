@@ -19,16 +19,21 @@
 
 
 ```kotlin
-lifecycleScope.launch {
-    lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-        windowInfoTracker.windowLayoutInfo(activity)
-            .collect { layoutInfo ->
-                val displayFeature = layoutInfo.displayFeatures
-                    .filterIsInstance<FoldingFeature>()
-                    .firstOrNull()
-
-                updateCameraLayout(displayFeature)
-            }
+fun observeFoldingFeature(
+    activity: ComponentActivity,
+    onFoldChanged: (FoldingFeature?) -> Unit,
+) {
+    activity.lifecycleScope.launch {
+        activity.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            WindowInfoTracker.getOrCreate(activity)
+                .windowLayoutInfo(activity)
+                .collect { layoutInfo ->
+                    val foldingFeature = layoutInfo.displayFeatures
+                        .filterIsInstance<FoldingFeature>()
+                        .firstOrNull()
+                    onFoldChanged(foldingFeature)
+                }
+        }
     }
 }
 ```
@@ -51,14 +56,22 @@ lifecycleScope.launch {
 
 
 ```kotlin
-val viewport = ViewPort.Builder(Rational(viewfinder.width, viewfinder.height), display.rotation)
-    .setScaleType(ViewPort.FILL_CENTER)
-    .build()
-
-val useCaseGroup = UseCaseGroup.Builder()
-    .addUseCase(preview)
-    .setViewPort(viewport)
-    .build()
+/** Rebuild the group and rebind after a fold changes the viewfinder size. */
+fun buildUseCaseGroup(
+    viewfinder: View,
+    preview: Preview,
+    imageCapture: ImageCapture,
+): UseCaseGroup {
+    val rotation = viewfinder.display?.rotation ?: Surface.ROTATION_0
+    val viewPort = ViewPort.Builder(Rational(viewfinder.width, viewfinder.height), rotation)
+        .setScaleType(ViewPort.FILL_CENTER)
+        .build()
+    return UseCaseGroup.Builder()
+        .addUseCase(preview)
+        .addUseCase(imageCapture)
+        .setViewPort(viewPort)
+        .build()
+}
 ```
 
 <br />

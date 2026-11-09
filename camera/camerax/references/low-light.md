@@ -20,13 +20,28 @@ CameraX Extensions 提供对设备内置计算摄影管线的访问。
 
 
 ```kotlin
-// Use ListenableFuture.await() extension function for coroutine support
-val extensionsManager = ExtensionsManager.getInstanceAsync(context, cameraProvider).await()
-if (extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT)) {
-    val nightSelector = extensionsManager.getExtensionEnabledCameraSelector(
-        cameraSelector, ExtensionMode.NIGHT
-    )
-    cameraProvider.bindToLifecycle(lifecycleOwner, nightSelector, imageCapture, preview)
+/** Binds Night mode with ExtensionSessionConfig (CameraX 1.6.0 and higher). */
+suspend fun bindNightMode(
+    context: Context,
+    lifecycleOwner: LifecycleOwner,
+    cameraProvider: ProcessCameraProvider,
+    preview: Preview,
+    imageCapture: ImageCapture,
+): Boolean {
+    // Suspend version of getInstanceAsync (CameraX 1.6.0 and higher).
+    val extensionsManager = ExtensionsManager.getInstance(context, cameraProvider)
+    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+    if (!extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT)) {
+        return false // Bind without the extension instead.
+    }
+    // ImageAnalysis isn't supported in extension sessions.
+    val config = ExtensionSessionConfig.Builder(ExtensionMode.NIGHT, extensionsManager)
+        .addUseCase(preview)
+        .addUseCase(imageCapture)
+        .build()
+    cameraProvider.unbindAll()
+    cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, config)
+    return true
 }
 ```
 
@@ -37,27 +52,51 @@ if (extensionsManager.isExtensionAvailable(cameraSelector, ExtensionMode.NIGHT))
 - **Image postview**：在多帧处理进行期间立即显示一张低分辨率图像。
 
   ```kotlin
-  val imageCapture = ImageCapture.Builder()
-      .setPostviewEnabled(true)
-      .build()
+  fun buildPostviewImageCapture(): ImageCapture =
+      ImageCapture.Builder()
+          .setPostviewEnabled(true)
+          .build()
   ```
 - **Extension strength**：让用户控制夜景效果的强度。
 
   ```kotlin
-  // Set the strength of the active extension (e.g. NIGHT mode intensity)
-  val extensionsManager = ExtensionsManager.getInstanceAsync(context, cameraProvider).await()
-  val extensionsControl = extensionsManager.getCameraExtensionsControl(camera.cameraControl)
-  extensionsControl?.setExtensionStrength(strength)
+  /** Sets the active extension's strength, from 0 to 100. */
+  suspend fun setExtensionStrength(
+      context: Context,
+      cameraProvider: ProcessCameraProvider,
+      camera: Camera,
+      strength: Int,
+  ) {
+      val extensionsManager = ExtensionsManager.getInstance(context, cameraProvider)
+      // Null when the bound camera has no active extension.
+      extensionsManager.getCameraExtensionsControl(camera.cameraControl)
+          ?.setExtensionStrength(strength)
+  }
   ```
 - **Capture progress**：为长曝光显示 UI 进度条。
 
   ```kotlin
-  // Use the suspend extension function for takePicture to avoid callback boilerplate
-  try {
-      val result = imageCapture.takePicture(outputOptions)
-      // Use result.savedUri or other fields
-  } catch (e: ImageCaptureException) {
-      // Handle capture failure
+  /**
+   * Captures to a file and reports progress for long exposures. The callbacks
+   * fire only when ImageCapture.getImageCaptureCapabilities(cameraInfo) reports
+   * support.
+   */
+  suspend fun captureWithProgress(
+      imageCapture: ImageCapture,
+      outputOptions: ImageCapture.OutputFileOptions,
+      onProgress: (percent: Int) -> Unit,
+      onPostview: (Bitmap) -> Unit,
+  ) {
+      try {
+          val result = imageCapture.takePicture(
+              outputOptions,
+              onCaptureProcessProgressed = onProgress,
+              onPostviewBitmapAvailable = onPostview,
+          )
+          Log.d("CameraX", "Saved ${result.savedUri}")
+      } catch (e: ImageCaptureException) {
+          Log.e("CameraX", "Capture failed", e)
+      }
   }
   ```
 
@@ -75,8 +114,35 @@ CameraX 内置的优先提升亮度的方式。它会修改硬件的自动曝光
 - **实现**：
 
   ```kotlin
-  // Enable Low Light Boost (LLB) natively in CameraX 1.4+
-  camera.cameraControl.enableLowLightBoostAsync(true)
+  /**
+   * Enables AE-mode Low Light Boost. Requires CameraX 1.5.0 or higher,
+   * Android 15 (API level 35) or higher, and device support.
+   */
+  fun enableLowLightBoost(
+      camera: Camera,
+      lifecycleOwner: LifecycleOwner,
+      executor: Executor,
+  ): Boolean {
+      // lowLightBoostState is always OFF on unsupported devices, so it can't
+      // be used as the availability check.
+      if (!camera.cameraInfo.isLowLightBoostSupported) return false
+
+      val future = camera.cameraControl.enableLowLightBoostAsync(true)
+      future.addListener({
+          try {
+              future.get()
+          } catch (e: ExecutionException) {
+              // IllegalStateException: unsupported or a settings conflict.
+              Log.w("CameraX", "Low Light Boost not enabled", e.cause)
+          }
+      }, executor)
+
+      camera.cameraInfo.lowLightBoostState.observe(lifecycleOwner) { state ->
+          val isBoosting = state == LowLightBoostState.ACTIVE
+          Log.d("CameraX", "Low Light Boost active: $isBoosting")
+      }
+      return true
+  }
   ```
 - **监控**：观察 `CameraInfo.lowLightBoostState`，跟踪硬件何时真正应用该增强。
 
@@ -97,18 +163,34 @@ CameraX 内置的优先提升亮度的方式。它会修改硬件的自动曝光
 3. **通过 `CameraEffect` 接入**：
 
    ```kotlin
-   val effect = SimpleCameraEffect(
+   /** CameraEffect's constructors are protected, so subclass it. */
+   class LowLightBoostEffect(
+       surfaceProcessor: SurfaceProcessor,
+       executor: Executor,
+       onError: Consumer<Throwable>,
+   ) : CameraEffect(
        CameraEffect.PREVIEW or CameraEffect.VIDEO_CAPTURE,
        executor,
-       llbSurfaceProcessor
-   ) { throw it }
+       surfaceProcessor,
+       onError,
+   )
 
-   // Add to UseCaseGroup
-   val useCaseGroup = UseCaseGroup.Builder()
-       .addUseCase(preview)
-       .addUseCase(videoCapture)
-       .addEffect(effect)
-       .build()
+   fun buildLowLightBoostUseCaseGroup(
+       preview: Preview,
+       videoCapture: VideoCapture<Recorder>,
+       llbSurfaceProcessor: SurfaceProcessor,
+       executor: Executor,
+   ): UseCaseGroup {
+       val effect = LowLightBoostEffect(llbSurfaceProcessor, executor) { error ->
+           Log.e("CameraX", "Low Light Boost effect failed", error)
+       }
+       // Bind the group with cameraProvider.bindToLifecycle(owner, selector, group).
+       return UseCaseGroup.Builder()
+           .addUseCase(preview)
+           .addUseCase(videoCapture)
+           .addEffect(effect)
+           .build()
+   }
    ```
 4. **场景检测**：使用 `session.setSceneDetectorCallback` 接收 `boostStrength` 更新，用于实时 UI 指示。
 

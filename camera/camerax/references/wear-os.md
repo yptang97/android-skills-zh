@@ -20,7 +20,7 @@ Wear OS 设备通常是圆形的。标准的矩形布局会裁掉角落的按钮
 遵循以下蓝图建议：
 
 - 使用 `Horologist` 或 `Wear Compose` 库。
-- 列表使用 `ScalingLazyColumn`，让条目始终处于圆形显示区的“安全区”内。
+- 列表使用 `ScalingLazyColumn`，让条目始终处于圆形显示区的「安全区」内。
 - **预览缩放**：裁切矩形手机取景器的中心区域，使其适配圆形手表屏幕。
 
 ### 串流取景器画面
@@ -29,10 +29,15 @@ Wear OS 设备通常是圆形的。标准的矩形布局会裁掉角落的按钮
 
 
 ```kotlin
-// Example: Sending a viewfinder frame to the watch
-val bitmap = previewView.bitmap // Capture current frame
-if (bitmap != null) {
-    val compressed = compressToJpeg(bitmap, quality = 50)
+/** Phone side: sends a compressed viewfinder frame to the watch. */
+suspend fun sendPreviewFrame(context: Context, previewView: PreviewView) {
+    val bitmap = previewView.bitmap ?: return // Capture current frame on the main thread
+    val compressed = withContext(Dispatchers.Default) { // Compress off the main thread
+        ByteArrayOutputStream().use { stream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream)
+            stream.toByteArray()
+        }
+    }
     val request = PutDataMapRequest.create("/camera/preview").apply {
         dataMap.putAsset("image", Asset.createFromBytes(compressed))
     }
@@ -46,12 +51,14 @@ if (bitmap != null) {
 
 ### 远程触发与同步
 
-对“拍照”或“切换相机”这类低延迟命令，使用 `MessageClient`。
+对「拍照」或「切换相机」这类低延迟命令，使用 `MessageClient`。
 
 
 ```kotlin
-// Watch sends a trigger to the phone
-Wearable.getMessageClient(context).sendMessage(nodeId, "/camera/capture", null)
+/** Watch side: sends a capture trigger to the phone node. */
+fun sendCaptureTrigger(context: Context, phoneNodeId: String) {
+    Wearable.getMessageClient(context).sendMessage(phoneNodeId, "/camera/capture", null)
+}
 ```
 
 <br />
@@ -66,5 +73,5 @@ Wearable.getMessageClient(context).sendMessage(nodeId, "/camera/capture", null)
 
 - **角落被裁切**：把**关闭**按钮放在方形布局的右上角，会导致在圆形手表显示区上无法点按该按钮。
 - **电量消耗**：持续的 Bluetooth 数据传输、取景器同步，会消耗手表电量。手机屏幕关闭时，主动关闭遥控应用。
-- **节点发现**：手机可能同时连接多个“节点”（手表、耳机或平板）。确保你的 `CapabilityClient` 过滤出具体的 `camera_remote_host` 能力。
+- **节点发现**：手机可能同时连接多个「节点」（手表、耳机或平板）。确保你的 `CapabilityClient` 过滤出具体的 `camera_remote_host` 能力。
 - **断连处理**：如果手表断开连接，手机相机必须停止高功耗预览以节省电量。

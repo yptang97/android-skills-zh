@@ -1,15 +1,10 @@
 ---
 name: adaptive
-description: 让应用 UI 适配不同 Android 设备（包括手机、平板、折叠设备、笔记本电脑、桌面端、TV、Auto
-  和 XR）的说明。包含如何使用 Compose MediaQuery API 处理不同的窗口尺寸、指针设备（例如鼠标）
-  和文本输入设备（例如键盘），以及如何在配置变更（例如折叠/展开折叠设备、旋转设备或调整窗口大小）时
-  保留 UI、导航、滚动和媒体播放状态。还涵盖使用 Navigation3 Scenes 的多窗格布局、目标尺寸可变的
-  自适应 UI 组件（例如按钮），以及使用 Compose Grid 和 FlexBox API 的自适应布局（包括导航区域：
-  nav rail 与 nav bar）。还涵盖带键盘快捷键、工具提示和自定义光标的桌面端体验。
+description: 创建或更新应用 UI，使其适配不同 Android 设备（包括手机、平板、折叠设备、笔记本电脑、桌面端、TV、Auto 和 XR）的说明。包含如何使用 Compose MediaQuery API 处理不同的窗口尺寸、指针设备（例如鼠标）和文本输入设备（例如键盘），以及如何在配置变更（例如折叠/展开折叠设备、旋转设备或调整窗口大小）时保留 UI、导航、滚动和媒体播放状态。还涵盖使用 Navigation3 Scenes 的多窗格布局、目标尺寸可变的自适应 UI 组件（例如按钮），以及使用 Compose Grid 和 FlexBox API 的自适应布局（包括导航区域：nav rail 与 nav bar）。还涵盖带键盘快捷键、工具提示和自定义光标的桌面端体验。
 license: Complete terms in LICENSE.txt
 metadata:
   author: Google LLC
-  last-updated: '2026-10-24'
+  last-updated: '2026-11-05'
   keywords:
   - android
   - ui
@@ -46,8 +41,8 @@ metadata:
 
 ## 步骤 1. 验证当前 UI
 
-确保已存在截图测试，用于在不同形态系数（form factor）上验证当前 UI。如果不存在，添加 [Compose Preview Screenshot Testing
-工具](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md)。使用下面的注解为所有主要形态系数创建预览。例如：
+确保已存在截图测试，用于在不同设备形态（form factor）上验证当前 UI。如果不存在，添加 [Compose Preview Screenshot Testing
+工具](references/android/studio/preview/compose-screenshot-testing-with-testsuites.md)。使用下面的注解为所有主要设备形态创建预览。例如：
 
 
 ```kotlin
